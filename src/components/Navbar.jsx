@@ -1,9 +1,17 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Headphones, User, LogOut } from "lucide-react";
+import { Menu, X, Headphones, User, LogOut, Settings, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const navLinks = [
     { label: "Hostels & PGs", href: "/#listings" },
@@ -57,16 +65,33 @@ const Navbar = () => {
                         Support
                     </Button>
                     {user ? (
-                        <div className="flex items-center gap-4">
-                            <div className="flex items-center gap-2 px-3 py-1 bg-secondary rounded-full">
-                                <User className="w-4 h-4 text-primary" />
-                                <span className="text-sm font-medium">{user.full_name}</span>
-                            </div>
-                            <Button variant="ghost" size="sm" onClick={handleLogout} className="gap-2 text-muted-foreground">
-                                <LogOut className="w-4 h-4" />
-                                Logout
-                            </Button>
-                        </div>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="secondary" size="sm" className="gap-2 px-4 rounded-full border border-border/50 hover:bg-secondary/80 transition-all">
+                                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
+                                        <User className="w-3.5 h-3.5 text-primary" />
+                                    </div>
+                                    <span className="text-sm font-medium">{user.full_name}</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56 mt-2">
+                                <DropdownMenuLabel className="font-heading">My Account</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
+                                    <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+                                    <span>User Dashboard</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
+                                    <Settings className="w-4 h-4 text-muted-foreground" />
+                                    <span>Settings</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer py-2.5 text-destructive focus:text-destructive">
+                                    <LogOut className="w-4 h-4" />
+                                    <span>Logout</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     ) : (
                         <Link to="/login">
                             <Button variant="default" size="sm">
@@ -104,16 +129,33 @@ const Navbar = () => {
                                 </a>
                             ))}
                             {user ? (
-                                <>
-                                    <div className="flex items-center gap-2 px-3 py-2 bg-secondary rounded-xl mb-1">
-                                        <User className="w-4 h-4 text-primary" />
-                                        <span className="text-sm font-medium">{user.full_name}</span>
+                                <div className="space-y-3 pt-2 border-t mt-1">
+                                    <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-xl mb-1">
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <User className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <span className="text-sm font-semibold">{user.full_name}</span>
                                     </div>
-                                    <Button variant="outline" size="sm" onClick={handleLogout} className="w-full gap-2">
-                                        <LogOut className="w-4 h-4" />
-                                        Logout
-                                    </Button>
-                                </>
+                                    <div className="grid grid-cols-1 gap-1">
+                                        <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
+                                            <LayoutDashboard className="w-4 h-4" />
+                                            Dashboard
+                                        </Button>
+                                        <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
+                                            <Settings className="w-4 h-4" />
+                                            Settings
+                                        </Button>
+                                        <Button
+                                            variant="ghost"
+                                            size="sm"
+                                            onClick={() => { handleLogout(); setMobileOpen(false); }}
+                                            className="justify-start gap-3 h-11 text-destructive hover:text-destructive hover:bg-destructive/5"
+                                        >
+                                            <LogOut className="w-4 h-4" />
+                                            Logout
+                                        </Button>
+                                    </div>
+                                </div>
                             ) : (
                                 <Link to="/login" onClick={() => setMobileOpen(false)}>
                                     <Button variant="default" size="sm" className="w-full mt-2">

@@ -30,7 +30,8 @@ class Property(models.Model):
     address = models.TextField()
     phone = models.CharField(max_length=20)
     email = models.EmailField()
-    main_image = models.CharField(max_length=500) # Storing asset path/name for now
+    main_image = models.CharField(max_length=1000) # Increased max_length for Cloudinary URLs
+    video_url = models.CharField(max_length=1000, null=True, blank=True)
     amenities = models.ManyToManyField(Amenity, related_name='properties')
 
     def __str__(self):
@@ -38,7 +39,7 @@ class Property(models.Model):
 
 class PropertyImage(models.Model):
     property = models.ForeignKey(Property, related_name='images', on_delete=models.CASCADE)
-    image_path = models.CharField(max_length=500)
+    image_path = models.CharField(max_length=1000)
 
 class Room(models.Model):
     property = models.ForeignKey(Property, related_name='rooms', on_delete=models.CASCADE)

@@ -175,6 +175,27 @@ const HostelDetail = () => {
                                 <p className="text-muted-foreground leading-relaxed">{property.description}</p>
                             </motion.div>
 
+                            {/* Video Section */}
+                            {property.video_url && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 20 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    transition={{ duration: 0.5, delay: 0.15 }}
+                                >
+                                    <h2 className="text-xl font-heading font-bold text-foreground mb-4">Property Video Tour</h2>
+                                    <div className="relative rounded-2xl overflow-hidden bg-card aspect-video border border-border shadow-sm">
+                                        <video
+                                            controls
+                                            className="w-full h-full object-cover"
+                                            poster={property.images[0]}
+                                        >
+                                            <source src={property.video_url} type="video/mp4" />
+                                            Your browser does not support the video tag.
+                                        </video>
+                                    </div>
+                                </motion.div>
+                            )}
+
                             {/* Amenities */}
                             <motion.div
                                 initial={{ opacity: 0, y: 20 }}

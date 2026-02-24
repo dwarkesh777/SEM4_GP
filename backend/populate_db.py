@@ -7,6 +7,18 @@ django.setup()
 
 from api.models import Property, Amenity, Room, Review, PropertyImage
 import datetime
+import json
+
+# Load Cloudinary mapping
+try:
+    with open('cloudinary_mapping.json', 'r') as f:
+        cloudinary_mapping = json.load(f)
+except FileNotFoundError:
+    print("Warning: cloudinary_mapping.json not found. Using local paths.")
+    cloudinary_mapping = {}
+
+def get_cloudinary_url(local_path):
+    return cloudinary_mapping.get(local_path, local_path)
 
 # Helper to get or create amenity
 def get_amenities(names):
@@ -183,34 +195,47 @@ properties_data = [
 ]
 
 def populate():
+    # Clear existing data for fresh start
+    print("Clearing existing data...")
+    Review.objects.all().delete()
+    Room.objects.all().delete()
+    PropertyImage.objects.all().delete()
+    Property.objects.all().delete()
+    Amenity.objects.all().delete()
+    
+    print(f"Amenities remaining: {Amenity.objects.count()}")
+    print(f"Properties remaining: {Property.objects.count()}")
+    
     for data in properties_data:
-        prop, created = Property.objects.get_or_create(
-            id=data['id'],
-            defaults={
-                'name': data['name'],
-                'location': data['location'],
-                'type': data['type'],
-                'gender': data['gender'],
-                'rating': data['rating'],
-                'reviews_count': data['reviews'],
-                'price': data['price'],
-                'original_price': data.get('originalPrice'),
-                'description': data['description'],
-                'address': data['address'],
-                'phone': data['phone'],
-                'email': data['email'],
-                'main_image': data['image']
-            }
-        )
-        
-        if created:
+        try:
+            prop = Property.objects.create(
+                id=data['id'],
+                name=data['name'],
+                location=data['location'],
+                type=data['type'],
+                gender=data['gender'],
+                rating=data['rating'],
+                reviews_count=data['reviews'],
+                price=data['price'],
+                original_price=data.get('originalPrice'),
+                description=data['description'],
+                address=data['address'],
+                phone=data['phone'],
+                email=data['email'],
+                main_image=get_cloudinary_url(data['image']),
+                video_url=data.get('video_url', 'https://res.cloudinary.com/demo/video/upload/v1631530588/sample_video.mp4')
+            )
+            
             # Set amenities
-            amenities = get_amenities(data['amenities'])
-            prop.amenities.set(amenities)
+            amenity_objs = []
+            for name in data['amenities']:
+                amenity, _ = Amenity.objects.get_or_create(name=name)
+                amenity_objs.append(amenity)
+            prop.amenities.set(amenity_objs)
             
             # Set images
             for img_path in data['images']:
-                PropertyImage.objects.create(property=prop, image_path=img_path)
+                PropertyImage.objects.create(property=prop, image_path=get_cloudinary_url(img_path))
             
             # Set rooms
             for room_data in data['rooms']:
@@ -218,7 +243,6 @@ def populate():
             
             # Set reviews
             for review_data in data['reviewsList']:
-                # Convert string date to date object
                 date_obj = datetime.datetime.strptime(review_data['date'], '%Y-%m-%d').date()
                 Review.objects.create(
                     property=prop,
@@ -227,7 +251,9 @@ def populate():
                     date=date_obj,
                     comment=review_data['comment']
                 )
-        print(f"Prop: {prop.name} {'created' if created else 'skipped'}")
+            print(f"Prop: {prop.name} created")
+        except Exception as e:
+            print(f"Error creating prop {data['id']}: {e}")
 
 if __name__ == '__main__':
     populate()

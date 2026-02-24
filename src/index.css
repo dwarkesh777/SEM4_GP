@@ -15,14 +15,14 @@
     --popover: 0 0% 100%;
     --popover-foreground: 200 25% 10%;
 
-    --primary: 172 66% 40%;
+    --primary: 217 91% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 150 20% 95%;
-    --secondary-foreground: 200 25% 15%;
+    --secondary: 214 30% 95%;
+    --secondary-foreground: 217 40% 15%;
 
-    --muted: 150 15% 93%;
-    --muted-foreground: 200 10% 45%;
+    --muted: 214 20% 93%;
+    --muted-foreground: 217 15% 45%;
 
     --accent: 36 90% 55%;
     --accent-foreground: 0 0% 100%;
@@ -30,15 +30,15 @@
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 150 15% 90%;
-    --input: 150 15% 88%;
-    --ring: 172 66% 40%;
+    --border: 214 20% 90%;
+    --input: 214 20% 88%;
+    --ring: 217 91% 60%;
 
     --radius: 0.75rem;
 
-    --hero-gradient: linear-gradient(135deg, hsl(172, 66%, 35%) 0%, hsl(190, 70%, 30%) 50%, hsl(200, 60%, 25%) 100%);
+    --hero-gradient: linear-gradient(135deg, hsl(217, 91%, 50%) 0%, hsl(230, 80%, 42%) 50%, hsl(240, 65%, 35%) 100%);
     --card-shadow: 0 4px 24px -4px hsl(200 25% 10% / 0.08);
-    --card-shadow-hover: 0 12px 40px -8px hsl(172 66% 40% / 0.2);
+    --card-shadow-hover: 0 12px 40px -8px hsl(217 91% 60% / 0.2);
 
     --sidebar-background: 0 0% 98%;
     --sidebar-foreground: 240 5.3% 26.1%;
@@ -57,7 +57,7 @@
     --card-foreground: 150 15% 95%;
     --popover: 200 20% 10%;
     --popover-foreground: 150 15% 95%;
-    --primary: 172 66% 45%;
+    --primary: 217 91% 65%;
     --primary-foreground: 0 0% 100%;
     --secondary: 200 20% 15%;
     --secondary-foreground: 150 15% 95%;
@@ -69,7 +69,7 @@
     --destructive-foreground: 0 0% 100%;
     --border: 200 15% 18%;
     --input: 200 15% 18%;
-    --ring: 172 66% 45%;
+    --ring: 217 91% 65%;
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
     --sidebar-primary: 224.3 76.3% 48%;
@@ -98,7 +98,7 @@
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(172, 66%, 40%), hsl(190, 70%, 35%));
+    background-image: linear-gradient(135deg, hsl(217, 91%, 60%), hsl(230, 80%, 50%));
   }
 
   .hero-overlay {
@@ -113,7 +113,7 @@
 
   .card-elevated {
     box-shadow: var(--card-shadow);
-    transition: box-shadow 0.3s ease, transform 0.3s ease;
+    transition: box-shadow 0.3s ease, transform 0.3s ease;  
   }
 
   .card-elevated:hover {

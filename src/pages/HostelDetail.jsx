@@ -130,7 +130,7 @@ const HostelDetail = () => {
 
                                     {/* Dots */}
                                     <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2">
-                                        {property.images.map((_, i) => (
+                                        {property.images?.map((_, i) => (
                                             <button
                                                 key={i}
                                                 onClick={() => setCurrentImage(i)}
@@ -142,7 +142,7 @@ const HostelDetail = () => {
 
                                 {/* Thumbnails */}
                                 <div className="flex gap-2 p-3">
-                                    {property.images.map((img, i) => (
+                                    {property.images?.map((img, i) => (
                                         <button
                                             key={i}
                                             onClick={() => setCurrentImage(i)}
@@ -168,8 +168,8 @@ const HostelDetail = () => {
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <Star className="w-4 h-4 fill-accent text-accent" />
-                                        <span className="text-sm font-semibold">{property.rating.toFixed(1)}/5</span>
-                                        <span className="text-xs text-muted-foreground">({property.reviews} reviews)</span>
+                                        <span className="text-sm font-semibold">{property.rating?.toFixed(1) || "0.0"}/5</span>
+                                        <span className="text-xs text-muted-foreground">({property.reviews || 0} reviews)</span>
                                     </div>
                                 </div>
                                 <p className="text-muted-foreground leading-relaxed">{property.description}</p>
@@ -187,7 +187,7 @@ const HostelDetail = () => {
                                         <video
                                             controls
                                             className="w-full h-full object-cover"
-                                            poster={property.images[0]}
+                                            poster={property.images?.[0] || ""}
                                         >
                                             <source src={property.video_url} type="video/mp4" />
                                             Your browser does not support the video tag.
@@ -204,7 +204,7 @@ const HostelDetail = () => {
                             >
                                 <h2 className="text-xl font-heading font-bold text-foreground mb-4">Amenities</h2>
                                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                                    {property.amenities.map((amenity) => {
+                                    {property.amenities?.map((amenity) => {
                                         const detail = amenityDetails[amenity];
                                         return (
                                             <div key={amenity} className="flex items-center gap-3 p-3 rounded-xl bg-secondary">
@@ -224,7 +224,7 @@ const HostelDetail = () => {
                             >
                                 <h2 className="text-xl font-heading font-bold text-foreground mb-4">Room Types</h2>
                                 <div className="space-y-3">
-                                    {property.rooms.map((room) => (
+                                    {property.rooms?.map((room) => (
                                         <div key={room.name} className="flex items-center justify-between p-4 rounded-xl bg-card border border-border card-elevated">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
@@ -237,7 +237,7 @@ const HostelDetail = () => {
                                             </div>
                                             <div className="flex items-center gap-4">
                                                 <div className="text-right">
-                                                    <p className="text-lg font-heading font-bold text-primary">₹{room.price.toLocaleString()}</p>
+                                                    <p className="text-lg font-heading font-bold text-primary">₹{room.price?.toLocaleString() || "0"}</p>
                                                     <p className="text-xs text-muted-foreground">/month</p>
                                                 </div>
                                                 {room.available ? (
@@ -258,10 +258,10 @@ const HostelDetail = () => {
                                 transition={{ duration: 0.5, delay: 0.4 }}
                             >
                                 <h2 className="text-xl font-heading font-bold text-foreground mb-4">
-                                    Reviews ({property.reviewsList.length})
+                                    Reviews ({property.reviewsList?.length || 0})
                                 </h2>
                                 <div className="space-y-4">
-                                    {property.reviewsList.map((review, i) => (
+                                    {property.reviewsList?.map((review, i) => (
                                         <motion.div
                                             key={i}
                                             initial={{ opacity: 0, y: 10 }}
@@ -273,11 +273,11 @@ const HostelDetail = () => {
                                             <div className="flex items-center justify-between mb-2">
                                                 <div className="flex items-center gap-2">
                                                     <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-heading font-bold text-sm">
-                                                        {review.name[0]}
+                                                        {review.name?.[0] || "?"}
                                                     </div>
                                                     <div>
                                                         <p className="font-medium text-sm text-card-foreground">{review.name}</p>
-                                                        <p className="text-xs text-muted-foreground">{new Date(review.date).toLocaleDateString("en-IN", { month: "short", year: "numeric" })}</p>
+                                                        <p className="text-xs text-muted-foreground">{review.date ? new Date(review.date).toLocaleDateString("en-IN", { month: "short", year: "numeric" }) : "Date unknown"}</p>
                                                     </div>
                                                 </div>
                                                 <div className="flex items-center gap-0.5">

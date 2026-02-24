@@ -33,7 +33,7 @@ class PropertySerializer(serializers.ModelSerializer):
         slug_field='image_path'
     )
     rooms = RoomSerializer(many=True, read_only=True)
-    reviews_list = ReviewSerializer(many=True, read_only=True)
+    reviewsList = ReviewSerializer(many=True, read_only=True)
     
     image = serializers.CharField(source='main_image')
     reviews = serializers.IntegerField(source='reviews_count')
@@ -44,5 +44,5 @@ class PropertySerializer(serializers.ModelSerializer):
         fields = [
             'id', 'image', 'images', 'video_url', 'name', 'location', 'type', 'gender', 
             'rating', 'reviews', 'price', 'originalPrice', 'amenities', 
-            'description', 'rooms', 'reviews_list', 'address', 'phone', 'email'
+            'description', 'rooms', 'reviewsList', 'address', 'phone', 'email'
         ]

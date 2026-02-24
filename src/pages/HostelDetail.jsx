@@ -11,7 +11,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { getPropertyById } from "@/data/properties";
+import { useQuery } from "@tanstack/react-query";
+
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
@@ -29,13 +30,32 @@ const amenityDetails = {
     "MATTRESS": { icon: <BedDouble className="w-5 h-5" />, label: "Mattress" },
 };
 
+const fetchProperty = async (id) => {
+    const res = await fetch(`http://localhost:8000/api/properties/${id}/`);
+    if (!res.ok) throw new Error("Network response was not ok");
+    return res.json();
+};
+
 const HostelDetail = () => {
     const { id } = useParams();
-    const property = getPropertyById(id || "");
+    const { data: property, isLoading, error } = useQuery({
+        queryKey: ["property", id],
+        queryFn: () => fetchProperty(id),
+        enabled: !!id,
+    });
     const [currentImage, setCurrentImage] = useState(0);
     const { toast } = useToast();
 
-    if (!property) {
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-background flex items-center justify-center flex-col gap-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                <p className="text-muted-foreground">Loading details...</p>
+            </div>
+        );
+    }
+
+    if (error || !property) {
         return (
             <div className="min-h-screen bg-background flex items-center justify-center flex-col gap-4">
                 <h1 className="text-2xl font-heading font-bold text-foreground">Property Not Found</h1>

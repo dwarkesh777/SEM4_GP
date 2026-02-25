@@ -25,9 +25,16 @@ class RegisterSerializer(serializers.ModelSerializer):
         )
         return user
 
+class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        if self.user.is_owner:
+            raise serializers.ValidationError("This is an Owner account.")
+        return data
+
 class OwnerTokenObtainPairSerializer(TokenObtainPairSerializer):
     def validate(self, attrs):
         data = super().validate(attrs)
         if not self.user.is_owner:
-            raise serializers.ValidationError("Only owners can login here.")
+            raise serializers.ValidationError("This is a User account.")
         return data

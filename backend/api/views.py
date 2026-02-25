@@ -1,7 +1,7 @@
 from rest_framework import viewsets, generics, permissions
 from .models import Property
 from .serializers import PropertySerializer
-from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer
+from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
 class PropertyViewSet(viewsets.ReadOnlyModelViewSet):
@@ -21,3 +21,6 @@ class UserProfileView(generics.RetrieveAPIView):
 
 class OwnerLoginView(TokenObtainPairView):
     serializer_class = OwnerTokenObtainPairSerializer
+
+class UserLoginView(TokenObtainPairView):
+    serializer_class = UserTokenObtainPairSerializer

@@ -1,7 +1,8 @@
 from rest_framework import viewsets, generics, permissions
 from .models import Property
 from .serializers import PropertySerializer
-from .user_serializers import UserSerializer, RegisterSerializer
+from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 class PropertyViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Property.objects.all()
@@ -17,3 +18,6 @@ class UserProfileView(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.request.user
+
+class OwnerLoginView(TokenObtainPairView):
+    serializer_class = OwnerTokenObtainPairSerializer

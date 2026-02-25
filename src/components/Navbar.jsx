@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Headphones, User, LogOut, Settings, LayoutDashboard } from "lucide-react";
+import { Menu, X, Headphones, User, LogOut, Settings, LayoutDashboard, Building2, LogIn } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -16,7 +16,6 @@ import {
 const navLinks = [
     { label: "Hostels & PGs", href: "/#listings" },
     { label: "Search by College", href: "/#search" },
-    { label: "For Owners", href: "/#owners" },
 ];
 
 const Navbar = () => {
@@ -57,6 +56,21 @@ const Navbar = () => {
                             {link.label}
                         </a>
                     ))}
+                    <DropdownMenu>
+                        <DropdownMenuTrigger className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
+                            For Owners
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent>
+                            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/owner-login')}>
+                                <LogIn className="w-4 h-4" />
+                                Owner Login
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => window.location.href = '#owners'}>
+                                <Building2 className="w-4 h-4" />
+                                Your Property
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
                 </div>
 
                 <div className="hidden md:flex items-center gap-3">
@@ -128,6 +142,23 @@ const Navbar = () => {
                                     {link.label}
                                 </a>
                             ))}
+                            <div className="flex flex-col gap-1 py-1">
+                                <span className="text-xs font-semibold text-muted-foreground px-2 py-1">FOR OWNERS</span>
+                                <Link
+                                    to="/owner-login"
+                                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-2 px-2"
+                                    onClick={() => setMobileOpen(false)}
+                                >
+                                    Owner Login
+                                </Link>
+                                <a
+                                    href="#owners"
+                                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-2 px-2"
+                                    onClick={() => setMobileOpen(false)}
+                                >
+                                    Your Property
+                                </a>
+                            </div>
                             {user ? (
                                 <div className="space-y-3 pt-2 border-t mt-1">
                                     <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-xl mb-1">

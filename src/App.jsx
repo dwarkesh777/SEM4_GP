@@ -8,6 +8,7 @@ import Index from "./pages/Index";
 import HostelDetail from "./pages/HostelDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import OwnerLogin from "./pages/OwnerLogin";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
                         <Route path="/hostel/:id" element={<HostelDetail />} />
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
+                        <Route path="/owner-login" element={<OwnerLogin />} />
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                         <Route path="*" element={<NotFound />} />
                     </Routes>

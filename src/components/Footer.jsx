@@ -1,7 +1,24 @@
 import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 import { MapPin, Phone, Mail } from "lucide-react";
 
 const Footer = () => {
+    const quickLinks = [
+        { name: "About Us", path: "/about" },
+        { name: "All Hostels", path: "/#listings" },
+        { name: "All PGs", path: "/#listings" },
+        { name: "Search by College", path: "/#listings" },
+        { name: "For Owners", path: "/owner-login" }
+    ];
+
+    const supportLinks = [
+        { name: "Help Center", path: "/help" },
+        { name: "Safety Info", path: "/safety" },
+        { name: "Cancellation Policy", path: "/cancellation" },
+        { name: "Terms of Service", path: "/terms" },
+        { name: "Privacy Policy", path: "/privacy" }
+    ];
+
     return (
         <motion.footer
             initial={{ opacity: 0 }}
@@ -23,9 +40,11 @@ const Footer = () => {
                     <div>
                         <h4 className="font-heading font-semibold text-background mb-4">Quick Links</h4>
                         <ul className="space-y-2.5 text-sm text-background/60">
-                            {["About Us", "All Hostels", "All PGs", "Search by College", "For Owners"].map((link) => (
-                                <li key={link}>
-                                    <a href="#" className="hover:text-primary transition-colors">{link}</a>
+                            {quickLinks.map((link) => (
+                                <li key={link.name}>
+                                    <Link to={link.path} className="hover:text-primary transition-colors">
+                                        {link.name}
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
@@ -34,9 +53,11 @@ const Footer = () => {
                     <div>
                         <h4 className="font-heading font-semibold text-background mb-4">Support</h4>
                         <ul className="space-y-2.5 text-sm text-background/60">
-                            {["Help Center", "Safety Info", "Cancellation Policy", "Terms of Service", "Privacy Policy"].map((link) => (
-                                <li key={link}>
-                                    <a href="#" className="hover:text-primary transition-colors">{link}</a>
+                            {supportLinks.map((link) => (
+                                <li key={link.name}>
+                                    <Link to={link.path} className="hover:text-primary transition-colors">
+                                        {link.name}
+                                    </Link>
                                 </li>
                             ))}
                         </ul>

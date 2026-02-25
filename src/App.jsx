@@ -10,6 +10,12 @@ import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import OwnerLogin from "./pages/OwnerLogin";
 import AddProperty from "./pages/AddProperty";
+import AboutUs from "./pages/AboutUs";
+import HelpCenter from "./pages/HelpCenter";
+import SafetyInfo from "./pages/SafetyInfo";
+import CancellationPolicy from "./pages/CancellationPolicy";
+import TermsOfService from "./pages/TermsOfService";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +34,12 @@ const App = () => (
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/owner-login" element={<OwnerLogin />} />
                         <Route path="/add-property" element={<AddProperty />} />
+                        <Route path="/about" element={<AboutUs />} />
+                        <Route path="/help" element={<HelpCenter />} />
+                        <Route path="/safety" element={<SafetyInfo />} />
+                        <Route path="/cancellation" element={<CancellationPolicy />} />
+                        <Route path="/terms" element={<TermsOfService />} />
+                        <Route path="/privacy" element={<PrivacyPolicy />} />
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                         <Route path="*" element={<NotFound />} />
                     </Routes>

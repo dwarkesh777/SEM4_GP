@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
 
 const amenityDetails = {
     wifi: { icon: <Wifi className="w-5 h-5" />, label: "Wi-Fi", category: "Essentials" },
@@ -52,6 +53,29 @@ const HostelDetail = () => {
     });
     const [currentImage, setCurrentImage] = useState(0);
     const { toast } = useToast();
+
+    const { isLoaded } = useJsApiLoader({
+        id: "google-map-script",
+        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
+    });
+
+    const mapContainerStyle = {
+        width: "100%",
+        height: "400px",
+        borderRadius: "2rem",
+    };
+
+    const mapOptions = {
+        disableDefaultUI: false,
+        zoomControl: true,
+        styles: [
+            {
+                featureType: "poi",
+                elementType: "labels",
+                stylers: [{ visibility: "off" }],
+            },
+        ],
+    };
 
     if (isLoading) {
         return (
@@ -359,6 +383,61 @@ const HostelDetail = () => {
                                             <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-full translate-x-10 -translate-y-10 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-500 pointer-events-none" />
                                         </motion.div>
                                     ))}
+                                </div>
+                            </motion.section>
+
+                            {/* LOCATION & MAP SECTION */}
+                            <motion.section
+                                initial={{ opacity: 0, y: 40 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                className="space-y-8"
+                            >
+                                <div className="flex items-center justify-between">
+                                    <h2 className="text-3xl font-heading font-black text-slate-900 tracking-tight">Location & <span className="text-primary italic">Surroundings</span></h2>
+                                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-100 shadow-sm font-bold text-slate-600 text-sm">
+                                        <MapPin className="w-4 h-4 text-primary" /> {property.city}, {property.location}
+                                    </div>
+                                </div>
+
+                                <div className="p-4 rounded-[2.5rem] bg-white border border-slate-100 shadow-xl overflow-hidden group relative">
+                                    <div className="h-[400px] w-full rounded-[2rem] overflow-hidden bg-slate-100 relative">
+                                        {isLoaded ? (
+                                            <GoogleMap
+                                                mapContainerStyle={mapContainerStyle}
+                                                center={{ lat: property.latitude || 23.0225, lng: property.longitude || 72.5714 }}
+                                                zoom={15}
+                                                options={mapOptions}
+                                            >
+                                                <MarkerF
+                                                    position={{ lat: property.latitude || 23.0225, lng: property.longitude || 72.5714 }}
+                                                    label={{
+                                                        text: property.name,
+                                                        className: "bg-white px-3 py-1 rounded-full shadow-lg font-black text-xs text-primary border border-primary/20 -translate-y-10",
+                                                    }}
+                                                />
+                                            </GoogleMap>
+                                        ) : (
+                                            <div className="flex items-center justify-center h-full">
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {/* Action overlay */}
+                                    <div className="mt-6 flex flex-wrap gap-4 px-2">
+                                        <div className="flex-1 min-w-[200px] p-4 rounded-2xl bg-slate-50 border border-slate-100">
+                                            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Full Address</p>
+                                            <p className="text-sm font-bold text-slate-700 leading-tight">{property.address}</p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            className="h-auto py-4 px-6 rounded-2xl border-slate-200 hover:border-primary hover:text-primary transition-all font-bold gap-2"
+                                            onClick={() => window.open(`https://www.google.com/maps/dir/?api=1&destination=${property.latitude},${property.longitude}`, "_blank")}
+                                        >
+                                            <ExternalLink className="w-4 h-4" /> Get Directions
+                                        </Button>
+                                    </div>
                                 </div>
                             </motion.section>
 

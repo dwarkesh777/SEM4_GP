@@ -43,9 +43,9 @@ const PropertyCard = ({
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border/50 hover:shadow-md transition-shadow duration-300 group cursor-pointer"
+                className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border/50 hover:shadow-md transition-shadow duration-300 group cursor-pointer h-full flex flex-col"
             >
-                <div className="relative h-60 overflow-hidden m-3 rounded-xl">
+                <div className="relative h-60 min-h-[240px] overflow-hidden m-3 rounded-xl flex-shrink-0">
                     <AnimatePresence mode="wait">
                         <motion.img
                             key={currentImgIndex}
@@ -71,14 +71,14 @@ const PropertyCard = ({
                     </div>
                 </div>
 
-                <div className="px-5 pb-5 pt-2">
-                    <h3 className="text-xl font-bold text-[#1A1A1A] mb-1 line-clamp-1">
+                <div className="px-5 pb-5 pt-2 flex-grow flex flex-col">
+                    <h3 className="text-xl font-bold text-[#1A1A1A] mb-1 line-clamp-1 min-h-[1.75rem]">
                         {name}
                     </h3>
 
                     <div className="flex items-center gap-1 text-[#6B7280] mb-3">
                         <MapPin className="w-4 h-4 text-[#6B7280]" />
-                        <span className="text-sm font-medium">{location}</span>
+                        <span className="text-sm font-medium line-clamp-1">{location}</span>
                     </div>
 
                     <div className="flex items-center gap-1 mb-4">
@@ -91,11 +91,11 @@ const PropertyCard = ({
                         <span className="ml-2 text-sm font-semibold text-[#1A1A1A]">{rating.toFixed(1)}/5 ({reviews})</span>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 mb-6">
+                    <div className="flex flex-wrap gap-2 mb-6 min-h-[4rem]">
                         {amenities.slice(0, 5).map((amenity) => (
                             <span
                                 key={amenity}
-                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#E6F2FF] text-[#0070E0] text-xs font-bold uppercase tracking-wider"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#E6F2FF] text-[#0070E0] text-xs font-bold uppercase tracking-wider h-fit"
                             >
                                 {amenityIcons[amenity.toUpperCase()] || <Wifi className="w-3 h-3" />}
                                 {amenity}
@@ -103,7 +103,7 @@ const PropertyCard = ({
                         ))}
                     </div>
 
-                    <div className="flex flex-col mb-4">
+                    <div className="flex flex-col mb-4 mt-auto">
                         <div className="flex items-baseline gap-2">
                             {originalPrice && (
                                 <span className="text-sm text-[#9CA3AF] line-through font-medium">₹{originalPrice.toLocaleString()}/-</span>

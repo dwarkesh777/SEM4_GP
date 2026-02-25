@@ -36,14 +36,8 @@ const Navbar = () => {
             className="fixed top-0 left-0 right-0 z-50 glass"
         >
             <div className="container flex items-center justify-between h-16">
-                <Link to="/" className="flex items-center gap-2">
-                    <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                        <span className="text-primary-foreground font-heading font-bold text-sm">N</span>
-                    </div>
-                    <span className="font-heading font-bold text-xl">
-                        <span className="text-gradient">Nest</span>
-                        <span className="text-foreground">Node</span>
-                    </span>
+                <Link to="/" className="flex items-center">
+                    <img src="/bedbuddy-logo-blue.svg" alt="BedBuddy Logo" className="h-10 w-auto" />
                 </Link>
 
                 <div className="hidden md:flex items-center gap-8">

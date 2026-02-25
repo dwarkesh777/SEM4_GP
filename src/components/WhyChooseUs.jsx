@@ -46,7 +46,7 @@ const WhyChooseUs = () => {
                     className="text-center mb-14"
                 >
                     <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-3">
-                        Why Choose NestNode?
+                        Why Choose BedBuddy?
                     </h2>
                     <p className="text-muted-foreground max-w-lg mx-auto">
                         We make finding the perfect accommodation simple and hassle-free

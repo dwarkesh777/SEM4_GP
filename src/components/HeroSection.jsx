@@ -49,7 +49,7 @@ const HeroSection = () => {
                     transition={{ duration: 0.6, delay: 0.4 }}
                     className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto mb-10"
                 >
-                    Book student housing, hostels & PGs across India with NestNode
+                    Book student housing, hostels & PGs across India with BedBuddy
                 </motion.p>
 
                 <motion.div

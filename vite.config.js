@@ -20,8 +20,8 @@ export default defineConfig(({ mode }) => ({
             registerType: 'autoUpdate',
             includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
             manifest: {
-                name: 'NestNode - Find Your Perfect Stay',
-                short_name: 'NestNode',
+                name: 'BedBuddy - Find Your Perfect Stay',
+                short_name: 'BedBuddy',
                 description: 'The easiest way to find and book hostels, PGs, and co-living spaces.',
                 theme_color: '#3b82f6',
                 background_color: '#ffffff',

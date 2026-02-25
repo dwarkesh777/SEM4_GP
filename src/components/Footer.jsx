@@ -13,10 +13,7 @@ const Footer = () => {
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
                     <div className="md:col-span-1">
                         <div className="flex items-center gap-2 mb-4">
-                            <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
-                                <span className="text-primary-foreground font-heading font-bold text-sm">N</span>
-                            </div>
-                            <span className="font-heading font-bold text-xl text-background">NestNode</span>
+                            <img src="/bedbuddy-logo-white.svg" alt="BedBuddy Logo" className="h-10 w-auto" />
                         </div>
                         <p className="text-sm text-background/60 leading-relaxed">
                             Your trusted platform for finding student housing, hostels & PGs across India.
@@ -58,14 +55,14 @@ const Footer = () => {
                             </li>
                             <li className="flex items-center gap-2">
                                 <Mail className="w-4 h-4 text-primary shrink-0" />
-                                <span>hello@nestnode.in</span>
+                                <span>hello@bedbuddy.in</span>
                             </li>
                         </ul>
                     </div>
                 </div>
 
                 <div className="border-t border-background/10 mt-10 pt-6 text-center text-sm text-background/40">
-                    © {new Date().getFullYear()} NestNode. All rights reserved.
+                    © {new Date().getFullYear()} BedBuddy. All rights reserved.
                 </div>
             </div>
         </motion.footer>

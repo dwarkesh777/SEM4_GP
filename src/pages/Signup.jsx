@@ -49,7 +49,7 @@ const Signup = () => {
                 >
                     <div className="text-center mb-8">
                         <h1 className="text-3xl font-heading font-bold text-foreground mb-2">Create Account</h1>
-                        <p className="text-muted-foreground">Join NestNode to find your perfect stay.</p>
+                        <p className="text-muted-foreground">Join BedBuddy to find your perfect stay.</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="space-y-6">

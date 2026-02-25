@@ -61,10 +61,6 @@ const Navbar = () => {
                             For Owners
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => navigate('/owner-login')}>
-                                <LogIn className="w-4 h-4" />
-                                Owner Login
-                            </DropdownMenuItem>
                             <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => window.location.href = '#owners'}>
                                 <Building2 className="w-4 h-4" />
                                 Your Property
@@ -107,11 +103,23 @@ const Navbar = () => {
                             </DropdownMenuContent>
                         </DropdownMenu>
                     ) : (
-                        <Link to="/login">
-                            <Button variant="default" size="sm">
-                                Login
-                            </Button>
-                        </Link>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="default" size="sm" className="gap-2">
+                                    Login
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48 mt-2">
+                                <DropdownMenuItem onClick={() => navigate('/login')} className="gap-2 cursor-pointer py-2.5">
+                                    <User className="w-4 h-4 text-muted-foreground" />
+                                    <span>User Login</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate('/owner-login')} className="gap-2 cursor-pointer py-2.5">
+                                    <Building2 className="w-4 h-4 text-muted-foreground" />
+                                    <span>Owner Login</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     )}
                 </div>
 
@@ -144,13 +152,6 @@ const Navbar = () => {
                             ))}
                             <div className="flex flex-col gap-1 py-1">
                                 <span className="text-xs font-semibold text-muted-foreground px-2 py-1">FOR OWNERS</span>
-                                <Link
-                                    to="/owner-login"
-                                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-2 px-2"
-                                    onClick={() => setMobileOpen(false)}
-                                >
-                                    Owner Login
-                                </Link>
                                 <a
                                     href="#owners"
                                     className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-2 px-2"
@@ -188,11 +189,18 @@ const Navbar = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <Link to="/login" onClick={() => setMobileOpen(false)}>
-                                    <Button variant="default" size="sm" className="w-full mt-2">
-                                        Login
-                                    </Button>
-                                </Link>
+                                <div className="grid grid-cols-2 gap-2 mt-2">
+                                    <Link to="/login" onClick={() => setMobileOpen(false)}>
+                                        <Button variant="outline" size="sm" className="w-full">
+                                            User Login
+                                        </Button>
+                                    </Link>
+                                    <Link to="/owner-login" onClick={() => setMobileOpen(false)}>
+                                        <Button variant="default" size="sm" className="w-full">
+                                            Owner Login
+                                        </Button>
+                                    </Link>
+                                </div>
                             )}
                         </div>
                     </motion.div>

@@ -1,4 +1,4 @@
-from rest_framework import viewsets, generics, permissions
+from rest_framework import viewsets, generics, permissions, parsers
 from .models import Property
 from .serializers import PropertySerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
@@ -8,6 +8,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
     permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)

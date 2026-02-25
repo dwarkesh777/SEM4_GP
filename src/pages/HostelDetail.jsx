@@ -104,7 +104,7 @@ const HostelDetail = () => {
                                     <AnimatePresence mode="wait">
                                         <motion.img
                                             key={currentImage}
-                                            src={property.images[currentImage]}
+                                            src={property.images && property.images.length > 0 ? property.images[currentImage]?.image : property.main_image}
                                             alt={`${property.name} - Image ${currentImage + 1}`}
                                             className="w-full h-full object-cover"
                                             initial={{ opacity: 0, scale: 1.05 }}
@@ -148,7 +148,7 @@ const HostelDetail = () => {
                                             onClick={() => setCurrentImage(i)}
                                             className={`w-20 h-14 rounded-lg overflow-hidden border-2 transition-all ${i === currentImage ? "border-primary" : "border-transparent opacity-60 hover:opacity-100"}`}
                                         >
-                                            <img src={img} alt="" className="w-full h-full object-cover" />
+                                            <img src={img.image} alt="" className="w-full h-full object-cover" />
                                         </button>
                                     ))}
                                 </div>
@@ -176,7 +176,7 @@ const HostelDetail = () => {
                             </motion.div>
 
                             {/* Video Section */}
-                            {property.video_url && (
+                            {property.video && (
                                 <motion.div
                                     initial={{ opacity: 0, y: 20 }}
                                     animate={{ opacity: 1, y: 0 }}
@@ -187,9 +187,9 @@ const HostelDetail = () => {
                                         <video
                                             controls
                                             className="w-full h-full object-cover"
-                                            poster={property.images?.[0] || ""}
+                                            poster={property.images?.[0]?.image || property.main_image || ""}
                                         >
-                                            <source src={property.video_url} type="video/mp4" />
+                                            <source src={property.video} type="video/mp4" />
                                             Your browser does not support the video tag.
                                         </video>
                                     </div>
@@ -232,7 +232,7 @@ const HostelDetail = () => {
                                                 </div>
                                                 <div>
                                                     <p className="font-medium text-card-foreground">{room.name}</p>
-                                                    <p className="text-xs text-muted-foreground">{room.occupancy}</p>
+                                                    <p className="text-xs text-muted-foreground">{room.beds} Bed{room.beds !== 1 ? 's' : ''} • {room.occupancy}</p>
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-4">

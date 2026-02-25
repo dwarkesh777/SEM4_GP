@@ -203,20 +203,58 @@ const AddProperty = () => {
         setSubmitting(true);
 
         try {
-            // Prepare room data: Separate regular and AC into distinct room entries
-            const rooms = [];
+            // Prepare FormData for multipart upload
+            const formDataObj = new FormData();
+
+            // Basic fields (skip arrays handled below)
+            Object.keys(formData).forEach(key => {
+                if (key === 'amenities' || key === 'appliances') return;
+                if (formData[key] !== null && formData[key] !== undefined && formData[key] !== "") {
+                    formDataObj.append(key, formData[key]);
+                }
+            });
+
+            // Handle main image
+            if (mainImage) {
+                formDataObj.append("main_image", mainImage);
+            }
+
+            // Handle video
+            if (videoFile) {
+                formDataObj.append("video", videoFile);
+            }
+
+            // Handle multiple images
+            extraImages.forEach((file) => {
+                formDataObj.append("uploaded_images", file);
+            });
+
+            // Handle nested rooms: We need to send these in a way DRF can understand or handle manually
+            // One way is to send each amenity/appliance separately
+            formData.amenities.forEach(amenity => {
+                formDataObj.append("amenities", amenity);
+            });
+            formData.appliances.forEach(appliance => {
+                formDataObj.append("appliances", appliance);
+            });
+
+            // For rooms, we'll send it as a JSON string and we might need to handle it in the backend
+            // or send as rooms[0]name=...
+            const simplifiedRooms = [];
             roomTypes.forEach(room => {
                 if (room.regularPrice) {
-                    rooms.push({
+                    simplifiedRooms.push({
                         name: room.name,
+                        beds: parseInt(room.regularBeds) || 0,
                         occupancy: room.name,
                         price: parseInt(room.regularPrice),
                         available: room.regularAvailable
                     });
                 }
                 if (room.acPrice) {
-                    rooms.push({
+                    simplifiedRooms.push({
                         name: `${room.name} (AC)`,
+                        beds: parseInt(room.acBeds) || 0,
                         occupancy: room.name,
                         price: parseInt(room.acPrice),
                         available: room.acAvailable
@@ -224,35 +262,34 @@ const AddProperty = () => {
                 }
             });
 
-            const payload = {
-                ...formData,
-                main_image: mainImagePreview || formData.main_image_url || "https://images.unsplash.com/photo-1555854817-5b2260756a1b?w=800&auto=format&fit=crop",
-                price: parseInt(formData.price),
-                original_price: formData.original_price ? parseInt(formData.original_price) : null,
-                amenities: formData.amenities,
-                appliances: formData.appliances,
-                rooms: rooms
-            };
+            // DRF's nested serializers usually don't handle JSON strings in MultiPartParser automatically
+            // So we'll append each room field if we want to be safe, but simplifiedRooms as JSON is easier if we update the backend to parse it
+            formDataObj.append("rooms_json", JSON.stringify(simplifiedRooms));
 
             const response = await fetch("http://localhost:8000/api/properties/", {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
                     "Authorization": `Bearer ${localStorage.getItem("token")}`
                 },
-                body: JSON.stringify(payload)
+                body: formDataObj
             });
 
             if (response.ok) {
                 toast.success("Property listed successfully!");
                 navigate("/");
             } else {
-                const err = await response.json();
-                toast.error(JSON.stringify(err));
+                let errorMessage = "Failed to list property";
+                try {
+                    const err = await response.json();
+                    errorMessage = err.error || (typeof err === 'object' ? JSON.stringify(err) : String(err));
+                } catch (e) {
+                    errorMessage = `Server error (${response.status}): The server encountered an issue.`;
+                }
+                toast.error(errorMessage);
             }
         } catch (error) {
             console.error("Submission error:", error);
-            toast.error("Failed to list property");
+            toast.error("Network error or invalid data. Please check your inputs.");
         } finally {
             setSubmitting(false);
         }

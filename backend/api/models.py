@@ -76,8 +76,8 @@ class Property(models.Model):
     address = models.TextField()
     phone = models.CharField(max_length=20)
     email = models.EmailField()
-    main_image = models.CharField(max_length=1000)
-    video_url = models.CharField(max_length=1000, null=True, blank=True)
+    main_image = models.ImageField(upload_to='properties/main/', null=True, blank=True)
+    video = models.FileField(upload_to='properties/videos/', null=True, blank=True)
     amenities = models.ManyToManyField(Amenity, related_name='properties', blank=True)
     appliances = models.ManyToManyField(Appliance, related_name='properties', blank=True)
 
@@ -86,11 +86,12 @@ class Property(models.Model):
 
 class PropertyImage(models.Model):
     property = models.ForeignKey(Property, related_name='images', on_delete=models.CASCADE)
-    image_path = models.CharField(max_length=1000)
+    image = models.ImageField(upload_to='properties/extra/', null=True, blank=True)
 
 class Room(models.Model):
     property = models.ForeignKey(Property, related_name='rooms', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
+    beds = models.IntegerField(default=1)
     occupancy = models.CharField(max_length=100)
     price = models.IntegerField()
     available = models.BooleanField(default=True)

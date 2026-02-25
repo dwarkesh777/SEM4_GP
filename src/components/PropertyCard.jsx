@@ -11,7 +11,7 @@ const amenityIcons = {
 };
 
 const PropertyCard = ({
-    id, image, name, location, type, gender, rating, reviews, price, originalPrice, amenities, index,
+    id, main_image, name, location, type, gender, rating, reviews, price, originalPrice, amenities, index,
 }) => {
     const genderColor = gender === "Boys" ? "bg-blue-500" : gender === "Girls" ? "bg-pink-500" : "bg-accent";
 
@@ -26,7 +26,7 @@ const PropertyCard = ({
             >
                 <div className="relative h-52 overflow-hidden">
                     <img
-                        src={image}
+                        src={main_image}
                         alt={name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                         loading="lazy"

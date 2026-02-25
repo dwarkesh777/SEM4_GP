@@ -17,7 +17,6 @@ const PropertyCard = ({
     const [isHovered, setIsHovered] = useState(false);
     const [currentImgIndex, setCurrentImgIndex] = useState(0);
 
-    // Combine main image and extra images
     const slideshowImages = [
         main_image,
         ...(images?.map(img => img.image) || [])
@@ -28,14 +27,12 @@ const PropertyCard = ({
         if (isHovered && slideshowImages.length > 1) {
             interval = setInterval(() => {
                 setCurrentImgIndex((prev) => (prev + 1) % slideshowImages.length);
-            }, 1500); // Change image every 1.5s
+            }, 1500);
         } else {
             setCurrentImgIndex(0);
         }
         return () => clearInterval(interval);
     }, [isHovered, slideshowImages.length]);
-
-    const genderColor = gender === "Boys" ? "bg-blue-500" : gender === "Girls" ? "bg-pink-500" : "bg-accent";
 
     return (
         <Link to={`/hostel/${id}`}>
@@ -46,9 +43,9 @@ const PropertyCard = ({
                 transition={{ duration: 0.5, delay: index * 0.1 }}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="bg-card rounded-xl overflow-hidden card-elevated group cursor-pointer"
+                className="bg-white rounded-2xl overflow-hidden shadow-sm border border-border/50 hover:shadow-md transition-shadow duration-300 group cursor-pointer"
             >
-                <div className="relative h-52 overflow-hidden">
+                <div className="relative h-60 overflow-hidden m-3 rounded-xl">
                     <AnimatePresence mode="wait">
                         <motion.img
                             key={currentImgIndex}
@@ -62,54 +59,63 @@ const PropertyCard = ({
                             loading="lazy"
                         />
                     </AnimatePresence>
-                    <div className="absolute top-3 left-3 flex gap-2">
-                        <Badge className="bg-primary text-primary-foreground text-xs font-semibold">
-                            {type.toUpperCase()}
+                    <div className="absolute top-3 left-3">
+                        <Badge className="bg-[#FF66AA] hover:bg-[#FF66AA] text-white border-none rounded-lg px-3 py-1 text-sm font-bold uppercase">
+                            {type}
                         </Badge>
                     </div>
                     <div className="absolute top-3 right-3">
-                        <Badge className={`${genderColor} text-primary-foreground text-xs`}>
-                            {gender}
+                        <Badge className="bg-[#2D2D2D] hover:bg-[#2D2D2D] text-white border-none rounded-full px-3 py-1 text-sm font-medium flex items-center gap-1.5">
+                            <span className="text-xs">♂</span> {gender}
                         </Badge>
                     </div>
                 </div>
 
-                <div className="p-4">
-                    <h3 className="font-heading font-semibold text-card-foreground text-base line-clamp-1 mb-1">
+                <div className="px-5 pb-5 pt-2">
+                    <h3 className="text-xl font-bold text-[#1A1A1A] mb-1 line-clamp-1">
                         {name}
                     </h3>
-                    <div className="flex items-center gap-1 text-muted-foreground text-sm mb-2">
-                        <MapPin className="w-3.5 h-3.5 text-primary" />
-                        <span className="line-clamp-1">{location}</span>
+
+                    <div className="flex items-center gap-1 text-[#6B7280] mb-3">
+                        <MapPin className="w-4 h-4 text-[#6B7280]" />
+                        <span className="text-sm font-medium">{location}</span>
                     </div>
 
-                    <div className="flex items-center gap-1 mb-3">
-                        <Star className="w-4 h-4 fill-accent text-accent" />
-                        <span className="text-sm font-semibold text-card-foreground">{rating.toFixed(1)}/5</span>
-                        {reviews > 0 && (
-                            <span className="text-xs text-muted-foreground">({reviews})</span>
-                        )}
+                    <div className="flex items-center gap-1 mb-4">
+                        {[1, 2, 3, 4, 5].map((s) => (
+                            <Star
+                                key={s}
+                                className={`w-4 h-4 ${s <= Math.round(rating) ? "fill-[#FFB800] text-[#FFB800]" : "fill-[#E5E7EB] text-[#E5E7EB]"}`}
+                            />
+                        ))}
+                        <span className="ml-2 text-sm font-semibold text-[#1A1A1A]">{rating.toFixed(1)}/5 ({reviews})</span>
                     </div>
 
-                    <div className="flex flex-wrap gap-1.5 mb-4">
-                        {amenities.slice(0, 4).map((amenity) => (
+                    <div className="flex flex-wrap gap-2 mb-6">
+                        {amenities.slice(0, 5).map((amenity) => (
                             <span
                                 key={amenity}
-                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-secondary text-secondary-foreground text-xs"
+                                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#E6F2FF] text-[#0070E0] text-xs font-bold uppercase tracking-wider"
                             >
-                                {amenityIcons[amenity]}
+                                {amenityIcons[amenity.toUpperCase()] || <Wifi className="w-3 h-3" />}
                                 {amenity}
                             </span>
                         ))}
                     </div>
 
-                    <div className="flex items-baseline gap-2 pt-3 border-t border-border">
-                        {originalPrice && (
-                            <span className="text-sm text-muted-foreground line-through">₹{originalPrice.toLocaleString()}/-</span>
-                        )}
-                        <span className="text-xl font-heading font-bold text-primary">₹{price.toLocaleString()}/-</span>
-                        <span className="text-xs text-muted-foreground">Monthly Rent</span>
+                    <div className="flex flex-col mb-4">
+                        <div className="flex items-baseline gap-2">
+                            {originalPrice && (
+                                <span className="text-sm text-[#9CA3AF] line-through font-medium">₹{originalPrice.toLocaleString()}/-</span>
+                            )}
+                            <span className="text-2xl font-extrabold text-[#0070E0]">₹{price.toLocaleString()}/-</span>
+                        </div>
+                        <span className="text-sm text-[#6B7280] font-medium mt-1">Monthly Rent From</span>
                     </div>
+
+                    <button className="w-full bg-[#0070E0] hover:bg-[#005bb5] text-white font-bold py-3.5 rounded-xl transition-colors duration-200">
+                        View Details
+                    </button>
                 </div>
             </motion.div>
         </Link>

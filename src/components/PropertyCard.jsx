@@ -1,4 +1,5 @@
-import { motion } from "framer-motion";
+import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { MapPin, Star, Wifi, Sofa, Droplets, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
@@ -11,8 +12,29 @@ const amenityIcons = {
 };
 
 const PropertyCard = ({
-    id, main_image, name, location, type, gender, rating, reviews, price, originalPrice, amenities, index,
+    id, main_image, images, name, location, type, gender, rating, reviews, price, originalPrice, amenities, index,
 }) => {
+    const [isHovered, setIsHovered] = useState(false);
+    const [currentImgIndex, setCurrentImgIndex] = useState(0);
+
+    // Combine main image and extra images
+    const slideshowImages = [
+        main_image,
+        ...(images?.map(img => img.image) || [])
+    ].filter(Boolean);
+
+    useEffect(() => {
+        let interval;
+        if (isHovered && slideshowImages.length > 1) {
+            interval = setInterval(() => {
+                setCurrentImgIndex((prev) => (prev + 1) % slideshowImages.length);
+            }, 1500); // Change image every 1.5s
+        } else {
+            setCurrentImgIndex(0);
+        }
+        return () => clearInterval(interval);
+    }, [isHovered, slideshowImages.length]);
+
     const genderColor = gender === "Boys" ? "bg-blue-500" : gender === "Girls" ? "bg-pink-500" : "bg-accent";
 
     return (
@@ -22,15 +44,24 @@ const PropertyCard = ({
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-50px" }}
                 transition={{ duration: 0.5, delay: index * 0.1 }}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
                 className="bg-card rounded-xl overflow-hidden card-elevated group cursor-pointer"
             >
                 <div className="relative h-52 overflow-hidden">
-                    <img
-                        src={main_image}
-                        alt={name}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        loading="lazy"
-                    />
+                    <AnimatePresence mode="wait">
+                        <motion.img
+                            key={currentImgIndex}
+                            src={slideshowImages[currentImgIndex]}
+                            alt={name}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.4 }}
+                            loading="lazy"
+                        />
+                    </AnimatePresence>
                     <div className="absolute top-3 left-3 flex gap-2">
                         <Badge className="bg-primary text-primary-foreground text-xs font-semibold">
                             {type.toUpperCase()}

@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="pinGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#2563EB"/>
+      <stop offset="100%" style="stop-color:#06B6D4"/>
+    </linearGradient>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="#2563EB" flood-opacity="0.3"/>
+    </filter>
+  </defs>
+
+  <!-- Location pin -->
+  <path d="M32 4 C18 4 8 14 8 27 C8 40 24 54 32 60 C40 54 56 40 56 27 C56 14 46 4 32 4 Z"
+        fill="url(#pinGrad)" filter="url(#shadow)"/>
+
+  <!-- White inner circle -->
+  <circle cx="32" cy="26" r="15" fill="white"/>
+
+  <!-- Headboard -->
+  <rect x="18" y="17" width="28" height="6" rx="3" fill="#2563EB"/>
+
+  <!-- Pillows -->
+  <rect x="20" y="22" width="10" height="7" rx="3.5" fill="white" stroke="#06B6D4" stroke-width="1.5"/>
+  <rect x="34" y="22" width="10" height="7" rx="3.5" fill="white" stroke="#06B6D4" stroke-width="1.5"/>
+
+  <!-- Mattress -->
+  <rect x="18" y="27" width="28" height="8" rx="2.5" fill="#2563EB" opacity="0.8"/>
+
+  <!-- Bed base -->
+  <rect x="18" y="33" width="28" height="7" rx="2" fill="#1d4ed8" opacity="0.4"/>
+</svg>

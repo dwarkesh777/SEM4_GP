@@ -1,7 +1,7 @@
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Headphones, User, LogOut, Settings, LayoutDashboard, Building2, LogIn } from "lucide-react";
+import { Menu, X, Headphones, User, LogOut, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -20,8 +20,23 @@ const navLinks = [
 
 const Navbar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
+    const [isScrolled, setIsScrolled] = useState(false);
     const { user, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+
+    // Force solid navbar on all pages except the homepage
+    const isHomePage = location.pathname === "/";
+    const forceSolid = !isHomePage;
+    const effectiveScrolled = isScrolled || forceSolid;
+
+    useEffect(() => {
+        const handleScroll = () => {
+            setIsScrolled(window.scrollY > 20);
+        };
+        window.addEventListener("scroll", handleScroll);
+        return () => window.removeEventListener("scroll", handleScroll);
+    }, []);
 
     const handleLogout = () => {
         logout();
@@ -32,196 +47,239 @@ const Navbar = () => {
         <motion.nav
             initial={{ y: -100 }}
             animate={{ y: 0 }}
-            transition={{ duration: 0.5, ease: "easeOut" }}
-            className="fixed top-0 left-0 right-0 z-50 glass"
+            transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+            className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${effectiveScrolled
+                ? "py-3 bg-white/70 backdrop-blur-xl border-b border-white/20 shadow-lg shadow-black/5"
+                : "py-5 bg-transparent"
+                }`}
         >
-            <div className="container flex items-center justify-between h-16">
-                <Link to="/" className="flex items-center">
-                    <img src="/bedbuddy-logo-blue.svg" alt="BedBuddy Logo" className="h-10 w-auto" />
+            <div className="container flex items-center justify-between">
+                <Link to="/" className="flex items-center gap-2.5 group transition-transform duration-300 hover:scale-105 active:scale-95">
+                    <div className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-500 ${effectiveScrolled ? "bg-primary shadow-lg shadow-primary/20" : "bg-white/20 backdrop-blur-md border border-white/30"
+                        }`}>
+                        <MapPin className="w-6 h-6 text-white" />
+                    </div>
+                    <span className={`text-2xl tracking-tight transition-colors duration-500 font-heading ${effectiveScrolled ? "text-slate-900" : "text-white"}`}>
+                        <span className="font-medium">Bed</span>
+                        <span className="font-black text-primary">Buddy</span>
+                    </span>
                 </Link>
 
-                <div className="hidden md:flex items-center gap-8">
-                    {navLinks.map((link) => (
-                        <a
+                <div className="hidden md:flex items-center gap-10">
+                    {navLinks.map((link, i) => (
+                        <motion.div
                             key={link.label}
-                            href={link.href}
-                            className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
+                            initial={{ opacity: 0, y: -10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.1 * i + 0.2 }}
                         >
-                            {link.label}
-                        </a>
-                    ))}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1">
-                            For Owners
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent>
-                            <DropdownMenuItem
-                                className="gap-2 cursor-pointer bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md group"
-                                onClick={() => navigate('/add-property')}
+                            <a
+                                href={link.href}
+                                className={`text-sm font-semibold transition-colors relative group ${effectiveScrolled ? "text-slate-600" : "text-white"
+                                    } hover:text-primary`}
                             >
-                                <Building2 className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
-                                <span className="text-white">List Your Property</span>
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                </div>
+                                {link.label}
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                            </a>
+                        </motion.div>
+                    ))}
 
-                <div className="hidden md:flex items-center gap-3">
-                    <Button variant="ghost" size="sm" className="gap-2 text-muted-foreground">
-                        <Headphones className="w-4 h-4" />
-                        Support
-                    </Button>
-                    {user ? (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.4 }}
+                    >
                         <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="secondary" size="sm" className="gap-2 px-4 rounded-full border border-border/50 hover:bg-secondary/80 transition-all">
-                                    <div className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center">
-                                        <User className="w-3.5 h-3.5 text-primary" />
+                            <DropdownMenuTrigger className={`text-sm font-semibold transition-colors flex items-center gap-1 group outline-none ${effectiveScrolled ? "text-slate-600" : "text-white"
+                                } hover:text-primary`}>
+                                For Owners
+                                <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="p-2 min-w-[200px] rounded-2xl border-white/20 shadow-2xl backdrop-blur-2xl">
+                                <DropdownMenuItem
+                                    className="gap-3 cursor-pointer bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold p-3 rounded-xl transition-all shadow-md group border-none mb-1"
+                                    onClick={() => navigate('/add-property')}
+                                >
+                                    <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+                                        <Building2 className="w-4 h-4 text-white" />
                                     </div>
-                                    <span className="text-sm font-medium">{user.full_name}</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56 mt-2">
-                                <DropdownMenuLabel className="font-heading">My Account</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {user.is_owner ? (
-                                    <>
-                                        <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
-                                            <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
-                                            <span>Owner Dashboard</span>
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
-                                            <Building2 className="w-4 h-4 text-muted-foreground" />
-                                            <span>Owner System</span>
-                                        </DropdownMenuItem>
-                                    </>
-                                ) : (
-                                    <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
-                                        <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
-                                        <span>User Dashboard</span>
-                                    </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
-                                    <Settings className="w-4 h-4 text-muted-foreground" />
-                                    <span>Settings</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={handleLogout} className="gap-2 cursor-pointer py-2.5 text-destructive focus:text-destructive">
-                                    <LogOut className="w-4 h-4" />
-                                    <span>Logout</span>
+                                    <div className="flex flex-col">
+                                        <span className="text-sm">List Your Property</span>
+                                        <span className="text-[10px] font-medium text-white/80">Start earning today</span>
+                                    </div>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                    ) : (
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button variant="default" size="sm" className="gap-2">
-                                    Login
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 mt-2">
-                                <DropdownMenuItem onClick={() => navigate('/login')} className="gap-2 cursor-pointer py-2.5">
-                                    <User className="w-4 h-4 text-muted-foreground" />
-                                    <span>User Login</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate('/owner-login')} className="gap-2 cursor-pointer py-2.5">
-                                    <Building2 className="w-4 h-4 text-muted-foreground" />
-                                    <span>Owner Login</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    )}
+                    </motion.div>
                 </div>
 
-                <button
-                    className="md:hidden p-2 text-foreground"
-                    onClick={() => setMobileOpen(!mobileOpen)}
-                >
-                    {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-                </button>
+                <div className="hidden md:flex items-center gap-4">
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.5 }}
+                    >
+                        <Button variant="ghost" size="sm" className={`gap-2 font-semibold rounded-full px-5 ${effectiveScrolled ? "text-slate-600 hover:bg-slate-100/50" : "text-white hover:bg-white/10"
+                            }`}>
+                            <Headphones className="w-4 h-4" />
+                            Support
+                        </Button>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ delay: 0.6 }}
+                    >
+                        {user ? (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button variant="outline" size="sm" className={`gap-2 px-4 rounded-full border-white/20 backdrop-blur-sm transition-all shadow-sm ${effectiveScrolled ? "bg-white/50 text-slate-700 hover:bg-white hover:border-primary/30" : "bg-white/10 text-white hover:bg-white/20"
+                                        }`}>
+                                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
+                                            <User className="w-3.5 h-3.5 text-primary" />
+                                        </div>
+                                        <span className="text-sm font-bold">{user.full_name}</span>
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-64 p-2 mt-2 rounded-2xl border-white/20 shadow-2xl backdrop-blur-2xl">
+                                    <DropdownMenuLabel className="font-heading px-3 py-2">
+                                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Signed in as</p>
+                                        <p className="text-sm font-bold truncate">{user.email}</p>
+                                    </DropdownMenuLabel>
+                                    <DropdownMenuSeparator className="bg-slate-100" />
+                                    {user.is_owner ? (
+                                        <>
+                                            <DropdownMenuItem className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-primary/5 group" onClick={() => navigate('/owner-dashboard')}>
+                                                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-focus:scale-110 transition-transform">
+                                                    <LayoutDashboard className="w-4 h-4" />
+                                                </div>
+                                                <span className="font-semibold text-slate-700">Owner Dashboard</span>
+                                            </DropdownMenuItem>
+                                        </>
+                                    ) : (
+                                        <DropdownMenuItem className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-primary/5 group">
+                                            <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-focus:scale-110 transition-transform">
+                                                <LayoutDashboard className="w-4 h-4" />
+                                            </div>
+                                            <span className="font-semibold text-slate-700">User Dashboard</span>
+                                        </DropdownMenuItem>
+                                    )}
+                                    <DropdownMenuItem className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-slate-100 group">
+                                        <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-500 group-focus:scale-110 transition-transform">
+                                            <Settings className="w-4 h-4" />
+                                        </div>
+                                        <span className="font-semibold text-slate-700">Settings</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuSeparator className="bg-slate-100" />
+                                    <DropdownMenuItem onClick={handleLogout} className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-red-50 group mt-1 transition-all border border-transparent focus:border-red-100">
+                                        <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 group-focus:scale-110 transition-transform">
+                                            <LogOut className="w-4 h-4" />
+                                        </div>
+                                        <span className="font-bold text-red-600">Logout</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        ) : (
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button className="px-8 rounded-full font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 transition-all outline-none">
+                                        Login
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56 p-2 mt-2 rounded-2xl border-white/20 shadow-2xl backdrop-blur-2xl">
+                                    <DropdownMenuItem onClick={() => navigate('/login')} className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-primary/5 group">
+                                        <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-focus:scale-110 transition-transform">
+                                            <User className="w-4 h-4" />
+                                        </div>
+                                        <span className="font-bold text-slate-700">User Login</span>
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => navigate('/owner-login')} className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-orange-50 group">
+                                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 group-focus:scale-110 transition-transform">
+                                            <Building2 className="w-4 h-4" />
+                                        </div>
+                                        <span className="font-bold text-slate-700">Owner Login</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        )}
+                    </motion.div>
+                </div>
+
+                <div className="md:hidden flex items-center gap-3">
+                    {user && (
+                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
+                            <User className="w-4 h-4 text-primary" />
+                        </div>
+                    )}
+                    <button
+                        className={`p-2 rounded-lg transition-colors ${effectiveScrolled ? "text-slate-800" : "text-white"}`}
+                        onClick={() => setMobileOpen(!mobileOpen)}
+                    >
+                        {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                    </button>
+                </div>
             </div>
 
             <AnimatePresence>
                 {mobileOpen && (
                     <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: "auto", opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="md:hidden overflow-hidden glass border-t"
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        exit={{ opacity: 0, height: 0 }}
+                        className="md:hidden glass border-t border-slate-200/50 bg-white/95 backdrop-blur-3xl overflow-hidden"
                     >
-                        <div className="container py-4 flex flex-col gap-3">
-                            {navLinks.map((link) => (
-                                <a
-                                    key={link.label}
-                                    href={link.href}
-                                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-2"
-                                    onClick={() => setMobileOpen(false)}
-                                >
-                                    {link.label}
-                                </a>
-                            ))}
-                            <button
+                        <div className="container py-8 flex flex-col gap-6">
+                            <div className="flex flex-col gap-2">
+                                {navLinks.map((link) => (
+                                    <a
+                                        key={link.label}
+                                        href={link.href}
+                                        className="text-lg font-bold text-slate-800 hover:text-primary transition-colors py-3 border-b border-slate-100 flex items-center justify-between group"
+                                        onClick={() => setMobileOpen(false)}
+                                    >
+                                        {link.label}
+                                        <ChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
+                                    </a>
+                                ))}
+                            </div>
+
+                            <Button
                                 onClick={() => { navigate('/add-property'); setMobileOpen(false); }}
-                                className="flex items-center gap-2 text-sm font-bold bg-orange-500 text-white hover:bg-orange-600 transition-all py-3 px-4 rounded-xl shadow-sm"
+                                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 py-7 text-lg font-bold rounded-2xl shadow-xl shadow-orange-500/20"
                             >
-                                <Building2 className="w-4 h-4" />
+                                <Building2 className="w-5 h-5 mr-3" />
                                 List Your Property
-                            </button>
-                            {user ? (
-                                <div className="space-y-3 pt-2 border-t mt-1">
-                                    <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-xl mb-1">
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <User className="w-4 h-4 text-primary" />
-                                        </div>
-                                        <span className="text-sm font-semibold">{user.full_name}</span>
-                                    </div>
-                                    <div className="grid grid-cols-1 gap-1">
-                                        {user.is_owner ? (
-                                            <>
-                                                <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
-                                                    <LayoutDashboard className="w-4 h-4" />
-                                                    Owner Dashboard
-                                                </Button>
-                                                <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
-                                                    <Building2 className="w-4 h-4" />
-                                                    Owner System
-                                                </Button>
-                                            </>
-                                        ) : (
-                                            <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
-                                                <LayoutDashboard className="w-4 h-4" />
-                                                User Dashboard
-                                            </Button>
-                                        )}
-                                        <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
-                                            <Settings className="w-4 h-4" />
-                                            Settings
-                                        </Button>
+                            </Button>
+
+                            <div className="grid grid-cols-2 gap-4 mt-2">
+                                {user ? (
+                                    <Button
+                                        variant="outline"
+                                        className="col-span-2 py-6 rounded-xl font-bold border-red-100 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all"
+                                        onClick={() => { handleLogout(); setMobileOpen(false); }}
+                                    >
+                                        <LogOut className="w-5 h-5 mr-3" />
+                                        Logout Account
+                                    </Button>
+                                ) : (
+                                    <>
                                         <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => { handleLogout(); setMobileOpen(false); }}
-                                            className="justify-start gap-3 h-11 text-destructive hover:text-destructive hover:bg-destructive/5"
+                                            variant="outline"
+                                            className="py-6 rounded-xl font-bold border-slate-200"
+                                            onClick={() => { navigate('/login'); setMobileOpen(false); }}
                                         >
-                                            <LogOut className="w-4 h-4" />
-                                            Logout
-                                        </Button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="grid grid-cols-2 gap-2 mt-2">
-                                    <Link to="/login" onClick={() => setMobileOpen(false)}>
-                                        <Button variant="outline" size="sm" className="w-full">
                                             User Login
                                         </Button>
-                                    </Link>
-                                    <Link to="/owner-login" onClick={() => setMobileOpen(false)}>
-                                        <Button variant="default" size="sm" className="w-full">
+                                        <Button
+                                            className="py-6 rounded-xl font-bold"
+                                            onClick={() => { navigate('/owner-login'); setMobileOpen(false); }}
+                                        >
                                             Owner Login
                                         </Button>
-                                    </Link>
-                                </div>
-                            )}
+                                    </>
+                                )}
+                            </div>
                         </div>
                     </motion.div>
                 )}

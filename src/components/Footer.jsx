@@ -29,8 +29,14 @@ const Footer = () => {
             <div className="container py-14">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
                     <div className="md:col-span-1">
-                        <div className="flex items-center gap-2 mb-4">
-                            <img src="/bedbuddy-logo-white.svg" alt="BedBuddy Logo" className="h-10 w-auto" />
+                        <div className="flex items-center gap-2.5 mb-6">
+                            <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-primary shadow-lg shadow-primary/20">
+                                <MapPin className="w-6 h-6 text-white" />
+                            </div>
+                            <span className="text-2xl tracking-tight font-heading">
+                                <span className="font-medium text-white">Bed</span>
+                                <span className="font-black text-primary">Buddy</span>
+                            </span>
                         </div>
                         <p className="text-sm text-background/60 leading-relaxed">
                             Your trusted platform for finding student housing, hostels & PGs across India.

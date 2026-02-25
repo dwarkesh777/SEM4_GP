@@ -93,11 +93,11 @@ export const AuthProvider = ({ children }) => {
         return userData;
     };
 
-    const signup = async (email, full_name, password) => {
+    const signup = async (email, full_name, password, is_owner = false) => {
         const response = await fetch('http://localhost:8000/api/auth/register/', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, full_name, password }),
+            body: JSON.stringify({ email, full_name, password, is_owner }),
         });
 
         if (!response.ok) {

@@ -16,41 +16,115 @@ const PopularListings = () => {
         queryFn: fetchProperties,
     });
 
-    if (isLoading) return <div className="py-20 text-center">Loading properties...</div>;
-    if (error) return <div className="py-20 text-center text-destructive">Error loading properties</div>;
+    if (isLoading) return (
+        <div className="py-24 flex flex-col items-center justify-center space-y-4">
+            <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+            <p className="text-slate-500 font-medium animate-pulse">Finding the best homes for you...</p>
+        </div>
+    );
+
+    if (error) return (
+        <div className="py-24 text-center">
+            <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-destructive/10 text-destructive mb-4">
+                <ArrowRight className="w-8 h-8 rotate-45" />
+            </div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Oops! Something went wrong</h3>
+            <p className="text-slate-500">We couldn't load the listings. Please try again later.</p>
+        </div>
+    );
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: {
+            opacity: 1,
+            transition: {
+                staggerChildren: 0.1
+            }
+        }
+    };
+
+    const itemVariants = {
+        hidden: { opacity: 0, y: 30 },
+        visible: {
+            opacity: 1,
+            y: 0,
+            transition: { duration: 0.6, ease: [0.22, 1, 0.36, 1] }
+        }
+    };
 
     return (
-        <section id="listings" className="py-20 bg-background">
-            <div className="container">
+        <section id="listings" className="relative py-24 bg-white overflow-hidden">
+            {/* Background Decorations */}
+            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
+            <div className="absolute top-40 right-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+
+            <div className="container relative z-10">
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+                    <motion.div
+                        initial={{ opacity: 0, x: -30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                        className="max-w-2xl"
+                    >
+                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-4">
+                            <span className="relative flex h-2 w-2">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                            </span>
+                            Top Picks
+                        </div>
+                        <h2 className="text-4xl md:text-5xl font-heading font-bold text-slate-900 leading-tight">
+                            Explore <span className="text-primary italic">Popular</span> Living Spaces
+                        </h2>
+                        <p className="mt-4 text-lg text-slate-500 font-medium">
+                            Highly rated properties curated specifically for your comfort and needs.
+                        </p>
+                    </motion.div>
+
+                    <motion.div
+                        initial={{ opacity: 0, x: 30 }}
+                        whileInView={{ opacity: 1, x: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.6 }}
+                    >
+                        <Button variant="outline" className="h-14 px-8 rounded-2xl font-bold border-slate-200 hover:border-primary hover:text-primary transition-all group">
+                            Explore Gallery
+                            <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                    </motion.div>
+                </div>
+
+                <motion.div
+                    variants={containerVariants}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true, margin: "-100px" }}
+                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+                >
+                    {properties?.map((property, index) => (
+                        <motion.div key={property.id} variants={itemVariants}>
+                            <PropertyCard {...property} index={index} />
+                        </motion.div>
+                    ))}
+                </motion.div>
+
                 <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    transition={{ duration: 0.5 }}
-                    className="mb-12"
+                    transition={{ duration: 0.6, delay: 0.4 }}
+                    className="flex flex-col items-center mt-20"
                 >
-                    <h2 className="text-3xl md:text-4xl font-heading font-bold text-foreground mb-2">
-                        Popular Hostels & PGs
-                    </h2>
-                    <div className="w-16 h-1 bg-primary rounded-full" />
-                </motion.div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {properties?.map((property, index) => (
-                        <PropertyCard key={property.id} {...property} index={index} />
-                    ))}
-                </div>
-
-                <motion.div
-                    initial={{ opacity: 0 }}
-                    whileInView={{ opacity: 1 }}
-                    viewport={{ once: true }}
-                    className="flex justify-center mt-12"
-                >
-                    <Button size="lg" className="gap-2 rounded-full px-8">
-                        Show All PG/Hostels
-                        <ArrowRight className="w-4 h-4" />
-                    </Button>
+                    <div className="p-1 rounded-[2.5rem] bg-slate-100/80 backdrop-blur-sm border border-white">
+                        <Button size="lg" className="h-16 px-12 rounded-[2.25rem] bg-primary text-white hover:bg-primary/90 shadow-2xl shadow-primary/20 transition-all text-lg font-bold group">
+                            Show All Properties
+                            <div className="ml-3 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                                <ArrowRight className="w-4 h-4" />
+                            </div>
+                        </Button>
+                    </div>
+                    <p className="mt-6 text-sm text-slate-400 font-medium">Over <span className="text-slate-600 font-bold">2,500+</span> verified properties available</p>
                 </motion.div>
             </div>
         </section>

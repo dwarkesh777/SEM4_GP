@@ -55,9 +55,12 @@ const Navbar = () => {
                             For Owners
                         </DropdownMenuTrigger>
                         <DropdownMenuContent>
-                            <DropdownMenuItem className="gap-2 cursor-pointer" onClick={() => window.location.href = '#owners'}>
-                                <Building2 className="w-4 h-4" />
-                                Your Property
+                            <DropdownMenuItem
+                                className="gap-2 cursor-pointer bg-orange-500 hover:bg-orange-600 text-white font-bold px-4 py-2 rounded-xl transition-all shadow-md group"
+                                onClick={() => navigate('/add-property')}
+                            >
+                                <Building2 className="w-4 h-4 text-white group-hover:scale-110 transition-transform" />
+                                <span className="text-white">List Your Property</span>
                             </DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
@@ -81,10 +84,23 @@ const Navbar = () => {
                             <DropdownMenuContent align="end" className="w-56 mt-2">
                                 <DropdownMenuLabel className="font-heading">My Account</DropdownMenuLabel>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
-                                    <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
-                                    <span>User Dashboard</span>
-                                </DropdownMenuItem>
+                                {user.is_owner ? (
+                                    <>
+                                        <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
+                                            <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+                                            <span>Owner Dashboard</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
+                                            <Building2 className="w-4 h-4 text-muted-foreground" />
+                                            <span>Owner System</span>
+                                        </DropdownMenuItem>
+                                    </>
+                                ) : (
+                                    <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
+                                        <LayoutDashboard className="w-4 h-4 text-muted-foreground" />
+                                        <span>User Dashboard</span>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuItem className="gap-2 cursor-pointer py-2.5">
                                     <Settings className="w-4 h-4 text-muted-foreground" />
                                     <span>Settings</span>
@@ -144,16 +160,13 @@ const Navbar = () => {
                                     {link.label}
                                 </a>
                             ))}
-                            <div className="flex flex-col gap-1 py-1">
-                                <span className="text-xs font-semibold text-muted-foreground px-2 py-1">FOR OWNERS</span>
-                                <a
-                                    href="#owners"
-                                    className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors py-2 px-2"
-                                    onClick={() => setMobileOpen(false)}
-                                >
-                                    Your Property
-                                </a>
-                            </div>
+                            <button
+                                onClick={() => { navigate('/add-property'); setMobileOpen(false); }}
+                                className="flex items-center gap-2 text-sm font-bold bg-orange-500 text-white hover:bg-orange-600 transition-all py-3 px-4 rounded-xl shadow-sm"
+                            >
+                                <Building2 className="w-4 h-4" />
+                                List Your Property
+                            </button>
                             {user ? (
                                 <div className="space-y-3 pt-2 border-t mt-1">
                                     <div className="flex items-center gap-2 px-3 py-2 bg-secondary/50 rounded-xl mb-1">
@@ -163,10 +176,23 @@ const Navbar = () => {
                                         <span className="text-sm font-semibold">{user.full_name}</span>
                                     </div>
                                     <div className="grid grid-cols-1 gap-1">
-                                        <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
-                                            <LayoutDashboard className="w-4 h-4" />
-                                            Dashboard
-                                        </Button>
+                                        {user.is_owner ? (
+                                            <>
+                                                <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
+                                                    <LayoutDashboard className="w-4 h-4" />
+                                                    Owner Dashboard
+                                                </Button>
+                                                <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
+                                                    <Building2 className="w-4 h-4" />
+                                                    Owner System
+                                                </Button>
+                                            </>
+                                        ) : (
+                                            <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
+                                                <LayoutDashboard className="w-4 h-4" />
+                                                User Dashboard
+                                            </Button>
+                                        )}
                                         <Button variant="ghost" size="sm" className="justify-start gap-3 h-11 text-muted-foreground">
                                             <Settings className="w-4 h-4" />
                                             Settings

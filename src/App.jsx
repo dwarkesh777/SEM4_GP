@@ -9,6 +9,7 @@ import HostelDetail from "./pages/HostelDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import OwnerLogin from "./pages/OwnerLogin";
+import AddProperty from "./pages/AddProperty";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -26,6 +27,7 @@ const App = () => (
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
                         <Route path="/owner-login" element={<OwnerLogin />} />
+                        <Route path="/add-property" element={<AddProperty />} />
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                         <Route path="*" element={<NotFound />} />
                     </Routes>

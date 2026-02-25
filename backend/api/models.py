@@ -42,6 +42,12 @@ class Amenity(models.Model):
     def __str__(self):
         return self.name
 
+class Appliance(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    def __str__(self):
+        return self.name
+
 class Property(models.Model):
     PROPERTY_TYPES = [
         ('Hostel', 'Hostel'),
@@ -53,9 +59,13 @@ class Property(models.Model):
         ('Co-ed', 'Co-ed'),
     ]
 
-    id = models.CharField(max_length=100, primary_key=True)
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    owner = models.ForeignKey(User, related_name='properties', on_delete=models.CASCADE)
     name = models.CharField(max_length=200)
+    city = models.CharField(max_length=100, default="Ahmedabad")
     location = models.CharField(max_length=200)
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
     type = models.CharField(max_length=20, choices=PROPERTY_TYPES)
     gender = models.CharField(max_length=20, choices=GENDER_CHOICES)
     rating = models.FloatField(default=0.0)
@@ -66,9 +76,10 @@ class Property(models.Model):
     address = models.TextField()
     phone = models.CharField(max_length=20)
     email = models.EmailField()
-    main_image = models.CharField(max_length=1000) # Increased max_length for Cloudinary URLs
+    main_image = models.CharField(max_length=1000)
     video_url = models.CharField(max_length=1000, null=True, blank=True)
-    amenities = models.ManyToManyField(Amenity, related_name='properties')
+    amenities = models.ManyToManyField(Amenity, related_name='properties', blank=True)
+    appliances = models.ManyToManyField(Appliance, related_name='properties', blank=True)
 
     def __str__(self):
         return self.name

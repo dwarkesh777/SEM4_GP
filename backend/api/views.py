@@ -4,9 +4,23 @@ from .serializers import PropertySerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
-class PropertyViewSet(viewsets.ReadOnlyModelViewSet):
+class PropertyViewSet(viewsets.ModelViewSet):
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
+    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+
+    def perform_create(self, serializer):
+        serializer.save(owner=self.request.user)
+
+class PropertyCreateView(generics.CreateAPIView):
+    serializer_class = PropertySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def perform_create(self, serializer):
+        if not self.request.user.is_owner:
+            from rest_framework.exceptions import PermissionDenied
+            raise PermissionDenied("Only owners can list properties.")
+        serializer.save(owner=self.request.user)
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer

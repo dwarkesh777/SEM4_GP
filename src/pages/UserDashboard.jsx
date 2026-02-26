@@ -58,25 +58,38 @@ const UserDashboard = () => {
     const fetchDashboardData = async () => {
         setIsLoading(true);
         try {
-            // In a real app, these would be API calls
-            // For now, since backend migrations were tricky, we handle potential errors gracefully
-
-            // Example API Fetch (Mocked for now)
-            const mockBookings = [];
-            const mockEnquiries = [];
-            const mockWishlist = [];
-
-            setBookings(mockBookings);
-            setEnquiries(mockEnquiries);
-            setWishlist(mockWishlist);
-
-            // Attempt to fetch from real API if possible
-            const token = localStorage.getItem('access_token');
-            if (token) {
-                // We'll add real fetch logic here once backend is fixed
+            const token = localStorage.getItem('token');
+            if (!token) {
+                throw new Error('No authentication token found');
             }
+
+            // Fetch real bookings data
+            const bookingsResponse = await fetch('http://localhost:8000/api/bookings/', {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+
+            if (bookingsResponse.ok) {
+                const bookingsData = await bookingsResponse.json();
+                setBookings(bookingsData);
+            } else {
+                console.error('Failed to fetch bookings');
+                setBookings([]);
+            }
+
+            // For now, keep enquiries and wishlist as empty arrays
+            // These can be implemented later
+            setEnquiries([]);
+            setWishlist([]);
+
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
+            // Set empty arrays on error
+            setBookings([]);
+            setEnquiries([]);
+            setWishlist([]);
         } finally {
             setIsLoading(false);
         }

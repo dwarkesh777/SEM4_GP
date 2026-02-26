@@ -20,7 +20,9 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import BookingForm from "@/components/BookingForm";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 
 
 
@@ -47,14 +49,27 @@ const fetchProperty = async (id) => {
 
 const HostelDetail = () => {
     const { id } = useParams();
+    const { user } = useAuth();
     const { data: property, isLoading, error } = useQuery({
         queryKey: ["property", id],
         queryFn: () => fetchProperty(id),
         enabled: !!id,
     });
     const [currentImage, setCurrentImage] = useState(0);
+    const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState(null);
     const { toast } = useToast();
+    
     const scrollToBooking = () => {
+        if (!user) {
+            toast({
+                title: "Login Required",
+                description: "Please login to book a property",
+                variant: "destructive",
+            });
+            return;
+        }
+        
         const element = document.getElementById("booking-sidebar");
         if (element) {
             element.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -62,6 +77,30 @@ const HostelDetail = () => {
             element.classList.add("ring-4", "ring-primary/20");
             setTimeout(() => element.classList.remove("ring-4", "ring-primary/20"), 2000);
         }
+    };
+    
+    const handleBookNow = (room = null) => {
+        if (!user) {
+            toast({
+                title: "Login Required",
+                description: "Please login to book a property",
+                variant: "destructive",
+            });
+            return;
+        }
+        
+        setSelectedRoom(room);
+        setIsBookingFormOpen(true);
+    };
+    
+    const handleBookingSuccess = (bookingData) => {
+        toast({
+            title: "Booking Successful!",
+            description: "Your booking has been confirmed and payment received.",
+            variant: "success",
+        });
+        setIsBookingFormOpen(false);
+        setSelectedRoom(null);
     };
 
 
@@ -380,7 +419,7 @@ const HostelDetail = () => {
                                                                     <Check className="w-3.5 h-3.5" /> Live Now
                                                                 </div>
                                                                 <Button
-                                                                    onClick={scrollToBooking}
+                                                                    onClick={() => handleBookNow(room)}
                                                                     className="w-full sm:w-auto h-10 px-6 rounded-xl bg-slate-900 hover:bg-primary text-white font-bold text-xs transition-all active:scale-95 shadow-lg shadow-slate-200 hover:shadow-primary/20"
                                                                 >
                                                                     Book Now
@@ -591,6 +630,18 @@ const HostelDetail = () => {
             </main>
 
             <Footer />
+            
+            {/* Booking Form Modal */}
+            <BookingForm
+                isOpen={isBookingFormOpen}
+                onClose={() => {
+                    setIsBookingFormOpen(false);
+                    setSelectedRoom(null);
+                }}
+                property={property}
+                selectedRoom={selectedRoom}
+                onBookingSuccess={handleBookingSuccess}
+            />
         </div>
     );
 };

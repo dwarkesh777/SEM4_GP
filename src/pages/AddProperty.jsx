@@ -78,9 +78,10 @@ const AddProperty = () => {
 
     const steps = [
         { id: 1, title: "Basic Info", icon: <Info className="w-4 h-4" />, description: "Property details & location" },
-        { id: 2, title: "Amenities", icon: <Check className="w-4 h-4" />, description: "Facilities & appliances" },
-        { id: 3, title: "Media", icon: <ImageIcon className="w-4 h-4" />, description: "Photos & video tour" },
-        { id: 4, title: "Pricing", icon: <Building2 className="w-4 h-4" />, description: "Room types & rates" },
+        { id: 2, title: "Pricing", icon: <Building2 className="w-4 h-4" />, description: "Base price & discount" },
+        { id: 3, title: "Amenities", icon: <Check className="w-4 h-4" />, description: "Facilities & appliances" },
+        { id: 4, title: "Media", icon: <ImageIcon className="w-4 h-4" />, description: "Photos & video tour" },
+        { id: 5, title: "Rooms", icon: <Building2 className="w-4 h-4" />, description: "Room types & rates" },
     ];
 
     // Redirect if not owner
@@ -339,8 +340,8 @@ const AddProperty = () => {
                                 >
                                     <div
                                         className={`relative z-10 p-5 rounded-[1.5rem] transition-all duration-500 border w-full ${isActive
-                                                ? "bg-white border-primary shadow-2xl shadow-primary/20 scale-105"
-                                                : "bg-transparent border-transparent opacity-60"
+                                            ? "bg-white border-primary shadow-2xl shadow-primary/20 scale-105"
+                                            : "bg-transparent border-transparent opacity-60"
                                             }`}
                                     >
                                         <div className="flex items-center gap-4">
@@ -448,7 +449,7 @@ const AddProperty = () => {
                                             </div>
                                         </div>
 
-                                        {/* Section 4: Location Coordinates */}
+                                        {/* Section 3: Location Coordinates */}
                                         <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
                                             <div className="flex items-center gap-3 mb-8">
                                                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -471,7 +472,7 @@ const AddProperty = () => {
                                             </div>
                                         </div>
 
-                                        {/* Section 5: Contact Information */}
+                                        {/* Section 4: Contact Information */}
                                         <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
                                             <div className="flex items-center gap-3 mb-8">
                                                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
@@ -497,6 +498,64 @@ const AddProperty = () => {
                                 )}
 
                                 {currentStep === 2 && (
+                                    <motion.div
+                                        key="step2"
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: -20 }}
+                                        className="space-y-8"
+                                    >
+                                        {/* Section 2: Main Property Price */}
+                                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
+                                            <div className="flex items-center gap-3 mb-8">
+                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                                    <Building2 className="w-5 h-5" />
+                                                </div>
+                                                <div>
+                                                    <h2 className="text-xl font-heading font-bold text-slate-900">Starting Price</h2>
+                                                    <p className="text-sm text-slate-500 font-medium">Base monthly price for your property</p>
+                                                </div>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="price">Monthly Starting Price *</Label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">₹</span>
+                                                        <Input
+                                                            id="price"
+                                                            name="price"
+                                                            type="number"
+                                                            placeholder="5000"
+                                                            value={formData.price}
+                                                            onChange={handleInputChange}
+                                                            className="pl-7 h-12 rounded-xl border-slate-100 shadow-sm"
+                                                            required
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 ml-1">This is the main price displayed in listings</p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="original_price">Original Price (Optional)</Label>
+                                                    <div className="relative">
+                                                        <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">₹</span>
+                                                        <Input
+                                                            id="original_price"
+                                                            name="original_price"
+                                                            type="number"
+                                                            placeholder="6000"
+                                                            value={formData.original_price}
+                                                            onChange={handleInputChange}
+                                                            className="pl-7 h-12 rounded-xl border-slate-100 shadow-sm"
+                                                        />
+                                                    </div>
+                                                    <p className="text-xs text-slate-500 ml-1">Show discount with strikethrough price</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </motion.div>
+                                )}
+
+                                {currentStep === 3 && (
                                     <motion.div
                                         key="step2"
                                         initial={{ opacity: 0, x: 20 }}
@@ -576,9 +635,9 @@ const AddProperty = () => {
                                     </motion.div>
                                 )}
 
-                                {currentStep === 3 && (
+                                {currentStep === 4 && (
                                     <motion.div
-                                        key="step3"
+                                        key="step4"
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}
@@ -723,9 +782,9 @@ const AddProperty = () => {
                                     </motion.div>
                                 )}
 
-                                {currentStep === 4 && (
+                                {currentStep === 5 && (
                                     <motion.div
-                                        key="step4"
+                                        key="step5"
                                         initial={{ opacity: 0, x: 20 }}
                                         animate={{ opacity: 1, x: 0 }}
                                         exit={{ opacity: 0, x: -20 }}

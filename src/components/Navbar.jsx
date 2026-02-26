@@ -188,13 +188,13 @@ const Navbar = () => {
                                     </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-56 p-2 mt-2 rounded-2xl border-white/20 shadow-2xl backdrop-blur-2xl">
-                                    <DropdownMenuItem onClick={() => navigate('/login')} className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-primary/5 group">
+                                    <DropdownMenuItem onClick={() => navigate('/student/login')} className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-primary/5 group">
                                         <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-focus:scale-110 transition-transform">
                                             <User className="w-4 h-4" />
                                         </div>
-                                        <span className="font-bold text-slate-700">User Login</span>
+                                        <span className="font-bold text-slate-700">Student Login</span>
                                     </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => navigate('/owner-login')} className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-orange-50 group">
+                                    <DropdownMenuItem onClick={() => navigate('/owner/login')} className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-orange-50 group">
                                         <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 group-focus:scale-110 transition-transform">
                                             <Building2 className="w-4 h-4" />
                                         </div>
@@ -267,13 +267,13 @@ const Navbar = () => {
                                         <Button
                                             variant="outline"
                                             className="py-6 rounded-xl font-bold border-slate-200"
-                                            onClick={() => { navigate('/login'); setMobileOpen(false); }}
+                                            onClick={() => { navigate('/student/login'); setMobileOpen(false); }}
                                         >
-                                            User Login
+                                            Student Login
                                         </Button>
                                         <Button
                                             className="py-6 rounded-xl font-bold"
-                                            onClick={() => { navigate('/owner-login'); setMobileOpen(false); }}
+                                            onClick={() => { navigate('/owner/login'); setMobileOpen(false); }}
                                         >
                                             Owner Login
                                         </Button>

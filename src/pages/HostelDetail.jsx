@@ -21,7 +21,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
-import { GoogleMap, useJsApiLoader, MarkerF } from "@react-google-maps/api";
+
+
 
 const amenityDetails = {
     wifi: { icon: <Wifi className="w-5 h-5" />, label: "Wi-Fi", category: "Essentials" },
@@ -54,10 +55,7 @@ const HostelDetail = () => {
     const [currentImage, setCurrentImage] = useState(0);
     const { toast } = useToast();
 
-    const { isLoaded } = useJsApiLoader({
-        id: "google-map-script",
-        googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY,
-    });
+
 
     const mapContainerStyle = {
         width: "100%",
@@ -400,32 +398,8 @@ const HostelDetail = () => {
                                     </div>
                                 </div>
 
-                                <div className="p-4 rounded-[2.5rem] bg-white border border-slate-100 shadow-xl overflow-hidden group relative">
-                                    <div className="h-[400px] w-full rounded-[2rem] overflow-hidden bg-slate-100 relative">
-                                        {isLoaded ? (
-                                            <GoogleMap
-                                                mapContainerStyle={mapContainerStyle}
-                                                center={{ lat: property.latitude || 23.0225, lng: property.longitude || 72.5714 }}
-                                                zoom={15}
-                                                options={mapOptions}
-                                            >
-                                                <MarkerF
-                                                    position={{ lat: property.latitude || 23.0225, lng: property.longitude || 72.5714 }}
-                                                    label={{
-                                                        text: property.name,
-                                                        className: "bg-white px-3 py-1 rounded-full shadow-lg font-black text-xs text-primary border border-primary/20 -translate-y-10",
-                                                    }}
-                                                />
-                                            </GoogleMap>
-                                        ) : (
-                                            <div className="flex items-center justify-center h-full">
-                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-                                            </div>
-                                        )}
-                                    </div>
-
-                                    {/* Action overlay */}
-                                    <div className="mt-6 flex flex-wrap gap-4 px-2">
+                                <div className="p-6 rounded-[2.5rem] bg-white border border-slate-100 shadow-xl group relative">
+                                    <div className="flex flex-wrap gap-4 items-center">
                                         <div className="flex-1 min-w-[200px] p-4 rounded-2xl bg-slate-50 border border-slate-100">
                                             <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1">Full Address</p>
                                             <p className="text-sm font-bold text-slate-700 leading-tight">{property.address}</p>

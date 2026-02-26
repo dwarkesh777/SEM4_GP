@@ -8,7 +8,10 @@ import Index from "./pages/Index";
 import HostelDetail from "./pages/HostelDetail";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
+import StudentLogin from "./pages/StudentLogin";
+import StudentSignup from "./pages/StudentSignup";
 import OwnerLogin from "./pages/OwnerLogin";
+import OwnerSignup from "./pages/OwnerSignup";
 import AddProperty from "./pages/AddProperty";
 import AboutUs from "./pages/AboutUs";
 import HelpCenter from "./pages/HelpCenter";
@@ -30,9 +33,20 @@ const App = () => (
                     <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/hostel/:id" element={<HostelDetail />} />
-                        <Route path="/login" element={<Login />} />
-                        <Route path="/signup" element={<Signup />} />
+                        
+                        {/* Student Routes */}
+                        <Route path="/student/login" element={<StudentLogin />} />
+                        <Route path="/student/signup" element={<StudentSignup />} />
+                        
+                        {/* Owner Routes */}
+                        <Route path="/owner/login" element={<OwnerLogin />} />
+                        <Route path="/owner/signup" element={<OwnerSignup />} />
+                        
+                        {/* Legacy Routes (for backward compatibility) */}
+                        <Route path="/login" element={<StudentLogin />} />
+                        <Route path="/signup" element={<StudentSignup />} />
                         <Route path="/owner-login" element={<OwnerLogin />} />
+                        
                         <Route path="/add-property" element={<AddProperty />} />
                         <Route path="/about" element={<AboutUs />} />
                         <Route path="/help" element={<HelpCenter />} />

@@ -8,7 +8,7 @@ const Footer = () => {
         { name: "All Hostels", path: "/#listings" },
         { name: "All PGs", path: "/#listings" },
         { name: "Search by College", path: "/#listings" },
-        { name: "For Owners", path: "/owner-login" }
+        { name: "For Owners", path: "/owner/login" }
     ];
 
     const supportLinks = [

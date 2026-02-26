@@ -517,7 +517,7 @@ const HostelDetail = () => {
                                             </div>
 
                                             <div className="pt-2">
-                                                <Button type="submit" className="w-full h-16 rounded-2xl bg-primary hover:bg-primary-foreground text-white font-black text-lg shadow-xl shadow-primary/20 hover:shadow-primary/40 transition-all duration-300 active:scale-[0.98] group">
+                                                <Button type="submit" className="w-full h-16 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 hover:from-indigo-700 hover:via-indigo-800 hover:to-violet-800 text-white font-black text-lg shadow-xl shadow-indigo-200 hover:shadow-indigo-300 transition-all duration-300 active:scale-[0.98] group border-none">
                                                     Check Availability
                                                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-2 transition-transform" />
                                                 </Button>

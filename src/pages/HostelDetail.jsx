@@ -54,6 +54,16 @@ const HostelDetail = () => {
     });
     const [currentImage, setCurrentImage] = useState(0);
     const { toast } = useToast();
+    const scrollToBooking = () => {
+        const element = document.getElementById("booking-sidebar");
+        if (element) {
+            element.scrollIntoView({ behavior: "smooth", block: "center" });
+            // Add a subtle highlight effect to the sidebar
+            element.classList.add("ring-4", "ring-primary/20");
+            setTimeout(() => element.classList.remove("ring-4", "ring-primary/20"), 2000);
+        }
+    };
+
 
 
 
@@ -363,13 +373,21 @@ const HostelDetail = () => {
                                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">All-Inclusive Rent</p>
                                                     </div>
 
-                                                    <div className="min-w-[120px] text-center">
+                                                    <div className="flex flex-col sm:flex-row items-center gap-3 min-w-[120px]">
                                                         {room.available ? (
-                                                            <div className="px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 font-black text-xs uppercase tracking-tighter flex items-center justify-center gap-2 border border-emerald-100">
-                                                                <Check className="w-3.5 h-3.5" /> Live Now
-                                                            </div>
+                                                            <>
+                                                                <div className="w-full sm:w-auto px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 font-black text-[10px] uppercase tracking-tighter flex items-center justify-center gap-2 border border-emerald-100 whitespace-nowrap">
+                                                                    <Check className="w-3.5 h-3.5" /> Live Now
+                                                                </div>
+                                                                <Button
+                                                                    onClick={scrollToBooking}
+                                                                    className="w-full sm:w-auto h-10 px-6 rounded-xl bg-slate-900 hover:bg-primary text-white font-bold text-xs transition-all active:scale-95 shadow-lg shadow-slate-200 hover:shadow-primary/20"
+                                                                >
+                                                                    Book Now
+                                                                </Button>
+                                                            </>
                                                         ) : (
-                                                            <div className="px-4 py-2 rounded-full bg-red-50 text-red-600 font-black text-xs uppercase tracking-tighter flex items-center justify-center gap-2 border border-red-100">
+                                                            <div className="w-full px-4 py-2 rounded-full bg-red-50 text-red-600 font-black text-[10px] uppercase tracking-tighter flex items-center justify-center gap-2 border border-red-100 whitespace-nowrap">
                                                                 <XIcon className="w-3.5 h-3.5" /> Sold Out
                                                             </div>
                                                         )}
@@ -472,7 +490,7 @@ const HostelDetail = () => {
                         </div>
 
                         {/* RIGHT COLUMN: Glassmorphism Booking Sidebar */}
-                        <div className="lg:col-span-4 lg:relative">
+                        <div className="lg:col-span-4 lg:relative" id="booking-sidebar">
                             <motion.div
                                 initial={{ opacity: 0, x: 30 }}
                                 animate={{ opacity: 1, x: 0 }}

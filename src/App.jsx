@@ -19,6 +19,7 @@ import SafetyInfo from "./pages/SafetyInfo";
 import CancellationPolicy from "./pages/CancellationPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import PrivacyPolicy from "./pages/PrivacyPolicy";
+import UserDashboard from "./pages/UserDashboard";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,20 +34,20 @@ const App = () => (
                     <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/hostel/:id" element={<HostelDetail />} />
-                        
+
                         {/* Student Routes */}
                         <Route path="/student/login" element={<StudentLogin />} />
                         <Route path="/student/signup" element={<StudentSignup />} />
-                        
+
                         {/* Owner Routes */}
                         <Route path="/owner/login" element={<OwnerLogin />} />
                         <Route path="/owner/signup" element={<OwnerSignup />} />
-                        
+
                         {/* Legacy Routes (for backward compatibility) */}
                         <Route path="/login" element={<StudentLogin />} />
                         <Route path="/signup" element={<StudentSignup />} />
                         <Route path="/owner-login" element={<OwnerLogin />} />
-                        
+
                         <Route path="/add-property" element={<AddProperty />} />
                         <Route path="/about" element={<AboutUs />} />
                         <Route path="/help" element={<HelpCenter />} />
@@ -54,6 +55,7 @@ const App = () => (
                         <Route path="/cancellation" element={<CancellationPolicy />} />
                         <Route path="/terms" element={<TermsOfService />} />
                         <Route path="/privacy" element={<PrivacyPolicy />} />
+                        <Route path="/dashboard" element={<UserDashboard />} />
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                         <Route path="*" element={<NotFound />} />
                     </Routes>

@@ -158,7 +158,7 @@ const Navbar = () => {
                                             </DropdownMenuItem>
                                         </>
                                     ) : (
-                                        <DropdownMenuItem className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-primary/5 group">
+                                        <DropdownMenuItem className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-primary/5 group" onClick={() => navigate('/dashboard')}>
                                             <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-focus:scale-110 transition-transform">
                                                 <LayoutDashboard className="w-4 h-4" />
                                             </div>

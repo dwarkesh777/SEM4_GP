@@ -119,3 +119,5 @@ class PropertySerializer(serializers.ModelSerializer):
             PropertyImage.objects.create(property=property_obj, image=img)
             
         return property_obj
+
+        return property_obj

@@ -58,22 +58,12 @@ const UserDashboard = () => {
     const fetchDashboardData = async () => {
         setIsLoading(true);
         try {
-            // In a real app, these would be API calls
-            // For now, since backend migrations were tricky, we handle potential errors gracefully
+            // Fetch bookings from localStorage (saved from booking modal)
+            const savedBookings = JSON.parse(localStorage.getItem('userBookings') || '[]');
+            const mockEnquiries = [];
+            const mockWishlist = [];
 
-            // Example API Fetch (Mocked for now)
-            const mockBookings = [
-                { id: 1, property_name: "Premium Boys Hostel", room_name: "Double Sharing", status: "Confirmed", date: "2024-03-15", price: 8500 },
-                { id: 2, property_name: "Elite Girls PG", room_name: "Single Room", status: "Pending", date: "2024-03-20", price: 12000 },
-            ];
-            const mockEnquiries = [
-                { id: 1, property_name: "Sunshine Residency", message: "Is WiFi available in all rooms?", date: "2024-02-28", status: "Replied" },
-            ];
-            const mockWishlist = [
-                { id: 1, name: "City View PG", location: "Navrangpura, Ahmedabad", price: 7500, rating: 4.5, image: "https://images.unsplash.com/photo-1555854817-5b2260d36c0c?w=800&q=80" },
-            ];
-
-            setBookings(mockBookings);
+            setBookings(savedBookings);
             setEnquiries(mockEnquiries);
             setWishlist(mockWishlist);
 

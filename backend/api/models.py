@@ -23,6 +23,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     full_name = models.CharField(max_length=255)
+    phone_number = models.CharField(max_length=20, null=True, blank=True)
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_owner = models.BooleanField(default=False)
@@ -102,3 +103,31 @@ class Review(models.Model):
     rating = models.IntegerField()
     date = models.DateField()
     comment = models.TextField()
+
+class Booking(models.Model):
+    STATUS_CHOICES = [
+        ('Pending', 'Pending'),
+        ('Confirmed', 'Confirmed'),
+        ('Cancelled', 'Cancelled'),
+    ]
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='bookings')
+    room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='bookings')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Enquiry(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='enquiries')
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='enquiries')
+    message = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+
+class Wishlist(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='wishlist')
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='wishlisted_by')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('user', 'property')

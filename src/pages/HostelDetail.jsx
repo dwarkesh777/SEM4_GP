@@ -21,6 +21,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
+import BookingModal from "@/components/BookingModal";
+import { useAuth } from "@/context/AuthContext";
 
 
 
@@ -47,12 +49,15 @@ const fetchProperty = async (id) => {
 
 const HostelDetail = () => {
     const { id } = useParams();
+    const { user } = useAuth();
     const { data: property, isLoading, error } = useQuery({
         queryKey: ["property", id],
         queryFn: () => fetchProperty(id),
         enabled: !!id,
     });
     const [currentImage, setCurrentImage] = useState(0);
+    const [showBookingModal, setShowBookingModal] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState(null);
     const { toast } = useToast();
     const scrollToBooking = () => {
         const element = document.getElementById("booking-sidebar");
@@ -64,8 +69,27 @@ const HostelDetail = () => {
         }
     };
 
+    const handleBooking = (room) => {
+        if (!user) {
+            toast({
+                title: "Login Required",
+                description: "Please login to book a property",
+                variant: "destructive",
+            });
+            return;
+        }
+        
+        setSelectedRoom(room);
+        setShowBookingModal(true);
+    };
 
-
+    const handlePaymentSuccess = (paymentInfo) => {
+        // Close modal after successful payment
+        setTimeout(() => {
+            setShowBookingModal(false);
+            setSelectedRoom(null);
+        }, 2000);
+    };
 
     const mapContainerStyle = {
         width: "100%",
@@ -120,11 +144,7 @@ const HostelDetail = () => {
         }
     };
 
-    const handleBooking = (e) => {
-        e.preventDefault();
-        toast({ title: "Booking Request Sent!", description: "We'll get back to you within 24 hours." });
-    };
-
+    
     return (
         <div className="min-h-screen bg-[#F8FAFC]">
             <Navbar />
@@ -380,7 +400,7 @@ const HostelDetail = () => {
                                                                     <Check className="w-3.5 h-3.5" /> Live Now
                                                                 </div>
                                                                 <Button
-                                                                    onClick={scrollToBooking}
+                                                                    onClick={() => handleBooking(room)}
                                                                     className="w-full sm:w-auto h-10 px-6 rounded-xl bg-slate-900 hover:bg-primary text-white font-bold text-xs transition-all active:scale-95 shadow-lg shadow-slate-200 hover:shadow-primary/20"
                                                                 >
                                                                     Book Now
@@ -591,6 +611,17 @@ const HostelDetail = () => {
             </main>
 
             <Footer />
+            
+            {/* Booking Modal */}
+            {showBookingModal && selectedRoom && (
+                <BookingModal
+                    isOpen={showBookingModal}
+                    onClose={() => setShowBookingModal(false)}
+                    property={property}
+                    selectedRoom={selectedRoom}
+                    onPaymentSuccess={handlePaymentSuccess}
+                />
+            )}
         </div>
     );
 };

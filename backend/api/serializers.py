@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Property, Amenity, Room, Review, PropertyImage, Appliance
+from .models import Property, Amenity, Room, Review, PropertyImage, Appliance, Booking, Enquiry, Wishlist
 
 class AmenitySerializer(serializers.ModelSerializer):
     class Meta:
@@ -120,4 +120,39 @@ class PropertySerializer(serializers.ModelSerializer):
             
         return property_obj
 
-        return property_obj
+class BookingSerializer(serializers.ModelSerializer):
+    property_name = serializers.ReadOnlyField(source='property.name')
+    room_name = serializers.ReadOnlyField(source='room.name')
+    property_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Booking
+        fields = ['id', 'user', 'property', 'property_name', 'property_image', 'room', 'room_name', 'status', 'created_at']
+        read_only_fields = ['user', 'status', 'created_at']
+
+    def get_property_image(self, obj):
+        if obj.property.main_image:
+            return self.context['request'].build_absolute_uri(obj.property.main_image.url)
+        return None
+
+class EnquirySerializer(serializers.ModelSerializer):
+    property_name = serializers.ReadOnlyField(source='property.name')
+    property_image = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Enquiry
+        fields = ['id', 'user', 'property', 'property_name', 'property_image', 'message', 'created_at']
+        read_only_fields = ['user', 'created_at']
+
+    def get_property_image(self, obj):
+        if obj.property.main_image:
+            return self.context['request'].build_absolute_uri(obj.property.main_image.url)
+        return None
+
+class WishlistSerializer(serializers.ModelSerializer):
+    property_details = PropertySerializer(source='property', read_only=True)
+
+    class Meta:
+        model = Wishlist
+        fields = ['id', 'user', 'property', 'property_details', 'created_at']
+        read_only_fields = ['user', 'created_at']

@@ -105,6 +105,10 @@ export const AuthProvider = ({ children }) => {
             throw new Error(JSON.stringify(error) || 'Signup failed');
         }
 
+<<<<<<< HEAD
+=======
+        // Use correct login endpoint based on role
+>>>>>>> 21a7634399e8584da3426560f9c4341e91ffe76d
         if (is_owner) {
             return ownerLogin(email, password);
         }

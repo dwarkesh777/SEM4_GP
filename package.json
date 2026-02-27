@@ -10,7 +10,8 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "start:backend": "cd backend && python manage.py runserver 8000"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

@@ -105,6 +105,9 @@ export const AuthProvider = ({ children }) => {
             throw new Error(JSON.stringify(error) || 'Signup failed');
         }
 
+        if (is_owner) {
+            return ownerLogin(email, password);
+        }
         return login(email, password);
     };
 

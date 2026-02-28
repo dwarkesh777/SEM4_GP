@@ -85,3 +85,93 @@ class UserLoginView(TokenObtainPairView):
 
 class OwnerLoginView(TokenObtainPairView):
     serializer_class = OwnerTokenObtainPairSerializer
+
+
+# ─── RAZORPAY PAYMENT VIEWS ───────────────────────────────────────────────────
+
+import razorpay
+import hmac
+import hashlib
+from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes as perm_classes
+from rest_framework.permissions import AllowAny
+
+
+def get_razorpay_client():
+    return razorpay.Client(
+        auth=(settings.RAZORPAY_KEY_ID, settings.RAZORPAY_KEY_SECRET)
+    )
+
+
+@api_view(['POST'])
+@perm_classes([AllowAny])
+def create_razorpay_order(request):
+    """
+    Creates a Razorpay order.
+    Body: { amount: <int in rupees>, property_id: <str>, room_name: <str> }
+    Returns: { order_id, amount, currency, key_id }
+    """
+    try:
+        amount_rupees = int(request.data.get('amount', 0))
+        property_id   = request.data.get('property_id', '')
+        room_name     = request.data.get('room_name', '')
+        customer_name = request.data.get('customer_name', '')
+
+        if amount_rupees <= 0:
+            return Response({'error': 'Invalid amount'}, status=status.HTTP_400_BAD_REQUEST)
+
+        client = get_razorpay_client()
+        order = client.order.create({
+            'amount':   amount_rupees * 100,   # Razorpay expects paise
+            'currency': 'INR',
+            'payment_capture': 1,
+            'notes': {
+                'property_id': str(property_id),
+                'room_name':   room_name,
+                'customer':    customer_name,
+            }
+        })
+
+        return Response({
+            'order_id':  order['id'],
+            'amount':    order['amount'],
+            'currency':  order['currency'],
+            'key_id':    settings.RAZORPAY_KEY_ID,
+        }, status=status.HTTP_201_CREATED)
+
+    except Exception as e:
+        logger.error(f"Razorpay order creation failed: {e}", exc_info=True)
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@perm_classes([AllowAny])
+def verify_razorpay_payment(request):
+    """
+    Verifies Razorpay payment signature after checkout.
+    Body: { razorpay_order_id, razorpay_payment_id, razorpay_signature }
+    """
+    try:
+        order_id   = request.data.get('razorpay_order_id', '')
+        payment_id = request.data.get('razorpay_payment_id', '')
+        signature  = request.data.get('razorpay_signature', '')
+
+        if not all([order_id, payment_id, signature]):
+            return Response({'error': 'Missing payment fields'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Signature verification
+        msg = f"{order_id}|{payment_id}"
+        expected = hmac.new(
+            settings.RAZORPAY_KEY_SECRET.encode('utf-8'),
+            msg.encode('utf-8'),
+            hashlib.sha256
+        ).hexdigest()
+
+        if expected == signature:
+            return Response({'verified': True, 'payment_id': payment_id})
+        else:
+            return Response({'verified': False, 'error': 'Signature mismatch'}, status=status.HTTP_400_BAD_REQUEST)
+
+    except Exception as e:
+        logger.error(f"Razorpay verification failed: {e}", exc_info=True)
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

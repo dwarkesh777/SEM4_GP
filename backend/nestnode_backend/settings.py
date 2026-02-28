@@ -131,3 +131,7 @@ STORAGES = {
 }
 
 SILENCED_SYSTEM_CHECKS = ["mongodb.E001"]
+
+# Razorpay Payment Gateway
+RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', 'rzp_live_SKk9PuXXC5dsm6')
+RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', 'v7E2TU5WJt5Ws5a8xdzA9yTs')

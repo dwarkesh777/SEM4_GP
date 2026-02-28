@@ -1,11 +1,12 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     ArrowLeft, ArrowRight, MapPin, Star, Phone, Mail, Wifi, Sofa, Droplets, Shield,
     Car, Tv, Wind, ChevronLeft, ChevronRight, Users, Check, X as XIcon,
     Shirt, Sparkles, BedDouble, Heart, Share2, Calendar, ShieldCheck,
-    Coffee, Utensils, Zap, Lock, Info, Clock, ExternalLink, LayoutDashboard, User
+    Coffee, Utensils, Zap, Lock, Info, Clock, ExternalLink, LayoutDashboard, User,
+    CreditCard, IndianRupee, CheckCircle2, AlertCircle, Loader2, Hash
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -44,6 +45,18 @@ const fetchProperty = async (id) => {
     return res.json();
 };
 
+// ─── Razorpay Script Loader ──────────────────────────────────────────────────
+const loadRazorpay = () => new Promise((resolve) => {
+    if (window.Razorpay) { resolve(true); return; }
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.onload = () => resolve(true);
+    script.onerror = () => resolve(false);
+    document.body.appendChild(script);
+});
+
+const RAZORPAY_KEY_ID = "rzp_live_SKk9PuXXC5dsm6";
+
 const HostelDetail = () => {
     const { id } = useParams();
     const { data: property, isLoading, error } = useQuery({
@@ -53,11 +66,140 @@ const HostelDetail = () => {
     });
     const [currentImage, setCurrentImage] = useState(0);
     const { toast } = useToast();
+
+    // ── Booking Modal State ──
+    const [bookingModal, setBookingModal] = useState(false);
+    const [selectedRoom, setSelectedRoom] = useState(null);
+    const [bookingStep, setBookingStep] = useState("form"); // "form" | "processing" | "success" | "failed"
+    const [paymentId, setPaymentId] = useState("");
+    const [bookingForm, setBookingForm] = useState({
+        name: "", phone: "", age: "", email: ""
+    });
+    const [formErrors, setFormErrors] = useState({});
+
+    const openBookingModal = (room) => {
+        setSelectedRoom(room);
+        setBookingModal(true);
+        setBookingStep("form");
+        setBookingForm({ name: "", phone: "", age: "", email: "" });
+        setFormErrors({});
+    };
+
+    const closeBookingModal = () => {
+        setBookingModal(false);
+        setSelectedRoom(null);
+        setBookingStep("form");
+    };
+
+    const validateForm = () => {
+        const errs = {};
+        if (!bookingForm.name.trim()) errs.name = "Full name is required";
+        if (!bookingForm.phone.match(/^[6-9]\d{9}$/)) errs.phone = "Enter a valid 10-digit mobile number";
+        const age = parseInt(bookingForm.age);
+        if (!bookingForm.age || isNaN(age) || age < 15 || age > 60) errs.age = "Enter a valid age (15–60)";
+        if (!bookingForm.email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) errs.email = "Enter a valid email address";
+        setFormErrors(errs);
+        return Object.keys(errs).length === 0;
+    };
+
+    const handleProceedToPayment = async () => {
+        if (!validateForm()) return;
+        setBookingStep("processing");
+
+        try {
+            // Step 1: Load Razorpay SDK
+            const loaded = await loadRazorpay();
+            if (!loaded) {
+                toast({ title: "Error", description: "Failed to load payment gateway. Check your internet.", variant: "destructive" });
+                setBookingStep("form");
+                return;
+            }
+
+            // Step 2: Create order on backend
+            const orderRes = await fetch(`${API_URL}/api/payment/create-order/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    amount: selectedRoom?.price || property?.price,
+                    property_id: property?.id,
+                    room_name: selectedRoom?.name,
+                    customer_name: bookingForm.name,
+                }),
+            });
+
+            if (!orderRes.ok) {
+                const errData = await orderRes.json();
+                throw new Error(errData.error || "Failed to create payment order");
+            }
+
+            const orderData = await orderRes.json();
+
+            // Step 3: Open Razorpay Checkout
+            const options = {
+                key: RAZORPAY_KEY_ID,
+                amount: orderData.amount,
+                currency: orderData.currency,
+                order_id: orderData.order_id,
+                name: "BedBuddy",
+                description: `Booking: ${selectedRoom?.name || "Room"} at ${property?.name}`,
+                image: "/bedbuddy-logo-blue.svg",
+                prefill: {
+                    name: bookingForm.name,
+                    email: bookingForm.email,
+                    contact: bookingForm.phone,
+                },
+                notes: {
+                    property_name: property?.name,
+                    room_name: selectedRoom?.name,
+                    customer_age: bookingForm.age,
+                },
+                theme: { color: "#3b82f6" },
+                handler: async (response) => {
+                    // Step 4: Verify payment signature
+                    try {
+                        const verifyRes = await fetch(`${API_URL}/api/payment/verify/`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_signature: response.razorpay_signature,
+                            }),
+                        });
+                        const verifyData = await verifyRes.json();
+                        if (verifyData.verified) {
+                            setPaymentId(response.razorpay_payment_id);
+                            setBookingStep("success");
+                        } else {
+                            setBookingStep("failed");
+                        }
+                    } catch {
+                        setBookingStep("failed");
+                    }
+                },
+                modal: {
+                    ondismiss: () => {
+                        if (bookingStep === "processing") setBookingStep("form");
+                    },
+                },
+            };
+
+            const rzp = new window.Razorpay(options);
+            rzp.on("payment.failed", () => setBookingStep("failed"));
+            rzp.open();
+            setBookingStep("form"); // reset so modal stays open while Razorpay overlay is showing
+
+        } catch (err) {
+            console.error("Payment error:", err);
+            toast({ title: "Payment Error", description: err.message, variant: "destructive" });
+            setBookingStep("form");
+        }
+    };
+
     const scrollToBooking = () => {
         const element = document.getElementById("booking-sidebar");
         if (element) {
             element.scrollIntoView({ behavior: "smooth", block: "center" });
-            // Add a subtle highlight effect to the sidebar
             element.classList.add("ring-4", "ring-primary/20");
             setTimeout(() => element.classList.remove("ring-4", "ring-primary/20"), 2000);
         }
@@ -379,7 +521,7 @@ const HostelDetail = () => {
                                                                     <Check className="w-3.5 h-3.5" /> Live Now
                                                                 </div>
                                                                 <Button
-                                                                    onClick={scrollToBooking}
+                                                                    onClick={() => openBookingModal(room)}
                                                                     className="w-full sm:w-auto h-10 px-6 rounded-xl bg-slate-900 hover:bg-primary text-white font-bold text-xs transition-all active:scale-95 shadow-lg shadow-slate-200 hover:shadow-primary/20"
                                                                 >
                                                                     Book Now
@@ -590,6 +732,258 @@ const HostelDetail = () => {
             </main>
 
             <Footer />
+
+            {/* ══════════════════════════════════════════════
+                BOOKING MODAL WITH RAZORPAY INTEGRATION
+            ══════════════════════════════════════════════ */}
+            <AnimatePresence>
+                {bookingModal && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-50 flex items-center justify-center p-4"
+                        onClick={(e) => e.target === e.currentTarget && bookingStep !== "processing" && closeBookingModal()}
+                    >
+                        {/* Backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-900/60 backdrop-blur-md"
+                        />
+
+                        {/* Modal Card */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.92, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.92, y: 30 }}
+                            transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                            className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl shadow-slate-900/20 overflow-hidden"
+                        >
+                            {/* Top gradient bar */}
+                            <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-blue-500 via-primary to-indigo-500" />
+
+                            {/* ── FORM STEP ─────────────────────── */}
+                            {(bookingStep === "form" || bookingStep === "processing") && (
+                                <div className="p-8">
+                                    {/* Header */}
+                                    <div className="flex items-start justify-between mb-7">
+                                        <div>
+                                            <h2 className="text-2xl font-black text-slate-900 tracking-tight">Book Your Stay</h2>
+                                            {selectedRoom && (
+                                                <div className="flex items-center gap-2 mt-1.5">
+                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">{selectedRoom.name}</span>
+                                                    <span className="text-slate-200">•</span>
+                                                    <span className="text-sm font-black text-primary">₹{selectedRoom.price?.toLocaleString()}<span className="text-xs font-bold text-slate-400">/mo</span></span>
+                                                </div>
+                                            )}
+                                        </div>
+                                        <button
+                                            onClick={closeBookingModal}
+                                            disabled={bookingStep === "processing"}
+                                            className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center text-slate-400 hover:bg-slate-200 hover:text-slate-700 transition-all disabled:opacity-40"
+                                        >
+                                            <XIcon className="w-4 h-4" />
+                                        </button>
+                                    </div>
+
+                                    {/* Form Fields */}
+                                    <div className="space-y-4">
+                                        {/* Name */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Full Name</label>
+                                            <div className="relative">
+                                                <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                                <input
+                                                    type="text"
+                                                    placeholder="e.g. Dwarkesh Savalia"
+                                                    value={bookingForm.name}
+                                                    onChange={(e) => setBookingForm(p => ({ ...p, name: e.target.value }))}
+                                                    disabled={bookingStep === "processing"}
+                                                    className={`w-full h-14 pl-11 pr-4 rounded-2xl bg-slate-50 border-2 font-bold text-slate-800 text-sm placeholder:text-slate-300 focus:outline-none focus:bg-white transition-all disabled:opacity-60 ${formErrors.name ? "border-red-300 focus:border-red-400" : "border-slate-100 focus:border-primary/40"}`}
+                                                />
+                                            </div>
+                                            {formErrors.name && <p className="text-xs font-bold text-red-500 ml-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{formErrors.name}</p>}
+                                        </div>
+
+                                        {/* Phone */}
+                                        <div className="space-y-1.5">
+                                            <label className="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Mobile Number</label>
+                                            <div className="relative">
+                                                <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                                <input
+                                                    type="tel"
+                                                    placeholder="10-digit mobile number"
+                                                    maxLength={10}
+                                                    value={bookingForm.phone}
+                                                    onChange={(e) => setBookingForm(p => ({ ...p, phone: e.target.value.replace(/\D/g, '') }))}
+                                                    disabled={bookingStep === "processing"}
+                                                    className={`w-full h-14 pl-11 pr-4 rounded-2xl bg-slate-50 border-2 font-bold text-slate-800 text-sm placeholder:text-slate-300 focus:outline-none focus:bg-white transition-all disabled:opacity-60 ${formErrors.phone ? "border-red-300 focus:border-red-400" : "border-slate-100 focus:border-primary/40"}`}
+                                                />
+                                            </div>
+                                            {formErrors.phone && <p className="text-xs font-bold text-red-500 ml-1 flex items-center gap-1"><AlertCircle className="w-3 h-3" />{formErrors.phone}</p>}
+                                        </div>
+
+                                        {/* Age + Email - 2 col */}
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Age</label>
+                                                <div className="relative">
+                                                    <Hash className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                                    <input
+                                                        type="number"
+                                                        placeholder="e.g. 20"
+                                                        min="15" max="60"
+                                                        value={bookingForm.age}
+                                                        onChange={(e) => setBookingForm(p => ({ ...p, age: e.target.value }))}
+                                                        disabled={bookingStep === "processing"}
+                                                        className={`w-full h-14 pl-11 pr-4 rounded-2xl bg-slate-50 border-2 font-bold text-slate-800 text-sm placeholder:text-slate-300 focus:outline-none focus:bg-white transition-all disabled:opacity-60 ${formErrors.age ? "border-red-300 focus:border-red-400" : "border-slate-100 focus:border-primary/40"}`}
+                                                    />
+                                                </div>
+                                                {formErrors.age && <p className="text-xs font-bold text-red-500 ml-1"><AlertCircle className="w-3 h-3 inline mr-0.5" />{formErrors.age}</p>}
+                                            </div>
+                                            <div className="space-y-1.5">
+                                                <label className="text-xs font-black uppercase tracking-widest text-slate-500 ml-1">Email</label>
+                                                <div className="relative">
+                                                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
+                                                    <input
+                                                        type="email"
+                                                        placeholder="you@email.com"
+                                                        value={bookingForm.email}
+                                                        onChange={(e) => setBookingForm(p => ({ ...p, email: e.target.value }))}
+                                                        disabled={bookingStep === "processing"}
+                                                        className={`w-full h-14 pl-11 pr-4 rounded-2xl bg-slate-50 border-2 font-bold text-slate-800 text-sm placeholder:text-slate-300 focus:outline-none focus:bg-white transition-all disabled:opacity-60 ${formErrors.email ? "border-red-300 focus:border-red-400" : "border-slate-100 focus:border-primary/40"}`}
+                                                    />
+                                                </div>
+                                                {formErrors.email && <p className="text-xs font-bold text-red-500 ml-1"><AlertCircle className="w-3 h-3 inline mr-0.5" />{formErrors.email}</p>}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Amount Summary */}
+                                    <div className="mt-6 p-4 rounded-2xl bg-primary/5 border border-primary/10 flex items-center justify-between">
+                                        <div>
+                                            <p className="text-xs font-black uppercase tracking-widest text-slate-500">Amount Payable</p>
+                                            <p className="text-xs font-bold text-slate-400">Monthly advance payment</p>
+                                        </div>
+                                        <div className="flex items-baseline gap-1">
+                                            <IndianRupee className="w-5 h-5 text-primary font-black" />
+                                            <span className="text-2xl font-black text-primary">{(selectedRoom?.price || property?.price)?.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Proceed Button */}
+                                    <button
+                                        onClick={handleProceedToPayment}
+                                        disabled={bookingStep === "processing"}
+                                        className="mt-5 w-full h-16 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-base shadow-xl shadow-blue-500/25 transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-70 disabled:cursor-not-allowed"
+                                    >
+                                        {bookingStep === "processing" ? (
+                                            <>
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                                Connecting to Razorpay...
+                                            </>
+                                        ) : (
+                                            <>
+                                                <CreditCard className="w-5 h-5" />
+                                                Proceed to Payment
+                                                <ArrowRight className="w-4 h-4" />
+                                            </>
+                                        )}
+                                    </button>
+
+                                    {/* Trust row */}
+                                    <div className="mt-4 flex items-center justify-center gap-4 text-slate-400">
+                                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest">
+                                            <ShieldCheck className="w-3.5 h-3.5 text-green-500" />
+                                            Secured by Razorpay
+                                        </div>
+                                        <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                        <div className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest">
+                                            <Lock className="w-3.5 h-3.5 text-blue-500" />
+                                            256-bit SSL Encrypted
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* ── SUCCESS STEP ─────────────────────── */}
+                            {bookingStep === "success" && (
+                                <div className="p-10 flex flex-col items-center text-center gap-5">
+                                    <motion.div
+                                        initial={{ scale: 0, rotate: -20 }}
+                                        animate={{ scale: 1, rotate: 0 }}
+                                        transition={{ type: "spring", stiffness: 200, damping: 15 }}
+                                        className="w-24 h-24 bg-green-50 rounded-[2rem] flex items-center justify-center"
+                                    >
+                                        <CheckCircle2 className="w-12 h-12 text-green-500" />
+                                    </motion.div>
+                                    <div>
+                                        <h2 className="text-2xl font-black text-slate-900 tracking-tight">Booking Confirmed! 🎉</h2>
+                                        <p className="text-slate-500 font-medium mt-2 text-sm leading-relaxed">
+                                            Your payment was successful. The property owner will contact you at <span className="font-black text-slate-700">{bookingForm.phone}</span> within 2 hours.
+                                        </p>
+                                    </div>
+                                    <div className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 text-left space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-bold text-slate-500">Payment ID</span>
+                                            <span className="font-black text-slate-800 text-xs">{paymentId}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-bold text-slate-500">Property</span>
+                                            <span className="font-black text-slate-800">{property?.name}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-bold text-slate-500">Room</span>
+                                            <span className="font-black text-slate-800">{selectedRoom?.name}</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="font-bold text-slate-500">Amount Paid</span>
+                                            <span className="font-black text-primary">₹{(selectedRoom?.price || property?.price)?.toLocaleString()}</span>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={closeBookingModal}
+                                        className="w-full h-13 py-4 rounded-2xl bg-slate-900 text-white font-black hover:bg-primary transition-all"
+                                    >
+                                        Done
+                                    </button>
+                                </div>
+                            )}
+
+                            {/* ── FAILED STEP ─────────────────────── */}
+                            {bookingStep === "failed" && (
+                                <div className="p-10 flex flex-col items-center text-center gap-5">
+                                    <div className="w-24 h-24 bg-red-50 rounded-[2rem] flex items-center justify-center">
+                                        <AlertCircle className="w-12 h-12 text-red-500" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-2xl font-black text-slate-900">Payment Failed</h2>
+                                        <p className="text-slate-500 font-medium mt-2 text-sm">
+                                            Something went wrong. Your money was not deducted. Please try again.
+                                        </p>
+                                    </div>
+                                    <div className="flex gap-3 w-full">
+                                        <button
+                                            onClick={() => setBookingStep("form")}
+                                            className="flex-1 h-12 rounded-2xl bg-primary text-white font-black hover:bg-primary/90 transition-all"
+                                        >
+                                            Try Again
+                                        </button>
+                                        <button
+                                            onClick={closeBookingModal}
+                                            className="flex-1 h-12 rounded-2xl bg-slate-100 text-slate-700 font-black hover:bg-slate-200 transition-all"
+                                        >
+                                            Cancel
+                                        </button>
+                                    </div>
+                                </div>
+                            )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

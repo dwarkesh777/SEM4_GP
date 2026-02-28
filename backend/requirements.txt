@@ -10,3 +10,4 @@ cloudinary
 django-cloudinary-storage
 pymongo[srv]
 dnspython
+razorpay

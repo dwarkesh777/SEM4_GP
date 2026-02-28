@@ -1,6 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
+import { API_URL } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -177,11 +178,14 @@ const AddProperty = () => {
         try {
             const submitData = new FormData();
 
-            // Basic Fields
+            // Basic Fields — skip empty strings for numeric fields to avoid Django validation errors
+            const numericFields = ['price', 'originalPrice', 'latitude', 'longitude'];
             Object.keys(formData).forEach(key => {
-                if (key !== 'rooms' && key !== 'amenities' && key !== 'appliances') {
-                    submitData.append(key, formData[key]);
-                }
+                if (key === 'rooms' || key === 'amenities' || key === 'appliances') return;
+                const value = formData[key];
+                // Don't send empty string for numeric fields — Django rejects them
+                if (numericFields.includes(key) && (value === '' || value === null || value === undefined)) return;
+                submitData.append(key, value);
             });
 
             // Handle Arrays (Backend expects multiple values for same key or specific format)
@@ -196,7 +200,7 @@ const AddProperty = () => {
             if (video) submitData.append('video', video);
             extraImages.forEach(img => submitData.append('uploaded_images', img));
 
-            const response = await fetch("http://localhost:8000/api/properties/", {
+            const response = await fetch(`${API_URL}/api/properties/`, {
                 method: "POST",
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('token')}`
@@ -210,11 +214,25 @@ const AddProperty = () => {
                 navigate("/");
             } else {
                 const errorData = await response.json().catch(() => ({}));
-                toast.error(errorData.error || errorData.detail || "Listing failed. Please check server.");
+                // DRF returns errors as { field: ["msg"] } or { error: "msg" } or { detail: "msg" }
+                let errorMsg = "Listing failed.";
+                if (errorData.error) {
+                    errorMsg = errorData.error;
+                } else if (errorData.detail) {
+                    errorMsg = errorData.detail;
+                } else if (typeof errorData === 'object') {
+                    // Flatten field-level errors: { name: ["required"], price: ["invalid"] }
+                    const fieldErrors = Object.entries(errorData)
+                        .map(([k, v]) => `${k}: ${Array.isArray(v) ? v[0] : v}`)
+                        .join(" | ");
+                    errorMsg = fieldErrors || errorMsg;
+                }
+                console.error("Property listing error:", errorData);
+                toast.error(errorMsg);
             }
         } catch (error) {
             console.error("Submission failed:", error);
-            toast.error(`Error: ${error.message || "Something went wrong"}. Check if backend is running at http://localhost:8000`);
+            toast.error(`Error: ${error.message || "Something went wrong"}. Check if backend is running at ${API_URL}`);
         } finally {
             setLoading(false);
         }
@@ -740,7 +758,7 @@ const AddProperty = () => {
                                                         </div>
                                                         <div className="space-y-3">
                                                             <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Beds</Label>
-                                                            <Input 
+                                                            <Input
                                                                 type="number"
                                                                 value={room.beds}
                                                                 onChange={(e) => handleRoomChange(idx, 'beds', parseInt(e.target.value))}
@@ -749,11 +767,10 @@ const AddProperty = () => {
                                                         </div>
                                                         <div className="flex items-center gap-4 pt-4 lg:col-span-4">
                                                             <Select onValueChange={(v) => handleRoomChange(idx, 'is_ac', v)} defaultValue={room.is_ac}>
-                                                                <SelectTrigger className={`h-12 px-6 rounded-xl font-bold transition-all border-2 ${
-                                                                    room.is_ac === 'AC' 
-                                                                    ? "bg-blue-50 border-blue-200 text-blue-600" 
+                                                                <SelectTrigger className={`h-12 px-6 rounded-xl font-bold transition-all border-2 ${room.is_ac === 'AC'
+                                                                    ? "bg-blue-50 border-blue-200 text-blue-600"
                                                                     : "bg-slate-50 border-slate-100 text-slate-500"
-                                                                }`}>
+                                                                    }`}>
                                                                     <SelectValue />
                                                                 </SelectTrigger>
                                                                 <SelectContent className="rounded-xl font-bold">
@@ -762,13 +779,12 @@ const AddProperty = () => {
                                                                 </SelectContent>
                                                             </Select>
 
-                                                            <button 
+                                                            <button
                                                                 onClick={() => handleRoomChange(idx, 'available', !room.available)}
-                                                                className={`flex items-center gap-3 px-6 py-3 rounded-xl font-bold transition-all h-12 ${
-                                                                    room.available 
-                                                                    ? "bg-green-50 text-green-600 border-2 border-green-100" 
+                                                                className={`flex items-center gap-3 px-6 py-3 rounded-xl font-bold transition-all h-12 ${room.available
+                                                                    ? "bg-green-50 text-green-600 border-2 border-green-100"
                                                                     : "bg-slate-100 text-slate-400 border-2 border-transparent"
-                                                                }`}
+                                                                    }`}
                                                             >
                                                                 <div className={`w-3 h-3 rounded-full ${room.available ? "bg-green-500 animate-pulse" : "bg-slate-300"}`} />
                                                                 {room.available ? "Available" : "Sold Out"}

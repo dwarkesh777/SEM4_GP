@@ -60,7 +60,7 @@ export const AuthProvider = ({ children }) => {
             console.error("Login failed:", error);
             return {
                 success: false,
-                error: "Network error. Please check if the server is running."
+                error: `Cannot connect to server at ${API_URL}. Run: cd backend && python manage.py runserver 8000`
             };
         }
     };
@@ -92,7 +92,7 @@ export const AuthProvider = ({ children }) => {
             console.error("Owner login failed:", error);
             return {
                 success: false,
-                error: "Network error. Please check if the server is running."
+                error: `Cannot connect to server at ${API_URL}. Run: cd backend && python manage.py runserver 8000`
             };
         }
     };
@@ -130,7 +130,7 @@ export const AuthProvider = ({ children }) => {
             console.error("Signup failed:", error);
             return {
                 success: false,
-                error: "Network error. Please check if the server is running."
+                error: `Cannot connect to server at ${API_URL}. Run: cd backend && python manage.py runserver 8000`
             };
         }
     };

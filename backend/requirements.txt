@@ -1,0 +1,12 @@
+django>=5.0,<7.0
+djangorestframework
+djangorestframework-simplejwt
+django-cors-headers
+django-mongodb-backend
+python-dotenv
+gunicorn
+whitenoise
+cloudinary
+django-cloudinary-storage
+pymongo[srv]
+dnspython

@@ -3,11 +3,10 @@ import PropertyCard from "./PropertyCard";
 import { Button } from "@/components/ui/button";
 import { ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-
-const API_BASE_URL = `http://${window.location.hostname}:8000`;
+import { API_URL } from "@/lib/api";
 
 const fetchProperties = async () => {
-    const res = await fetch(`${API_BASE_URL}/api/properties/`);
+    const res = await fetch(`${API_URL}/api/properties/`);
     if (!res.ok) throw new Error("Network response was not ok");
     return res.json();
 };

@@ -21,8 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
-
-const API_URL = `http://${window.location.hostname}:8000`;
+import { API_URL } from "@/lib/api";
 
 const amenityDetails = {
     wifi: { icon: <Wifi className="w-5 h-5" />, label: "Wi-Fi", category: "Essentials" },

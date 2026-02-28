@@ -413,6 +413,8 @@ const PaymentReceipts = () => {
             <Footer />
         </div>
     );
+
+    // 
 };
 
 export default PaymentReceipts;

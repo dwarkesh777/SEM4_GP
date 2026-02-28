@@ -19,7 +19,6 @@ import StudentSignup from "./pages/StudentSignup";
 import OwnerLogin from "./pages/OwnerLogin";
 import OwnerSignup from "./pages/OwnerSignup";
 import UserDashboard from "./pages/UserDashboard";
-import PaymentReceipts from "./pages/PaymentReceipts";
 import NotFound from "./pages/NotFound";
 import AddProperty from "./pages/AddProperty";
 
@@ -53,7 +52,6 @@ const App = () => (
                         <Route path="/terms" element={<TermsOfService />} />
                         <Route path="/privacy" element={<PrivacyPolicy />} />
                         <Route path="/dashboard" element={<UserDashboard />} />
-                        <Route path="/receipts" element={<PaymentReceipts />} />
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                         <Route path="*" element={<NotFound />} />
                     </Routes>

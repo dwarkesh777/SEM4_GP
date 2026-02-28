@@ -352,52 +352,17 @@ const HostelDetail = () => {
                         });
                         const verifyData = await verifyRes.json();
                         if (verifyData.verified) {
-                            const pid = response.razorpay_payment_id;
-                            const oid = response.razorpay_order_id;
-                            setPaymentId(pid);
-                            setOrderId(oid);
+                            setPaymentId(response.razorpay_payment_id);
+                            setOrderId(response.razorpay_order_id);
                             setBookingStep("success");
-
-                            // ── Save receipt to localStorage for Payment Receipts page ──
-                            const receipt = {
-                                id: pid,
-                                orderId: oid,
-                                paymentId: pid,
-                                receiptNo: "BB-" + Date.now().toString().slice(-8),
-                                date: new Date().toISOString(),
-                                customer: { ...bookingForm },
-                                property: {
-                                    id: property?.id,
-                                    name: property?.name,
-                                    location: property?.location,
-                                    city: property?.city,
-                                    address: property?.address,
-                                    phone: property?.phone,
-                                    email: property?.email,
-                                },
-                                room: {
-                                    name: selectedRoom?.name,
-                                    occupancy: selectedRoom?.occupancy,
-                                    price: selectedRoom?.price || property?.price,
-                                    is_ac: selectedRoom?.is_ac,
-                                },
-                                amount: selectedRoom?.price || property?.price,
-                                status: "CAPTURED",
-                            };
-                            try {
-                                const existing = JSON.parse(localStorage.getItem("bb_receipts") || "[]");
-                                existing.unshift(receipt);
-                                localStorage.setItem("bb_receipts", JSON.stringify(existing));
-                            } catch (e) { console.error("Receipt save error:", e); }
-
-                            // Auto-trigger receipt PDF after short delay
+                            // Auto-trigger receipt generation after a short delay
                             setTimeout(() => {
                                 generateReceiptPDF({
-                                    paymentId: pid,
+                                    paymentId: response.razorpay_payment_id,
                                     bookingForm,
                                     selectedRoom,
                                     property,
-                                    orderId: oid,
+                                    orderId: response.razorpay_order_id,
                                 });
                             }, 800);
                         } else {

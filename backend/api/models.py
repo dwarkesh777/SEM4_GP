@@ -112,11 +112,20 @@ class Booking(models.Model):
         ('Cancelled', 'Cancelled'),
     ]
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='bookings')
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='bookings')
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='bookings')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Confirmed')
     created_at = models.DateTimeField(auto_now_add=True)
+    # Payment details
+    payment_id = models.CharField(max_length=100, null=True, blank=True)
+    razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
+    amount = models.IntegerField(null=True, blank=True)
+    # Customer details (stored at booking time)
+    customer_name = models.CharField(max_length=255, null=True, blank=True)
+    customer_phone = models.CharField(max_length=20, null=True, blank=True)
+    customer_email = models.EmailField(null=True, blank=True)
+    customer_age = models.IntegerField(null=True, blank=True)
 
 class Enquiry(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

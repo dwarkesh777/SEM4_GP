@@ -341,13 +341,25 @@ const HostelDetail = () => {
                 handler: async (response) => {
                     // Step 4: Verify payment signature
                     try {
+                        const token = localStorage.getItem("token");
                         const verifyRes = await fetch(`${API_URL}/api/payment/verify/`, {
                             method: "POST",
-                            headers: { "Content-Type": "application/json" },
+                            headers: {
+                                "Content-Type": "application/json",
+                                ...(token ? { "Authorization": `Bearer ${token}` } : {}),
+                            },
                             body: JSON.stringify({
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_payment_id: response.razorpay_payment_id,
                                 razorpay_signature: response.razorpay_signature,
+                                // Booking details to save in DB
+                                property_id: property?.id,
+                                room_id: selectedRoom?.id,
+                                amount: selectedRoom?.price || property?.price,
+                                customer_name: bookingForm.name,
+                                customer_phone: bookingForm.phone,
+                                customer_email: bookingForm.email,
+                                customer_age: parseInt(bookingForm.age),
                             }),
                         });
                         const verifyData = await verifyRes.json();

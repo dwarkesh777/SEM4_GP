@@ -164,17 +164,29 @@ class PropertySerializer(serializers.ModelSerializer):
 
 class BookingSerializer(serializers.ModelSerializer):
     property_name = serializers.ReadOnlyField(source='property.name')
+    property_location = serializers.ReadOnlyField(source='property.location')
+    property_city = serializers.ReadOnlyField(source='property.city')
+    property_type = serializers.ReadOnlyField(source='property.type')
     room_name = serializers.ReadOnlyField(source='room.name')
+    room_occupancy = serializers.ReadOnlyField(source='room.occupancy')
     property_image = serializers.SerializerMethodField()
+    property_id = serializers.ReadOnlyField(source='property.id')
 
     class Meta:
         model = Booking
-        fields = ['id', 'user', 'property', 'property_name', 'property_image', 'room', 'room_name', 'status', 'created_at']
+        fields = [
+            'id', 'user', 'property_id', 'property_name', 'property_location',
+            'property_city', 'property_type', 'property_image',
+            'room', 'room_name', 'room_occupancy', 'status', 'created_at',
+            'payment_id', 'razorpay_order_id', 'amount',
+            'customer_name', 'customer_phone', 'customer_email', 'customer_age',
+        ]
         read_only_fields = ['user', 'status', 'created_at']
 
     def get_property_image(self, obj):
-        if obj.property.main_image:
-            return self.context['request'].build_absolute_uri(obj.property.main_image.url)
+        request = self.context.get('request')
+        if obj.property.main_image and request:
+            return request.build_absolute_uri(obj.property.main_image.url)
         return None
 
 

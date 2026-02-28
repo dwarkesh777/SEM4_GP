@@ -1,0 +1,27 @@
+[phases.setup]
+nixPkgs = ["python311"]
+
+[phases.install]
+cmds = ["pip install -r requirements.txt"]
+
+[start]
+cmd = "gunicorn nestnode_backend.wsgi --bind 0.0.0.0:$PORT"
+```
+
+---
+
+### Fix 2 — Check your `runtime.txt`
+
+Make sure `backend/runtime.txt` contains exactly:
+```
+python-3.11.0
+```
+No extra spaces or blank lines.
+
+---
+
+### Fix 3 — Make sure `Procfile` is correct
+
+`backend/Procfile` should contain exactly:
+```
+web: gunicorn nestnode_backend.wsgi --bind 0.0.0.0:$PORT

@@ -6,7 +6,7 @@ import {
     Car, Tv, Wind, ChevronLeft, ChevronRight, Users, Check, X as XIcon,
     Shirt, Sparkles, BedDouble, Heart, Share2, Calendar, ShieldCheck,
     Coffee, Utensils, Zap, Lock, Info, Clock, ExternalLink, LayoutDashboard, User,
-    CreditCard, IndianRupee, CheckCircle2, AlertCircle, Loader2, Hash
+    CreditCard, IndianRupee, CheckCircle2, AlertCircle, Loader2, Hash, Download, FileText
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -57,6 +57,189 @@ const loadRazorpay = () => new Promise((resolve) => {
 
 const RAZORPAY_KEY_ID = "rzp_live_SKk9PuXXC5dsm6";
 
+// ─── PDF Receipt Generator (pure canvas, no external lib needed) ──────────────
+const generateReceiptPDF = ({ paymentId, bookingForm, selectedRoom, property, orderId }) => {
+    const receiptNo = "BB-" + Date.now().toString().slice(-8);
+    const dateStr = new Date().toLocaleString("en-IN", {
+        day: "2-digit", month: "long", year: "numeric",
+        hour: "2-digit", minute: "2-digit", hour12: true
+    });
+    const amount = (selectedRoom?.price || property?.price || 0).toLocaleString("en-IN");
+
+    // Build HTML receipt in a hidden iframe then print-to-PDF
+    const receiptHTML = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8"/>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #fff; color: #1e293b; }
+  .page { width: 794px; min-height: 1123px; padding: 60px; background: #fff; }
+  .header { display: flex; align-items: center; justify-content: space-between; padding-bottom: 32px; border-bottom: 3px solid #3b82f6; margin-bottom: 40px; }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .brand-icon { width: 48px; height: 48px; background: #3b82f6; border-radius: 14px; display: flex; align-items: center; justify-content: center; color: white; font-size: 22px; font-weight: 900; }
+  .brand-name { font-size: 28px; font-weight: 900; color: #1e293b; letter-spacing: -1px; }
+  .brand-sub { font-size: 12px; color: #94a3b8; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; }
+  .receipt-badge { background: #f0fdf4; border: 2px solid #bbf7d0; border-radius: 12px; padding: 10px 20px; text-align: right; }
+  .receipt-badge .label { font-size: 10px; font-weight: 700; color: #16a34a; text-transform: uppercase; letter-spacing: 2px; }
+  .receipt-badge .number { font-size: 18px; font-weight: 900; color: #15803d; letter-spacing: -0.5px; }
+  .success-banner { background: linear-gradient(135deg, #3b82f6 0%, #4f46e5 100%); border-radius: 20px; padding: 30px 36px; color: white; margin-bottom: 40px; display: flex; align-items: center; gap: 20px; }
+  .success-icon { width: 56px; height: 56px; background: rgba(255,255,255,0.2); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; flex-shrink: 0; }
+  .success-title { font-size: 22px; font-weight: 900; letter-spacing: -0.5px; }
+  .success-sub { font-size: 13px; opacity: 0.8; margin-top: 4px; font-weight: 500; }
+  .section { margin-bottom: 32px; }
+  .section-title { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 14px; padding-bottom: 8px; border-bottom: 1px solid #f1f5f9; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .info-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px; }
+  .info-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 4px; }
+  .info-value { font-size: 14px; font-weight: 800; color: #1e293b; }
+  .amount-box { background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%); border: 2px solid #bbf7d0; border-radius: 16px; padding: 24px 28px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 32px; }
+  .amount-label { font-size: 12px; font-weight: 700; color: #15803d; text-transform: uppercase; letter-spacing: 1.5px; }
+  .amount-value { font-size: 36px; font-weight: 900; color: #15803d; letter-spacing: -1px; }
+  .amount-sub { font-size: 11px; color: #4ade80; font-weight: 600; margin-top: 2px; }
+  .payment-ids { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 16px 20px; }
+  .pid-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #f1f5f9; }
+  .pid-row:last-child { border-bottom: none; }
+  .pid-key { font-size: 12px; font-weight: 700; color: #64748b; }
+  .pid-val { font-size: 12px; font-weight: 800; color: #1e293b; font-family: monospace; }
+  .footer { margin-top: 48px; padding-top: 24px; border-top: 2px dashed #e2e8f0; display: flex; justify-content: space-between; align-items: center; }
+  .footer-left { font-size: 11px; color: #94a3b8; font-weight: 600; line-height: 1.6; }
+  .footer-right { text-align: right; font-size: 11px; color: #94a3b8; font-weight: 600; }
+  .verified-badge { display: inline-flex; align-items: center; gap: 6px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 20px; padding: 6px 14px; font-size: 11px; font-weight: 700; color: #15803d; }
+  @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+</style>
+</head>
+<body>
+<div class="page">
+  <!-- Header -->
+  <div class="header">
+    <div class="brand">
+      <div class="brand-icon">B</div>
+      <div>
+        <div class="brand-name">BedBuddy</div>
+        <div class="brand-sub">Official Payment Receipt</div>
+      </div>
+    </div>
+    <div class="receipt-badge">
+      <div class="label">Receipt No.</div>
+      <div class="number">${receiptNo}</div>
+    </div>
+  </div>
+
+  <!-- Success Banner -->
+  <div class="success-banner">
+    <div class="success-icon">✓</div>
+    <div>
+      <div class="success-title">Payment Successful</div>
+      <div class="success-sub">Your booking has been confirmed — ${dateStr}</div>
+    </div>
+  </div>
+
+  <!-- Amount -->
+  <div class="amount-box">
+    <div>
+      <div class="amount-label">Total Amount Paid</div>
+      <div class="amount-sub">Monthly Advance · Fully Secured</div>
+    </div>
+    <div class="amount-value">₹${amount}</div>
+  </div>
+
+  <!-- Customer Details -->
+  <div class="section">
+    <div class="section-title">Customer Information</div>
+    <div class="grid-2">
+      <div class="info-card">
+        <div class="info-label">Full Name</div>
+        <div class="info-value">${bookingForm.name}</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">Age</div>
+        <div class="info-value">${bookingForm.age} years</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">Mobile Number</div>
+        <div class="info-value">+91 ${bookingForm.phone}</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">Email Address</div>
+        <div class="info-value">${bookingForm.email}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Property Details -->
+  <div class="section">
+    <div class="section-title">Booking Details</div>
+    <div class="grid-2">
+      <div class="info-card">
+        <div class="info-label">Property Name</div>
+        <div class="info-value">${property?.name || "—"}</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">Room Type</div>
+        <div class="info-value">${selectedRoom?.name || "—"}</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">Location</div>
+        <div class="info-value">${property?.location || "—"}, ${property?.city || "—"}</div>
+      </div>
+      <div class="info-card">
+        <div class="info-label">Occupancy</div>
+        <div class="info-value">${selectedRoom?.occupancy || "—"}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Payment IDs -->
+  <div class="section">
+    <div class="section-title">Transaction Details</div>
+    <div class="payment-ids">
+      <div class="pid-row">
+        <span class="pid-key">Razorpay Payment ID</span>
+        <span class="pid-val">${paymentId}</span>
+      </div>
+      <div class="pid-row">
+        <span class="pid-key">Payment Method</span>
+        <span class="pid-val">Razorpay Secure Gateway</span>
+      </div>
+      <div class="pid-row">
+        <span class="pid-key">Payment Status</span>
+        <span class="pid-val" style="color:#15803d;">✓ CAPTURED</span>
+      </div>
+      <div class="pid-row">
+        <span class="pid-key">Date & Time</span>
+        <span class="pid-val">${dateStr}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-left">
+      BedBuddy — Find Your Perfect Stay<br/>
+      For support: support@bedbuddy.com<br/>
+      This is a computer-generated receipt. No signature required.
+    </div>
+    <div class="footer-right">
+      <div class="verified-badge">✓ Verified & Authentic</div>
+      <div style="margin-top:8px;">Powered by Razorpay</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`;
+
+    // Open in a new window and trigger print-to-PDF
+    const win = window.open("", "_blank", "width=900,height=700");
+    win.document.write(receiptHTML);
+    win.document.close();
+    win.focus();
+    setTimeout(() => {
+        win.print();
+        // win.close(); // optional: close after print dialog
+    }, 500);
+};
+
 const HostelDetail = () => {
     const { id } = useParams();
     const { data: property, isLoading, error } = useQuery({
@@ -72,6 +255,7 @@ const HostelDetail = () => {
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [bookingStep, setBookingStep] = useState("form"); // "form" | "processing" | "success" | "failed"
     const [paymentId, setPaymentId] = useState("");
+    const [orderId, setOrderId] = useState("");
     const [bookingForm, setBookingForm] = useState({
         name: "", phone: "", age: "", email: ""
     });
@@ -169,7 +353,18 @@ const HostelDetail = () => {
                         const verifyData = await verifyRes.json();
                         if (verifyData.verified) {
                             setPaymentId(response.razorpay_payment_id);
+                            setOrderId(response.razorpay_order_id);
                             setBookingStep("success");
+                            // Auto-trigger receipt generation after a short delay
+                            setTimeout(() => {
+                                generateReceiptPDF({
+                                    paymentId: response.razorpay_payment_id,
+                                    bookingForm,
+                                    selectedRoom,
+                                    property,
+                                    orderId: response.razorpay_order_id,
+                                });
+                            }, 800);
                         } else {
                             setBookingStep("failed");
                         }
@@ -910,45 +1105,87 @@ const HostelDetail = () => {
 
                             {/* ── SUCCESS STEP ─────────────────────── */}
                             {bookingStep === "success" && (
-                                <div className="p-10 flex flex-col items-center text-center gap-5">
+                                <div className="p-8 flex flex-col items-center text-center gap-5">
+                                    {/* Animated success icon */}
                                     <motion.div
                                         initial={{ scale: 0, rotate: -20 }}
                                         animate={{ scale: 1, rotate: 0 }}
                                         transition={{ type: "spring", stiffness: 200, damping: 15 }}
-                                        className="w-24 h-24 bg-green-50 rounded-[2rem] flex items-center justify-center"
+                                        className="w-24 h-24 bg-gradient-to-br from-green-400 to-emerald-500 rounded-[2rem] flex items-center justify-center shadow-xl shadow-green-500/30"
                                     >
-                                        <CheckCircle2 className="w-12 h-12 text-green-500" />
+                                        <CheckCircle2 className="w-12 h-12 text-white" />
                                     </motion.div>
-                                    <div>
+
+                                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
                                         <h2 className="text-2xl font-black text-slate-900 tracking-tight">Booking Confirmed! 🎉</h2>
                                         <p className="text-slate-500 font-medium mt-2 text-sm leading-relaxed">
-                                            Your payment was successful. The property owner will contact you at <span className="font-black text-slate-700">{bookingForm.phone}</span> within 2 hours.
+                                            Payment successful. Owner will contact <span className="font-black text-slate-700">{bookingForm.phone}</span> within 2 hours.
                                         </p>
-                                    </div>
-                                    <div className="w-full p-4 rounded-2xl bg-slate-50 border border-slate-100 text-left space-y-2">
-                                        <div className="flex justify-between text-sm">
-                                            <span className="font-bold text-slate-500">Payment ID</span>
-                                            <span className="font-black text-slate-800 text-xs">{paymentId}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="font-bold text-slate-500">Property</span>
-                                            <span className="font-black text-slate-800">{property?.name}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="font-bold text-slate-500">Room</span>
-                                            <span className="font-black text-slate-800">{selectedRoom?.name}</span>
-                                        </div>
-                                        <div className="flex justify-between text-sm">
-                                            <span className="font-bold text-slate-500">Amount Paid</span>
-                                            <span className="font-black text-primary">₹{(selectedRoom?.price || property?.price)?.toLocaleString()}</span>
-                                        </div>
-                                    </div>
-                                    <button
-                                        onClick={closeBookingModal}
-                                        className="w-full h-13 py-4 rounded-2xl bg-slate-900 text-white font-black hover:bg-primary transition-all"
+                                    </motion.div>
+
+                                    {/* Receipt preview card */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
+                                        className="w-full rounded-2xl border border-slate-100 overflow-hidden"
                                     >
-                                        Done
-                                    </button>
+                                        {/* Card header */}
+                                        <div className="bg-gradient-to-r from-blue-600 to-indigo-600 px-5 py-3 flex items-center justify-between">
+                                            <div className="flex items-center gap-2">
+                                                <FileText className="w-4 h-4 text-white/80" />
+                                                <span className="text-white font-black text-sm uppercase tracking-widest">Payment Receipt</span>
+                                            </div>
+                                            <span className="text-white/70 font-bold text-xs">BB-{Date.now().toString().slice(-6)}</span>
+                                        </div>
+                                        {/* Card rows */}
+                                        <div className="bg-slate-50 divide-y divide-slate-100 text-left">
+                                            {[
+                                                { label: "Name", value: bookingForm.name },
+                                                { label: "Mobile", value: `+91 ${bookingForm.phone}` },
+                                                { label: "Property", value: property?.name },
+                                                { label: "Room", value: selectedRoom?.name },
+                                                { label: "Amount Paid", value: `₹${(selectedRoom?.price || property?.price)?.toLocaleString()}`, highlight: true },
+                                                { label: "Payment ID", value: paymentId, mono: true },
+                                            ].map(({ label, value, highlight, mono }) => (
+                                                <div key={label} className="flex justify-between items-center px-5 py-2.5">
+                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">{label}</span>
+                                                    <span className={`text-xs font-black ${highlight ? "text-green-600 text-sm" : mono ? "font-mono text-slate-600" : "text-slate-800"}`}>
+                                                        {value}
+                                                    </span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </motion.div>
+
+                                    {/* PDF auto-generated notice */}
+                                    <motion.p
+                                        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.5 }}
+                                        className="text-xs font-bold text-green-600 flex items-center gap-1.5 bg-green-50 px-4 py-2 rounded-full border border-green-100"
+                                    >
+                                        <CheckCircle2 className="w-3.5 h-3.5" />
+                                        Receipt PDF opened automatically — save via Print → Save as PDF
+                                    </motion.p>
+
+                                    {/* Action buttons */}
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
+                                        className="w-full flex gap-3"
+                                    >
+                                        {/* Download PDF button */}
+                                        <button
+                                            onClick={() => generateReceiptPDF({ paymentId, bookingForm, selectedRoom, property, orderId })}
+                                            className="flex-1 h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-sm shadow-xl shadow-blue-500/25 transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                                        >
+                                            <Download className="w-4 h-4" />
+                                            Download PDF
+                                        </button>
+                                        {/* Done button */}
+                                        <button
+                                            onClick={closeBookingModal}
+                                            className="flex-1 h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-sm transition-all active:scale-[0.98]"
+                                        >
+                                            Done
+                                        </button>
+                                    </motion.div>
                                 </div>
                             )}
 

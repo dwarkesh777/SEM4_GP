@@ -1,9 +1,8 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { API_URL } from "@/lib/api";
 
 const AuthContext = createContext();
-
-const API_URL = `http://${window.location.hostname}:8000`;
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);

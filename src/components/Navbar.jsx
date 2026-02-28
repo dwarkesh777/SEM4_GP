@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Headphones, User, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, MapPin, LogOut } from "lucide-react";
+import { Menu, X, Headphones, User, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, MapPin, LogOut, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -139,6 +139,12 @@ const Navbar = () => {
                                     <Settings className="w-4 h-4 text-slate-400" />
                                     <span className="font-bold text-slate-600">Settings</span>
                                 </DropdownMenuItem>
+                                {!user?.is_owner && (
+                                    <DropdownMenuItem onClick={() => navigate("/receipts")} className="p-3 rounded-xl cursor-pointer hover:bg-blue-50 transition-colors gap-3 mb-1">
+                                        <Receipt className="w-4 h-4 text-blue-500" />
+                                        <span className="font-bold text-slate-600">Payment Receipts</span>
+                                    </DropdownMenuItem>
+                                )}
                                 <DropdownMenuSeparator className="my-2 bg-slate-100" />
                                 <DropdownMenuItem onClick={logout} className="p-3 rounded-xl cursor-pointer hover:bg-orange-50 transition-colors gap-3 text-orange-600 group">
                                     <LogOut className="w-4 h-4 text-orange-400 transition-colors" />

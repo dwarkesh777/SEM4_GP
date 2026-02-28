@@ -343,17 +343,11 @@ const HostelDetail = () => {
                     try {
                         const verifyRes = await fetch(`${API_URL}/api/payment/verify/`, {
                             method: "POST",
-                            headers: {
-                                "Content-Type": "application/json",
-                                "Authorization": `Bearer ${localStorage.getItem("access_token")}`
-                            },
+                            headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_payment_id: response.razorpay_payment_id,
                                 razorpay_signature: response.razorpay_signature,
-                                property_id: property?.id,
-                                room_id: selectedRoom?.id,
-                                amount: selectedRoom?.price || property?.price,
                             }),
                         });
                         const verifyData = await verifyRes.json();

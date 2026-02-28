@@ -61,18 +61,19 @@ const UserDashboard = () => {
             // In a real app, these would be API calls
             // For now, since backend migrations were tricky, we handle potential errors gracefully
 
-            // Attempt to fetch from real API
+            // Example API Fetch (Mocked for now)
+            const mockBookings = [];
+            const mockEnquiries = [];
+            const mockWishlist = [];
+
+            setBookings(mockBookings);
+            setEnquiries(mockEnquiries);
+            setWishlist(mockWishlist);
+
+            // Attempt to fetch from real API if possible
             const token = localStorage.getItem('access_token');
             if (token) {
-                const res = await fetch(`${API_URL}/api/bookings/`, {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                if (res.ok) {
-                    const data = await res.json();
-                    setBookings(data);
-                }
+                // We'll add real fetch logic here once backend is fixed
             }
         } catch (error) {
             console.error("Error fetching dashboard data:", error);
@@ -293,7 +294,7 @@ const UserDashboard = () => {
                                                             <div>
                                                                 <h3 className="font-bold text-slate-900 text-lg">{booking.property_name}</h3>
                                                                 <div className="flex items-center gap-3 text-sm text-slate-500 font-medium">
-                                                                    <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {new Date(booking.created_at).toLocaleDateString()}</span>
+                                                                    <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {booking.date}</span>
                                                                     <span className="w-1 h-1 rounded-full bg-slate-300" />
                                                                     <span>{booking.room_name}</span>
                                                                 </div>
@@ -303,7 +304,7 @@ const UserDashboard = () => {
                                                         <div className="flex items-center justify-between md:justify-end gap-6 w-full md:w-auto">
                                                             <div className="text-right">
                                                                 <p className="text-xs text-slate-400 font-bold uppercase tracking-wider mb-0.5">Price</p>
-                                                                <p className="text-lg font-black text-slate-900">₹{booking.amount?.toLocaleString()}</p>
+                                                                <p className="text-lg font-black text-slate-900">₹{booking.price}</p>
                                                             </div>
                                                             <div className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 ${booking.status === "Confirmed"
                                                                 ? "bg-emerald-50 text-emerald-600 border border-emerald-100"

@@ -116,8 +116,6 @@ class Booking(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='bookings')
     room = models.ForeignKey(Room, on_delete=models.CASCADE, related_name='bookings')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
-    payment_id = models.CharField(max_length=100, null=True, blank=True)
-    amount = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
 
 class Enquiry(models.Model):

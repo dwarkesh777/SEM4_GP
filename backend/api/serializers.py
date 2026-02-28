@@ -169,7 +169,7 @@ class BookingSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Booking
-        fields = ['id', 'user', 'property', 'property_name', 'property_image', 'room', 'room_name', 'status', 'created_at']
+        fields = ['id', 'user', 'property', 'property_name', 'property_image', 'room', 'room_name', 'status', 'payment_id', 'amount', 'created_at']
         read_only_fields = ['user', 'status', 'created_at']
 
     def get_property_image(self, obj):

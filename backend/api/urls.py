@@ -1,7 +1,10 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment
+from .views import (
+    PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, 
+    UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingListView
+)
 
 router = DefaultRouter()
 router.register(r'properties', PropertyViewSet)
@@ -15,5 +18,6 @@ urlpatterns = [
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('payment/create-order/', create_razorpay_order, name='create_razorpay_order'),
     path('payment/verify/', verify_razorpay_payment, name='verify_razorpay_payment'),
+    path('bookings/', BookingListView.as_view(), name='booking-list'),
 ]
 # hii4

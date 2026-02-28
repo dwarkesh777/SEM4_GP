@@ -1,8 +1,8 @@
 import logging
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
-from .models import Property
-from .serializers import PropertySerializer
+from .models import Property, Booking
+from .serializers import PropertySerializer, BookingSerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -168,10 +168,45 @@ def verify_razorpay_payment(request):
         ).hexdigest()
 
         if expected == signature:
-            return Response({'verified': True, 'payment_id': payment_id})
+            # Payment signature is valid — Save booking to database
+            try:
+                
+                property_id = request.data.get('property_id')
+                room_id     = request.data.get('room_id') # Changed from room_name to room_id for reliability
+                amount_paid = request.data.get('amount', 0)
+                
+                # We need user from request, so they MUST be logged in. 
+                # If they are not (shouldn't happen with proper frontend), we can't save.
+                if request.user.is_authenticated:
+                    booking = Booking.objects.create(
+                        user=request.user,
+                        property_id=property_id,
+                        room_id=room_id,
+                        amount=amount_paid,
+                        payment_id=payment_id,
+                        status='Confirmed'
+                    )
+                    logger.info(f"Booking {booking.id} created for user {request.user.email}")
+                    return Response({'verified': True, 'payment_id': payment_id, 'booking_id': str(booking.id)})
+                else:
+                    logger.warning("Payment verified but user not authenticated — cannot save booking.")
+                    return Response({'verified': True, 'payment_id': payment_id, 'warning': 'User not authenticated'}, status=status.HTTP_200_OK)
+            except Exception as e:
+                logger.error(f"Error saving booking after payment: {e}", exc_info=True)
+                # Keep verified: True because payment WAS successful, but notify about the save error
+                return Response({'verified': True, 'payment_id': payment_id, 'error_saving_booking': str(e)})
         else:
             return Response({'verified': False, 'error': 'Signature mismatch'}, status=status.HTTP_400_BAD_REQUEST)
 
     except Exception as e:
         logger.error(f"Razorpay verification failed: {e}", exc_info=True)
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+class BookingListView(generics.ListAPIView):
+    serializer_class = BookingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        # Only show bookings for the logged-in user
+        return Booking.objects.filter(user=self.request.user).order_by('-created_at')

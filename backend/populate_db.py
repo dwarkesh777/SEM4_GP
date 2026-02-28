@@ -206,10 +206,25 @@ def populate():
     print(f"Amenities remaining: {Amenity.objects.count()}")
     print(f"Properties remaining: {Property.objects.count()}")
     
+    # Get or create a default owner
+    from django.contrib.auth import get_user_model
+    User = get_user_model()
+    owner_user, _ = User.objects.get_or_create(
+        email="owner@test.com",
+        defaults={
+            "full_name": "Test Owner",
+            "is_owner": True,
+            "is_active": True
+        }
+    )
+    if not owner_user.has_usable_password():
+        owner_user.set_password("ownerpassword123")
+        owner_user.save()
+
     for data in properties_data:
         try:
             prop = Property.objects.create(
-                id=data['id'],
+                owner=owner_user,
                 name=data['name'],
                 location=data['location'],
                 type=data['type'],
@@ -223,7 +238,7 @@ def populate():
                 phone=data['phone'],
                 email=data['email'],
                 main_image=get_cloudinary_url(data['image']),
-                video_url=data.get('video_url', 'https://res.cloudinary.com/demo/video/upload/v1631530588/sample_video.mp4')
+                video=data.get('video_url', 'https://res.cloudinary.com/demo/video/upload/v1631530588/sample_video.mp4')
             )
             
             # Set amenities
@@ -235,7 +250,7 @@ def populate():
             
             # Set images
             for img_path in data['images']:
-                PropertyImage.objects.create(property=prop, image_path=get_cloudinary_url(img_path))
+                PropertyImage.objects.create(property=prop, image=get_cloudinary_url(img_path))
             
             # Set rooms
             for room_data in data['rooms']:

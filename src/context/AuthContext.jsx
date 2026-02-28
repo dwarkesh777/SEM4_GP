@@ -1,123 +1,143 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from "react";
+import { toast } from "sonner";
 
 const AuthContext = createContext();
+
+const API_URL = `http://${window.location.hostname}:8000`;
 
 export const AuthProvider = ({ children }) => {
     const [user, setUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const storedUser = localStorage.getItem('user');
-        const token = localStorage.getItem('token');
-        if (storedUser && token) {
-            setUser(JSON.parse(storedUser));
-        }
-        setLoading(false);
+        const checkAuth = async () => {
+            const token = localStorage.getItem("token");
+            if (token) {
+                try {
+                    const response = await fetch(`${API_URL}/api/auth/profile/`, {
+                        headers: {
+                            Authorization: `Bearer ${token}`
+                        }
+                    });
+                    if (response.ok) {
+                        const userData = await response.json();
+                        setUser(userData);
+                    } else {
+                        localStorage.removeItem("token");
+                    }
+                } catch (error) {
+                    console.error("Auth check failed:", error);
+                }
+            }
+            setLoading(false);
+        };
+        checkAuth();
     }, []);
 
     const login = async (email, password) => {
-        const response = await fetch('http://localhost:8000/api/auth/login/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            let message = error.detail || 'Login failed';
-            if (typeof error === 'object' && !error.detail) {
-                const firstKey = Object.keys(error)[0];
-                if (Array.isArray(error[firstKey])) {
-                    message = error[firstKey][0];
-                } else if (typeof error[firstKey] === 'string') {
-                    message = error[firstKey];
-                }
+        try {
+            const response = await fetch(`${API_URL}/api/auth/login/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem("token", data.access);
+                const userResponse = await fetch(`${API_URL}/api/auth/profile/`, {
+                    headers: { Authorization: `Bearer ${data.access}` }
+                });
+                const userData = await userResponse.json();
+                setUser(userData);
+                return { success: true };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                return {
+                    success: false,
+                    error: errorData.detail || errorData.error || "Invalid credentials. Please try again."
+                };
             }
-            throw new Error(message);
+        } catch (error) {
+            console.error("Login failed:", error);
+            return {
+                success: false,
+                error: "Network error. Please check if the server is running."
+            };
         }
-
-        const data = await response.json();
-        const access = data.access;
-
-        // Fetch profile to get full name etc.
-        const profileRes = await fetch('http://localhost:8000/api/auth/profile/', {
-            headers: { 'Authorization': `Bearer ${access}` },
-        });
-
-        const userData = await profileRes.json();
-
-        localStorage.setItem('token', access);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
-        return userData;
     };
 
     const ownerLogin = async (email, password) => {
-        const response = await fetch('http://localhost:8000/api/auth/owner/login/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, password }),
-        });
-
-        if (!response.ok) {
-            const error = await response.json();
-            // Handle DRF nested error messages
-            let message = error.detail || 'Owner login failed';
-            if (typeof error === 'object' && !error.detail) {
-                // Check for non_field_errors or other keys
-                const firstKey = Object.keys(error)[0];
-                if (Array.isArray(error[firstKey])) {
-                    message = error[firstKey][0];
-                } else if (typeof error[firstKey] === 'string') {
-                    message = error[firstKey];
-                }
+        try {
+            const response = await fetch(`${API_URL}/api/auth/owner/login/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem("token", data.access);
+                const userResponse = await fetch(`${API_URL}/api/auth/profile/`, {
+                    headers: { Authorization: `Bearer ${data.access}` }
+                });
+                const userData = await userResponse.json();
+                setUser(userData);
+                return { success: true };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                return {
+                    success: false,
+                    error: errorData.detail || errorData.error || "Invalid credentials. Please try again."
+                };
             }
-            throw new Error(message);
+        } catch (error) {
+            console.error("Owner login failed:", error);
+            return {
+                success: false,
+                error: "Network error. Please check if the server is running."
+            };
         }
-
-        const data = await response.json();
-        const access = data.access;
-
-        const profileRes = await fetch('http://localhost:8000/api/auth/profile/', {
-            headers: { 'Authorization': `Bearer ${access}` },
-        });
-
-        const userData = await profileRes.json();
-        if (!userData.is_owner) {
-            throw new Error('Unauthorized: User is not an owner');
-        }
-
-        localStorage.setItem('token', access);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
-        return userData;
     };
 
-    const signup = async (email, full_name, password, is_owner = false) => {
-        const response = await fetch('http://localhost:8000/api/auth/register/', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email, full_name, password, is_owner }),
-        });
+    const signup = async (email, password, fullName, isOwner) => {
+        try {
+            const response = await fetch(`${API_URL}/api/auth/register/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, full_name: fullName, is_owner: isOwner })
+            });
+            if (response.ok) {
+                return { success: true };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                // Handle various Django/DRF error formats
+                let errorMessage = "Registration failed. Please try again.";
 
-        if (!response.ok) {
-            const error = await response.json();
-            throw new Error(JSON.stringify(error) || 'Signup failed');
-        }
+                if (errorData.email) {
+                    errorMessage = Array.isArray(errorData.email) ? errorData.email[0] : errorData.email;
+                    if (errorMessage.includes("already exists")) {
+                        errorMessage = "This email is already registered.";
+                    }
+                } else if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                } else if (errorData.error) {
+                    errorMessage = errorData.error;
+                } else if (errorData.non_field_errors) {
+                    errorMessage = errorData.non_field_errors[0];
+                }
 
-<<<<<<< HEAD
-=======
-        // Use correct login endpoint based on role
->>>>>>> 21a7634399e8584da3426560f9c4341e91ffe76d
-        if (is_owner) {
-            return ownerLogin(email, password);
+                return { success: false, error: errorMessage };
+            }
+        } catch (error) {
+            console.error("Signup failed:", error);
+            return {
+                success: false,
+                error: "Network error. Please check if the server is running."
+            };
         }
-        return login(email, password);
     };
 
     const logout = () => {
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem("token");
         setUser(null);
     };
 

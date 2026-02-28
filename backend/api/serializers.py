@@ -21,7 +21,7 @@ class RoomSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
     class Meta:
         model = Room
-        fields = ['id', 'name', 'beds', 'occupancy', 'price', 'available']
+        fields = ['id', 'name', 'beds', 'occupancy', 'price', 'is_ac', 'available']
 
 class ReviewSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
@@ -54,11 +54,11 @@ class PropertySerializer(serializers.ModelSerializer):
     owner = serializers.ReadOnlyField(source='owner.email')
 
     # For multiple uploads
-    uploaded_images = serializers.ListField(
-        child=serializers.ImageField(max_length=1000000, allow_empty_file=False, use_url=False),
-        write_only=True,
-        required=False
-    )
+    # uploaded_images = serializers.ListField(
+    #     child=serializers.ImageField(max_length=1000000, allow_empty_file=False, use_url=False),
+    #     write_only=True,
+    #     required=False
+    # )
 
     class Meta:
         model = Property
@@ -110,7 +110,7 @@ class PropertySerializer(serializers.ModelSerializer):
             if isinstance(room_data, dict) and room_data.get('name') and room_data.get('price') is not None:
                 try:
                     # Filter out keys not in the Room model
-                    room_fields = {k: v for k, v in room_data.items() if k in ['name', 'beds', 'occupancy', 'price', 'available']}
+                    room_fields = {k: v for k, v in room_data.items() if k in ['name', 'beds', 'occupancy', 'price', 'is_ac', 'available']}
                     Room.objects.create(property=property_obj, **room_fields)
                 except Exception as e:
                     logger.error(f"Error creating room: {e}")

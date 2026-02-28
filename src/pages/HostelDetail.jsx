@@ -22,7 +22,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useToast } from "@/hooks/use-toast";
 
-
+const API_URL = `http://${window.location.hostname}:8000`;
 
 const amenityDetails = {
     wifi: { icon: <Wifi className="w-5 h-5" />, label: "Wi-Fi", category: "Essentials" },
@@ -40,7 +40,7 @@ const amenityDetails = {
 };
 
 const fetchProperty = async (id) => {
-    const res = await fetch(`http://localhost:8000/api/properties/${id}/`);
+    const res = await fetch(`${API_URL}/api/properties/${id}/`);
     if (!res.ok) throw new Error("Network response was not ok");
     return res.json();
 };

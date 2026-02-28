@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Headphones, User, LogOut, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, MapPin } from "lucide-react";
+import { Menu, X, Headphones, User, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, MapPin, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -21,9 +21,9 @@ const navLinks = [
 const Navbar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
-    const { user, logout } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const { user, logout } = useAuth();
 
     // Force solid navbar on all pages except the homepage
     const isHomePage = location.pathname === "/";
@@ -37,11 +37,6 @@ const Navbar = () => {
         window.addEventListener("scroll", handleScroll);
         return () => window.removeEventListener("scroll", handleScroll);
     }, []);
-
-    const handleLogout = () => {
-        logout();
-        navigate('/');
-    };
 
     return (
         <motion.nav
@@ -84,36 +79,85 @@ const Navbar = () => {
                         </motion.div>
                     ))}
 
+                    {/* Owners Dropdown */}
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.4 }}
                     >
                         <DropdownMenu>
-                            <DropdownMenuTrigger className={`text-sm font-semibold transition-colors flex items-center gap-1 group outline-none ${effectiveScrolled ? "text-slate-600" : "text-white"
-                                } hover:text-primary`}>
-                                For Owners
-                                <ChevronDown className="w-4 h-4 transition-transform group-data-[state=open]:rotate-180" />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="p-2 min-w-[200px] rounded-2xl border-white/20 shadow-2xl backdrop-blur-2xl">
-                                <DropdownMenuItem
-                                    className="gap-3 cursor-pointer bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold p-3 rounded-xl transition-all shadow-md group border-none mb-1"
-                                    onClick={() => navigate('/add-property')}
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    className={`flex items-center gap-1.5 text-sm font-semibold transition-all duration-300 hover:text-primary group ${effectiveScrolled ? "text-slate-600" : "text-white"
+                                        }`}
                                 >
-                                    <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
-                                        <Building2 className="w-4 h-4 text-white" />
-                                    </div>
-                                    <div className="flex flex-col">
-                                        <span className="text-sm">List Your Property</span>
-                                        <span className="text-[10px] font-medium text-white/80">Start earning today</span>
-                                    </div>
+                                    For Owners
+                                    <ChevronDown className="w-4 h-4 transition-transform duration-300 group-data-[state=open]:rotate-180" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-56 p-2 rounded-2xl mt-2 shadow-2xl border-slate-100" align="start">
+                                <DropdownMenuItem
+                                    onClick={() => navigate('/add-property')}
+                                    className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3"
+                                >
+                                    <Building2 className="w-4 h-4 text-primary" />
+                                    <span className="font-bold text-slate-700">List Your Property</span>
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
                     </motion.div>
+
                 </div>
 
                 <div className="hidden md:flex items-center gap-4">
+                    {user ? (
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    className={`relative h-10 w-10 rounded-full border-2 transition-all p-0 overflow-hidden ${effectiveScrolled ? "border-slate-100 shadow-sm" : "border-white/20"}`}
+                                >
+                                    <div className="w-full h-full bg-primary/10 flex items-center justify-center">
+                                        <User className={`w-5 h-5 ${effectiveScrolled ? "text-primary" : "text-white"}`} />
+                                    </div>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent className="w-64 p-3 rounded-3xl mt-2 mr-0 shadow-2xl shadow-black/10 border-slate-100" align="end">
+                                <DropdownMenuLabel className="font-heading p-2">
+                                    <div className="flex flex-col">
+                                        <span className="text-base font-black text-slate-900">{user.full_name}</span>
+                                        <span className="text-xs font-medium text-slate-500 truncate">{user.email}</span>
+                                    </div>
+                                </DropdownMenuLabel>
+                                <DropdownMenuSeparator className="my-2 bg-slate-100" />
+                                <DropdownMenuItem onClick={() => navigate("/dashboard")} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                                    <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                                    <span className="font-bold text-slate-600">User Dashboard</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigate("/settings")} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                                    <Settings className="w-4 h-4 text-slate-400" />
+                                    <span className="font-bold text-slate-600">Settings</span>
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator className="my-2 bg-slate-100" />
+                                <DropdownMenuItem onClick={logout} className="p-3 rounded-xl cursor-pointer hover:bg-orange-50 transition-colors gap-3 text-orange-600 group">
+                                    <LogOut className="w-4 h-4 text-orange-400 transition-colors" />
+                                    <span className="font-black">Sign Out</span>
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    ) : (
+                        <Button
+                            className={`rounded-full px-6 font-bold shadow-lg transition-all active:scale-95 ${effectiveScrolled
+                                ? "bg-primary text-white shadow-primary/20 hover:bg-primary/90"
+                                : "bg-white text-primary shadow-white/10 hover:bg-white/90"
+                                }`}
+                            onClick={() => navigate("/login")}
+                        >
+                            Log in
+                        </Button>
+                    )}
+
                     <motion.div
                         initial={{ opacity: 0, scale: 0.8 }}
                         animate={{ opacity: 1, scale: 1 }}
@@ -125,93 +169,9 @@ const Navbar = () => {
                             Support
                         </Button>
                     </motion.div>
-
-                    <motion.div
-                        initial={{ opacity: 0, scale: 0.8 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        transition={{ delay: 0.6 }}
-                    >
-                        {user ? (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" size="sm" className={`gap-2 px-4 rounded-full border-white/20 backdrop-blur-sm transition-all shadow-sm ${effectiveScrolled ? "bg-white/50 text-slate-700 hover:bg-white hover:border-primary/30" : "bg-white/10 text-white hover:bg-white/20"
-                                        }`}>
-                                        <div className="w-6 h-6 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden border border-primary/20">
-                                            <User className="w-3.5 h-3.5 text-primary" />
-                                        </div>
-                                        <span className="text-sm font-bold">{user.full_name}</span>
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-64 p-2 mt-2 rounded-2xl border-white/20 shadow-2xl backdrop-blur-2xl">
-                                    <DropdownMenuLabel className="font-heading px-3 py-2">
-                                        <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider mb-1">Signed in as</p>
-                                        <p className="text-sm font-bold truncate">{user.email}</p>
-                                    </DropdownMenuLabel>
-                                    <DropdownMenuSeparator className="bg-slate-100" />
-                                    {user.is_owner ? (
-                                        <>
-                                            <DropdownMenuItem className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-primary/5 group" onClick={() => navigate('/owner-dashboard')}>
-                                                <div className="w-8 h-8 rounded-lg bg-indigo-50 flex items-center justify-center text-indigo-600 group-focus:scale-110 transition-transform">
-                                                    <LayoutDashboard className="w-4 h-4" />
-                                                </div>
-                                                <span className="font-semibold text-slate-700">Owner Dashboard</span>
-                                            </DropdownMenuItem>
-                                        </>
-                                    ) : (
-                                        <DropdownMenuItem className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-primary/5 group" onClick={() => navigate('/dashboard')}>
-                                            <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-focus:scale-110 transition-transform">
-                                                <LayoutDashboard className="w-4 h-4" />
-                                            </div>
-                                            <span className="font-semibold text-slate-700">User Dashboard</span>
-                                        </DropdownMenuItem>
-                                    )}
-                                    <DropdownMenuItem className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-slate-100 group">
-                                        <div className="w-8 h-8 rounded-lg bg-slate-50 flex items-center justify-center text-slate-500 group-focus:scale-110 transition-transform">
-                                            <Settings className="w-4 h-4" />
-                                        </div>
-                                        <span className="font-semibold text-slate-700">Settings</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator className="bg-slate-100" />
-                                    <DropdownMenuItem onClick={handleLogout} className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-red-50 group mt-1 transition-all border border-transparent focus:border-red-100">
-                                        <div className="w-8 h-8 rounded-lg bg-red-50 flex items-center justify-center text-red-600 group-focus:scale-110 transition-transform">
-                                            <LogOut className="w-4 h-4" />
-                                        </div>
-                                        <span className="font-bold text-red-600">Logout</span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        ) : (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button className="px-8 rounded-full font-bold bg-primary hover:bg-primary/90 shadow-lg shadow-primary/20 hover:shadow-primary/30 active:scale-95 transition-all outline-none">
-                                        Login
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-56 p-2 mt-2 rounded-2xl border-white/20 shadow-2xl backdrop-blur-2xl">
-                                    <DropdownMenuItem onClick={() => navigate('/student/login')} className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-primary/5 group">
-                                        <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-focus:scale-110 transition-transform">
-                                            <User className="w-4 h-4" />
-                                        </div>
-                                        <span className="font-bold text-slate-700">Student Login</span>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => navigate('/owner/login')} className="gap-3 cursor-pointer py-3 px-3 rounded-xl focus:bg-orange-50 group">
-                                        <div className="w-8 h-8 rounded-lg bg-orange-50 flex items-center justify-center text-orange-600 group-focus:scale-110 transition-transform">
-                                            <Building2 className="w-4 h-4" />
-                                        </div>
-                                        <span className="font-bold text-slate-700">Owner Login</span>
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
-                    </motion.div>
                 </div>
 
                 <div className="md:hidden flex items-center gap-3">
-                    {user && (
-                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
-                            <User className="w-4 h-4 text-primary" />
-                        </div>
-                    )}
                     <button
                         className={`p-2 rounded-lg transition-colors ${effectiveScrolled ? "text-slate-800" : "text-white"}`}
                         onClick={() => setMobileOpen(!mobileOpen)}
@@ -244,47 +204,56 @@ const Navbar = () => {
                                 ))}
                             </div>
 
-                            <Button
-                                onClick={() => { navigate('/add-property'); setMobileOpen(false); }}
-                                className="w-full bg-gradient-to-r from-orange-500 to-amber-500 py-7 text-lg font-bold rounded-2xl shadow-xl shadow-orange-500/20"
-                            >
-                                <Building2 className="w-5 h-5 mr-3" />
-                                List Your Property
-                            </Button>
-
-                            <div className="grid grid-cols-2 gap-4 mt-2">
-                                {user ? (
+                            {user ? (
+                                <div className="flex flex-col gap-4">
                                     <Button
-                                        variant="outline"
-                                        className="col-span-2 py-6 rounded-xl font-bold border-red-100 bg-red-50 text-red-600 hover:bg-red-100 hover:text-red-700 transition-all"
-                                        onClick={() => { handleLogout(); setMobileOpen(false); }}
+                                        onClick={() => { navigate("/dashboard"); setMobileOpen(false); }}
+                                        className="w-full h-16 rounded-2xl bg-slate-100 text-slate-900 font-bold justify-start px-6 gap-4"
+                                        variant="ghost"
                                     >
-                                        <LogOut className="w-5 h-5 mr-3" />
-                                        Logout Account
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <User className="w-4 h-4 text-primary" />
+                                        </div>
+                                        Dashboard
                                     </Button>
-                                ) : (
-                                    <>
-                                        <Button
-                                            variant="outline"
-                                            className="py-6 rounded-xl font-bold border-slate-200"
-                                            onClick={() => { navigate('/student/login'); setMobileOpen(false); }}
-                                        >
-                                            Student Login
-                                        </Button>
-                                        <Button
-                                            className="py-6 rounded-xl font-bold"
-                                            onClick={() => { navigate('/owner/login'); setMobileOpen(false); }}
-                                        >
-                                            Owner Login
-                                        </Button>
-                                    </>
-                                )}
+                                    <Button
+                                        onClick={() => { logout(); setMobileOpen(false); }}
+                                        className="w-full h-16 rounded-2xl bg-orange-50 text-orange-600 font-bold justify-start px-6 gap-4"
+                                        variant="ghost"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-orange-100 flex items-center justify-center">
+                                            <LogOut className="w-4 h-4" />
+                                        </div>
+                                        Sign Out
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button
+                                    onClick={() => { navigate("/login"); setMobileOpen(false); }}
+                                    className="w-full bg-primary py-7 text-lg font-bold rounded-2xl shadow-xl shadow-primary/20"
+                                >
+                                    Login / Signup
+                                </Button>
+                            )}
+
+                            <div className="flex flex-col gap-2">
+                                <div className="text-xs font-black uppercase tracking-widest text-slate-400 mb-2 ml-1">For Owners</div>
+                                <Button
+                                    onClick={() => { navigate("/add-property"); setMobileOpen(false); }}
+                                    className="w-full h-16 rounded-2xl bg-white border border-slate-100 text-slate-900 font-bold justify-start px-6 gap-4 shadow-sm"
+                                    variant="ghost"
+                                >
+                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                                        <Building2 className="w-5 h-5 text-primary" />
+                                    </div>
+                                    List Your Property
+                                </Button>
                             </div>
                         </div>
                     </motion.div>
                 )}
             </AnimatePresence>
-        </motion.nav>
+        </motion.nav >
     );
 };
 

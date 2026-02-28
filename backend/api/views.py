@@ -7,21 +7,14 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 class PropertyViewSet(viewsets.ModelViewSet):
     queryset = Property.objects.all()
     serializer_class = PropertySerializer
-    permission_classes = [permissions.IsAuthenticatedOrReadOnly]
+    permission_classes = [permissions.AllowAny]
     parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 
     def perform_create(self, serializer):
-        serializer.save(owner=self.request.user)
-
-class PropertyCreateView(generics.CreateAPIView):
-    serializer_class = PropertySerializer
-    permission_classes = [permissions.IsAuthenticated]
-
-    def perform_create(self, serializer):
-        if not self.request.user.is_owner:
-            from rest_framework.exceptions import PermissionDenied
-            raise PermissionDenied("Only owners can list properties.")
-        serializer.save(owner=self.request.user)
+        if self.request.user.is_authenticated:
+            serializer.save(owner=self.request.user)
+        else:
+            serializer.save()
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
@@ -34,8 +27,9 @@ class UserProfileView(generics.RetrieveUpdateAPIView):
     def get_object(self):
         return self.request.user
 
+class UserLoginView(TokenObtainPairView):
+    serializer_class = UserTokenObtainPairSerializer
+
 class OwnerLoginView(TokenObtainPairView):
     serializer_class = OwnerTokenObtainPairSerializer
 
-class UserLoginView(TokenObtainPairView):
-    serializer_class = UserTokenObtainPairSerializer

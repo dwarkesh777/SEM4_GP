@@ -88,11 +88,13 @@ const PropertyCard = ({
                                 className={`w-4 h-4 ${s <= Math.round(rating) ? "fill-[#FFB800] text-[#FFB800]" : "fill-[#E5E7EB] text-[#E5E7EB]"}`}
                             />
                         ))}
-                        <span className="ml-2 text-sm font-semibold text-[#1A1A1A]">{rating.toFixed(1)}/5 ({reviews})</span>
+                        <span className="ml-2 text-sm font-semibold text-[#1A1A1A]">
+                            {typeof rating === 'number' ? rating.toFixed(1) : '0.0'}/5 ({reviews || 0})
+                        </span>
                     </div>
 
                     <div className="flex flex-wrap gap-2 mb-6 min-h-[4rem]">
-                        {amenities.slice(0, 5).map((amenity) => (
+                        {amenities?.slice(0, 5).map((amenity) => (
                             <span
                                 key={amenity}
                                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#E6F2FF] text-[#0070E0] text-xs font-bold uppercase tracking-wider h-fit"

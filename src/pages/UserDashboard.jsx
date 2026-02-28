@@ -112,18 +112,6 @@ const UserDashboard = () => {
         { id: "wishlist", label: "Wishlist", icon: Heart },
     ];
 
-    if (!user) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-slate-50">
-                <Card className="w-full max-w-md p-8 text-center shadow-xl border-white/20 backdrop-blur-sm">
-                    <User className="w-16 h-16 mx-auto mb-4 text-primary opacity-20" />
-                    <CardTitle className="text-2xl mb-2 font-heading">Not Logged In</CardTitle>
-                    <CardDescription className="mb-6">Please login to access your dashboard.</CardDescription>
-                    <Button onClick={() => window.location.href = '/login'} className="w-full rounded-xl">Login Now</Button>
-                </Card>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen bg-slate-50/50">
@@ -157,8 +145,8 @@ const UserDashboard = () => {
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id)}
                                         className={`flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ${activeTab === tab.id
-                                                ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
-                                                : "text-slate-600 hover:bg-primary/5 hover:text-primary"
+                                            ? "bg-primary text-white shadow-lg shadow-primary/20 scale-[1.02]"
+                                            : "text-slate-600 hover:bg-primary/5 hover:text-primary"
                                             }`}
                                     >
                                         <tab.icon className={`w-5 h-5 ${activeTab === tab.id ? "text-white" : "text-inherit"}`} />
@@ -319,8 +307,8 @@ const UserDashboard = () => {
                                                                 <p className="text-lg font-black text-slate-900">₹{booking.price}</p>
                                                             </div>
                                                             <div className={`px-4 py-2 rounded-full text-xs font-black uppercase tracking-widest flex items-center gap-2 ${booking.status === "Confirmed"
-                                                                    ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                                                                    : "bg-amber-50 text-amber-600 border border-amber-100"
+                                                                ? "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                                                                : "bg-amber-50 text-amber-600 border border-amber-100"
                                                                 }`}>
                                                                 {booking.status === "Confirmed" ? <CheckCircle2 className="w-4 h-4" /> : <Clock className="w-4 h-4" />}
                                                                 {booking.status}

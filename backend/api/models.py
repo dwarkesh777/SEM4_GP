@@ -95,6 +95,7 @@ class Room(models.Model):
     beds = models.IntegerField(default=1)
     occupancy = models.CharField(max_length=100)
     price = models.IntegerField()
+    is_ac = models.CharField(max_length=20, default='Non-AC')
     available = models.BooleanField(default=True)
 
 class Review(models.Model):

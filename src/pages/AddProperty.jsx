@@ -1,133 +1,110 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-    Building2,
-    Image as ImageIcon,
-    Video,
-    MapPin,
-    Phone,
-    Mail,
-    ChevronRight,
-    ChevronLeft,
-    Plus,
-    X,
-    Upload,
-    Check,
-    Info,
-    LayoutDashboard,
-    Wifi,
-    Tv,
-    Wind,
-    Utensils,
-    Shield,
-    Car,
-    Dumbbell,
-    Trash2
-} from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
-    SelectValue
+    SelectValue,
 } from "@/components/ui/select";
-import { useAuth } from "@/context/AuthContext";
+import {
+    Building2,
+    MapPin,
+    ArrowLeft,
+    Plus,
+    ChevronRight,
+    ChevronLeft,
+    Info,
+    IndianRupee,
+    CheckCircle2,
+    Image as ImageIcon,
+    Bed,
+    X,
+    Upload,
+    Phone,
+    Mail,
+    Globe,
+    Video
+} from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 
-const amenitiesList = [
-    { id: "wifi", label: "WiFi", icon: <Wifi className="w-4 h-4" /> },
-    { id: "fully_furnished", label: "Fully Furnished", icon: <Building2 className="w-4 h-4" /> },
-    { id: "ac", label: "AC", icon: <Wind className="w-4 h-4" /> },
-    { id: "tv", label: "TV", icon: <Tv className="w-4 h-4" /> },
-    { id: "laundry", label: "Laundry", icon: <Info className="w-4 h-4" /> },
-    { id: "hot_water", label: "Hot Water", icon: <Info className="w-4 h-4" /> },
-    { id: "house_keeping", label: "House Keeping", icon: <Info className="w-4 h-4" /> },
-    { id: "mattress", label: "Mattress", icon: <Info className="w-4 h-4" /> },
-    { id: "parking", label: "Parking", icon: <Car className="w-4 h-4" /> },
-    { id: "security", label: "Security", icon: <Shield className="w-4 h-4" /> },
-    { id: "food", label: "Food", icon: <Utensils className="w-4 h-4" /> },
-    { id: "gym", label: "Gym", icon: <Dumbbell className="w-4 h-4" /> },
+const steps = [
+    { id: 1, title: "Basic Info", subtitle: "STEP 01", icon: Info },
+    { id: 2, title: "Pricing", subtitle: "STEP 02", icon: IndianRupee },
+    { id: 3, title: "Amenities", subtitle: "STEP 03", icon: CheckCircle2 },
+    { id: 4, title: "Media", subtitle: "STEP 04", icon: ImageIcon },
+    { id: 5, title: "Rooms", subtitle: "STEP 05", icon: Bed },
 ];
 
-const appliancesList = [
-    { id: "tv_app", label: "TV" },
-    { id: "geyser", label: "Geyser" },
-    { id: "lamps", label: "Lamps" },
-    { id: "fridge", label: "Fridge" },
-    { id: "ac_app", label: "AC" },
-    { id: "fans", label: "Fans" },
-    { id: "iron", label: "Iron" },
-    { id: "induction", label: "Induction" },
-    { id: "washing_machine", label: "Washing Machine" },
-    { id: "water_purifier", label: "Water Purifier" },
-    { id: "microwave", label: "Microwave" },
-    { id: "router", label: "Router" },
+const AMENITIES_LIST = [
+    "wifi", "fully_furnished", "ac", "tv", "laundry",
+    "hot_water", "house_keeping", "mattress", "parking",
+    "security", "food", "gym"
+];
+
+const APPLIANCES_LIST = [
+    "tv_app", "geyser", "lamps", "fridge", "ac_app",
+    "fans", "iron", "induction", "washing_machine",
+    "water_purifier", "microwave", "router"
 ];
 
 const AddProperty = () => {
-    const { user, loading } = useAuth();
+    const { user } = useAuth();
     const navigate = useNavigate();
-    const [submitting, setSubmitting] = useState(false);
     const [currentStep, setCurrentStep] = useState(1);
+    const [loading, setLoading] = useState(false);
 
-    const steps = [
-        { id: 1, title: "Basic Info", icon: <Info className="w-4 h-4" />, description: "Property details & location" },
-        { id: 2, title: "Pricing", icon: <Building2 className="w-4 h-4" />, description: "Base price & discount" },
-        { id: 3, title: "Amenities", icon: <Check className="w-4 h-4" />, description: "Facilities & appliances" },
-        { id: 4, title: "Media", icon: <ImageIcon className="w-4 h-4" />, description: "Photos & video tour" },
-        { id: 5, title: "Rooms", icon: <Building2 className="w-4 h-4" />, description: "Room types & rates" },
-    ];
-
-    // Redirect if not owner
-    useEffect(() => {
-        if (!loading && (!user || !user.is_owner)) {
-            toast.error("Unauthorized: Only owners can list properties");
-            navigate("/owner-login");
-        }
-    }, [user, loading, navigate]);
-
+    // Form State
     const [formData, setFormData] = useState({
         name: "",
         type: "Hostel",
-        city: "",
-        location: "",
+        city: "Ahmedabad",
+        location: "", // Area
         gender: "Boys",
         address: "",
-        price: "",
-        original_price: "",
-        description: "",
         latitude: "",
         longitude: "",
         phone: "",
-        email: "",
-        main_image_url: "",
-        video_url: "",
+        email: user?.email || "",
+        price: "",
+        originalPrice: "",
+        description: "",
         amenities: [],
         appliances: [],
+        rooms: [{ name: "Standard Room", beds: 1, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
     });
-
-    const [roomTypes, setRoomTypes] = useState([
-        { id: 1, name: "Double Sharing", regularPrice: "", regularBeds: "", regularAvailable: true, acPrice: "", acBeds: "", acAvailable: true },
-        { id: 2, name: "Triple Sharing", regularPrice: "", regularBeds: "", regularAvailable: true, acPrice: "", acBeds: "", acAvailable: true },
-        { id: 3, name: "Quadruple Sharing", regularPrice: "", regularBeds: "", regularAvailable: true, acPrice: "", acBeds: "", acAvailable: true },
-    ]);
 
     const [mainImage, setMainImage] = useState(null);
     const [mainImagePreview, setMainImagePreview] = useState(null);
     const [extraImages, setExtraImages] = useState([]);
-    const [extraImagePreviews, setExtraImagePreviews] = useState([]);
-    const [videoFile, setVideoFile] = useState(null);
+    const [extraImagesPreviews, setExtraImagesPreviews] = useState([]);
+    const [video, setVideo] = useState(null);
     const [videoPreview, setVideoPreview] = useState(null);
 
     const fileInputRef = useRef(null);
     const extraFilesInputRef = useRef(null);
     const videoInputRef = useRef(null);
+
+    if (!user?.is_owner) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="text-center p-8 bg-white rounded-3xl shadow-xl max-w-md border border-slate-100">
+                    <div className="w-20 h-20 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <X className="w-10 h-10 text-orange-500" />
+                    </div>
+                    <h2 className="text-2xl font-black text-slate-900 mb-2">Access Denied</h2>
+                    <p className="text-slate-500 font-medium mb-8">Only property owners can access the owner system and list properties.</p>
+                    <Button onClick={() => navigate("/")} className="w-full bg-primary py-6 rounded-2xl font-bold">Go Back Home</Button>
+                </div>
+            </div>
+        );
+    }
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -138,821 +115,711 @@ const AddProperty = () => {
         setFormData(prev => ({ ...prev, [name]: value }));
     };
 
-    const handleToggleAmenity = (id) => {
+    const toggleItem = (listName, item) => {
         setFormData(prev => {
-            const current = [...prev.amenities];
-            if (current.includes(id)) {
-                return { ...prev, amenities: current.filter(item => item !== id) };
+            const list = prev[listName];
+            if (list.includes(item)) {
+                return { ...prev, [listName]: list.filter(i => i !== item) };
             } else {
-                return { ...prev, amenities: [...current, id] };
+                return { ...prev, [listName]: [...list, item] };
             }
         });
-    };
-
-    const handleToggleAppliance = (id) => {
-        setFormData(prev => {
-            const current = [...prev.appliances];
-            if (current.includes(id)) {
-                return { ...prev, appliances: current.filter(item => item !== id) };
-            } else {
-                return { ...prev, appliances: [...current, id] };
-            }
-        });
-    };
-
-    const handleRoomChange = (id, field, value) => {
-        setRoomTypes(prev => prev.map(room =>
-            room.id === id ? { ...room, [field]: value } : room
-        ));
     };
 
     const handleMainImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
             setMainImage(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setMainImagePreview(reader.result);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const handleExtraImagesChange = (e) => {
-        const files = Array.from(e.target.files);
-        if (files.length > 0) {
-            setExtraImages(prev => [...prev, ...files]);
-
-            files.forEach(file => {
-                const reader = new FileReader();
-                reader.onloadend = () => {
-                    setExtraImagePreviews(prev => [...prev, reader.result]);
-                };
-                reader.readAsDataURL(file);
-            });
+            setMainImagePreview(URL.createObjectURL(file));
         }
     };
 
     const handleVideoChange = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setVideoFile(file);
-            const url = URL.createObjectURL(file);
-            setVideoPreview(url);
+            setVideo(file);
+            setVideoPreview(URL.createObjectURL(file));
         }
     };
 
-    const removeExtraImage = (index) => {
-        setExtraImages(prev => prev.filter((_, i) => i !== index));
-        setExtraImagePreviews(prev => prev.filter((_, i) => i !== index));
+    const handleRoomChange = (index, field, value) => {
+        const updatedRooms = [...formData.rooms];
+        updatedRooms[index][field] = value;
+        setFormData(prev => ({ ...prev, rooms: updatedRooms }));
     };
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setSubmitting(true);
+    const addRoom = () => {
+        setFormData(prev => ({
+            ...prev,
+            rooms: [...prev.rooms, { name: "", beds: 1, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
+        }));
+    };
 
+    const removeRoom = (index) => {
+        if (formData.rooms.length > 1) {
+            setFormData(prev => ({
+                ...prev,
+                rooms: prev.rooms.filter((_, i) => i !== index)
+            }));
+        }
+    };
+
+    const nextStep = () => {
+        if (currentStep < 5) setCurrentStep(currentStep + 1);
+    };
+
+    const prevStep = () => {
+        if (currentStep > 1) setCurrentStep(currentStep - 1);
+    };
+
+    const handleSubmit = async () => {
+        setLoading(true);
         try {
-            // Prepare FormData for multipart upload
-            const formDataObj = new FormData();
+            const submitData = new FormData();
 
-            // Basic fields (skip arrays handled below)
+            // Basic Fields
             Object.keys(formData).forEach(key => {
-                if (key === 'amenities' || key === 'appliances') return;
-                if (formData[key] !== null && formData[key] !== undefined && formData[key] !== "") {
-                    formDataObj.append(key, formData[key]);
+                if (key !== 'rooms' && key !== 'amenities' && key !== 'appliances') {
+                    submitData.append(key, formData[key]);
                 }
             });
 
-            // Handle main image
-            if (mainImage) {
-                formDataObj.append("main_image", mainImage);
-            }
+            // Handle Arrays (Backend expects multiple values for same key or specific format)
+            formData.amenities.forEach(a => submitData.append('amenities', a));
+            formData.appliances.forEach(a => submitData.append('appliances', a));
 
-            // Handle video
-            if (videoFile) {
-                formDataObj.append("video", videoFile);
-            }
+            // Rooms as JSON string
+            submitData.append('rooms_json', JSON.stringify(formData.rooms));
 
-            // Handle multiple images
-            extraImages.forEach((file) => {
-                formDataObj.append("uploaded_images", file);
-            });
-
-            // Handle nested rooms: We need to send these in a way DRF can understand or handle manually
-            // One way is to send each amenity/appliance separately
-            formData.amenities.forEach(amenity => {
-                formDataObj.append("amenities", amenity);
-            });
-            formData.appliances.forEach(appliance => {
-                formDataObj.append("appliances", appliance);
-            });
-
-            // For rooms, we'll send it as a JSON string and we might need to handle it in the backend
-            // or send as rooms[0]name=...
-            const simplifiedRooms = [];
-            roomTypes.forEach(room => {
-                if (room.regularPrice) {
-                    simplifiedRooms.push({
-                        name: room.name,
-                        beds: parseInt(room.regularBeds) || 0,
-                        occupancy: room.name,
-                        price: parseInt(room.regularPrice),
-                        available: room.regularAvailable
-                    });
-                }
-                if (room.acPrice) {
-                    simplifiedRooms.push({
-                        name: `${room.name} (AC)`,
-                        beds: parseInt(room.acBeds) || 0,
-                        occupancy: room.name,
-                        price: parseInt(room.acPrice),
-                        available: room.acAvailable
-                    });
-                }
-            });
-
-            // DRF's nested serializers usually don't handle JSON strings in MultiPartParser automatically
-            // So we'll append each room field if we want to be safe, but simplifiedRooms as JSON is easier if we update the backend to parse it
-            formDataObj.append("rooms_json", JSON.stringify(simplifiedRooms));
+            // Images & Video
+            if (mainImage) submitData.append('main_image', mainImage);
+            if (video) submitData.append('video', video);
+            extraImages.forEach(img => submitData.append('uploaded_images', img));
 
             const response = await fetch("http://localhost:8000/api/properties/", {
                 method: "POST",
                 headers: {
-                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    // Don't set Content-Type, browser does it for FormData
                 },
-                body: formDataObj
+                body: submitData
             });
 
             if (response.ok) {
                 toast.success("Property listed successfully!");
                 navigate("/");
             } else {
-                let errorMessage = "Failed to list property";
-                try {
-                    const err = await response.json();
-                    errorMessage = err.error || (typeof err === 'object' ? JSON.stringify(err) : String(err));
-                } catch (e) {
-                    errorMessage = `Server error (${response.status}): The server encountered an issue.`;
-                }
-                toast.error(errorMessage);
+                const errorData = await response.json().catch(() => ({}));
+                toast.error(errorData.error || errorData.detail || "Listing failed. Please check server.");
             }
         } catch (error) {
-            console.error("Submission error:", error);
-            toast.error("Network error or invalid data. Please check your inputs.");
+            console.error("Submission failed:", error);
+            toast.error(`Error: ${error.message || "Something went wrong"}. Check if backend is running at http://localhost:8000`);
         } finally {
-            setSubmitting(false);
+            setLoading(false);
         }
     };
 
-    if (loading) return null;
-
     return (
-        <div className="min-h-screen pt-24 pb-12 bg-[#F8FAFC]">
-            <div className="container max-w-6xl">
-                <div className="mb-10">
-                    <motion.div
-                        initial={{ opacity: 0, x: -20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="flex items-center gap-2 text-primary font-bold text-sm mb-2"
-                    >
-                        <LayoutDashboard className="w-4 h-4" />
-                        OWNER SYSTEM
-                    </motion.div>
-                    <h1 className="text-4xl md:text-5xl font-heading font-extrabold text-slate-900 tracking-tight">
+        <div className="min-h-screen bg-white pt-24 pb-20">
+            <div className="container px-4 sm:px-6 lg:px-8">
+                {/* Header Section */}
+                <div className="flex flex-col mb-12">
+                    <div className="flex items-center gap-2 text-primary font-bold text-xs uppercase tracking-widest mb-3">
+                        <div className="w-5 h-5 bg-primary/10 rounded flex items-center justify-center">
+                            <Building2 className="w-3 h-3" />
+                        </div>
+                        Owner System
+                    </div>
+                    <h1 className="text-5xl font-black text-slate-900 mb-4 font-heading tracking-tight">
                         List Your <span className="text-primary italic">Property</span>
                     </h1>
-                    <p className="text-slate-500 mt-3 text-base md:text-lg max-w-2xl font-medium leading-relaxed">
+                    <p className="text-slate-500 font-medium text-lg max-w-xl leading-relaxed">
                         Join our premium network of hostels and PGs. Reach thousands of students looking for a second home.
                     </p>
                 </div>
 
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 items-start">
-                    {/* Stepper Sidebar */}
-                    <div className="lg:col-span-3 space-y-4 lg:sticky lg:top-32 h-fit">
-                        {steps.map((step, idx) => {
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
+                    {/* Sidebar Steps */}
+                    <div className="lg:col-span-3 flex flex-col gap-4 relative">
+                        {steps.map((step, index) => {
+                            const Icon = step.icon;
                             const isActive = currentStep === step.id;
                             const isCompleted = currentStep > step.id;
 
                             return (
-                                <div
-                                    key={step.id}
-                                    className="relative flex items-center lg:block"
-                                >
-                                    <div
-                                        className={`relative z-10 p-5 rounded-[1.5rem] transition-all duration-500 border w-full ${isActive
-                                            ? "bg-white border-primary shadow-2xl shadow-primary/20 scale-105"
-                                            : "bg-transparent border-transparent opacity-60"
+                                <div key={step.id} className="relative flex items-center gap-6 group">
+                                    {index !== steps.length - 1 && (
+                                        <div className={`absolute left-[27px] top-14 w-0.5 h-6 transition-colors duration-500 ${isCompleted ? "bg-primary" : "bg-slate-100"}`} />
+                                    )}
+                                    <button
+                                        onClick={() => isCompleted && setCurrentStep(step.id)}
+                                        className={`relative w-14 h-14 rounded-2xl flex items-center justify-center transition-all duration-500 border-2 ${isActive
+                                            ? "bg-primary border-primary shadow-xl shadow-primary/30"
+                                            : isCompleted
+                                                ? "bg-white border-primary/20 text-primary"
+                                                : "bg-white border-slate-100 text-slate-300"
                                             }`}
                                     >
-                                        <div className="flex items-center gap-4">
-                                            <div className="relative">
-                                                {isActive && (
-                                                    <motion.div
-                                                        layoutId="pulse"
-                                                        className="absolute inset-0 bg-primary/20 rounded-xl"
-                                                        animate={{ scale: [1, 1.4, 1], opacity: [0.5, 0, 0.5] }}
-                                                        transition={{ duration: 2, repeat: Infinity }}
-                                                    />
-                                                )}
-                                                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-500 relative z-10 ${isActive || isCompleted ? "bg-primary text-white" : "bg-slate-200 text-slate-500"
-                                                    }`}>
-                                                    {isCompleted ? <Check className="w-5 h-5 animate-in zoom-in duration-300" /> : step.icon}
-                                                </div>
-                                            </div>
-                                            <div className="flex flex-col">
-                                                <span className={`text-sm font-bold transition-colors duration-300 ${isActive ? "text-slate-900" : "text-slate-500"}`}>
-                                                    {step.title}
-                                                </span>
-                                                <span className="text-[10px] uppercase tracking-wider font-bold text-slate-400">
-                                                    Step 0{step.id}
-                                                </span>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {idx !== steps.length - 1 && (
-                                        <div className="absolute left-[2.25rem] top-full h-4 w-0.5 -ml-[1px] hidden lg:block overflow-hidden">
-                                            <div className="w-full h-full bg-slate-200" />
+                                        <Icon className={`w-6 h-6 ${isActive ? "text-white" : ""}`} />
+                                        {isActive && (
                                             <motion.div
-                                                className="absolute top-0 left-0 w-full bg-primary origin-top"
-                                                initial={{ scaleY: 0 }}
-                                                animate={{ scaleY: isCompleted ? 1 : 0 }}
-                                                transition={{ duration: 0.5 }}
+                                                layoutId="active-step-ring"
+                                                className="absolute -inset-2 border-2 border-primary/20 rounded-[1.5rem]"
+                                                initial={false}
+                                                transition={{ type: "spring", stiffness: 300, damping: 30 }}
                                             />
-                                        </div>
-                                    )}
+                                        )}
+                                    </button>
+                                    <div className="flex flex-col">
+                                        <span className={`text-[10px] font-black uppercase tracking-widest ${isActive ? "text-primary" : "text-slate-400"}`}>
+                                            {step.subtitle}
+                                        </span>
+                                        <span className={`text-lg font-bold leading-none ${isActive ? "text-slate-900" : "text-slate-400"}`}>
+                                            {step.title}
+                                        </span>
+                                    </div>
                                 </div>
                             );
                         })}
                     </div>
 
-                    {/* Form Area */}
-                    <div className="lg:col-span-9">
-                        <form onSubmit={handleSubmit} className="space-y-8">
-                            <AnimatePresence mode="wait">
+                    {/* Main Form Area */}
+                    <div className="lg:col-span-9 bg-white">
+                        <AnimatePresence mode="wait">
+                            <motion.div
+                                key={currentStep}
+                                initial={{ opacity: 0, x: 20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                exit={{ opacity: 0, x: -20 }}
+                                transition={{ duration: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                                className="bg-slate-50/50 border border-slate-100 rounded-[3rem] p-10 md:p-14"
+                            >
                                 {currentStep === 1 && (
-                                    <motion.div
-                                        key="step1"
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -20 }}
-                                        className="space-y-8"
-                                    >
-                                        {/* Section 1: Basic Information */}
-                                        <div className="bg-background rounded-2xl p-6 md:p-8 shadow-sm border border-border/50">
-                                            <div className="flex items-center gap-2 mb-6 text-primary">
-                                                <Info className="w-5 h-5" />
-                                                <h2 className="text-xl font-heading font-bold">Basic Information</h2>
+                                    <div className="space-y-12">
+                                        <div className="flex items-center gap-4 mb-2">
+                                            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                                                <Info className="w-6 h-6 text-primary" />
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="name">Property Name</Label>
-                                                    <Input id="name" name="name" value={formData.name} onChange={handleInputChange} placeholder="Enter property name" required />
+                                            <h2 className="text-3xl font-black text-slate-800 font-heading">Basic Information</h2>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
+                                            <div className="space-y-3">
+                                                <Label className="text-sm font-bold text-slate-700 ml-1">Property Name</Label>
+                                                <Input
+                                                    name="name"
+                                                    value={formData.name}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Enter property name"
+                                                    className="h-16 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg px-6"
+                                                />
+                                            </div>
+                                            <div className="space-y-3">
+                                                <Label className="text-sm font-bold text-slate-700 ml-1">Property Type</Label>
+                                                <Select onValueChange={(v) => handleSelectChange('type', v)} defaultValue={formData.type}>
+                                                    <SelectTrigger className="h-16 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg px-6">
+                                                        <SelectValue placeholder="Select type" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-2xl shadow-xl border-slate-100">
+                                                        <SelectItem value="Hostel" className="font-bold py-3">Hostel</SelectItem>
+                                                        <SelectItem value="PG" className="font-bold py-3">PG</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="space-y-3">
+                                                <Label className="text-sm font-bold text-slate-700 ml-1">City</Label>
+                                                <Input
+                                                    name="city"
+                                                    value={formData.city}
+                                                    onChange={handleInputChange}
+                                                    placeholder="e.g. Ahmedabad"
+                                                    className="h-16 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg px-6"
+                                                />
+                                            </div>
+                                            <div className="space-y-3">
+                                                <Label className="text-sm font-bold text-slate-700 ml-1">Location/Area</Label>
+                                                <Input
+                                                    name="location"
+                                                    value={formData.location}
+                                                    onChange={handleInputChange}
+                                                    placeholder="e.g. Navarangpura"
+                                                    className="h-16 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg px-6"
+                                                />
+                                            </div>
+                                            <div className="space-y-3">
+                                                <Label className="text-sm font-bold text-slate-700 ml-1">Type (Gender)</Label>
+                                                <Select onValueChange={(v) => handleSelectChange('gender', v)} defaultValue={formData.gender}>
+                                                    <SelectTrigger className="h-16 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg px-6">
+                                                        <SelectValue placeholder="Select target gender" />
+                                                    </SelectTrigger>
+                                                    <SelectContent className="rounded-2xl shadow-xl border-slate-100">
+                                                        <SelectItem value="Boys" className="font-bold py-3">Boys</SelectItem>
+                                                        <SelectItem value="Girls" className="font-bold py-3">Girls</SelectItem>
+                                                        <SelectItem value="Co-ed" className="font-bold py-3">Co-ed</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </div>
+                                            <div className="md:col-span-2 space-y-3">
+                                                <Label className="text-sm font-bold text-slate-700 ml-1">Full Address</Label>
+                                                <Textarea
+                                                    name="address"
+                                                    value={formData.address}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Complete address with street, building number, etc."
+                                                    className="min-h-[120px] rounded-3xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg p-6 resize-none"
+                                                />
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-10 border-t border-slate-100">
+                                            <div className="flex items-center gap-4 mb-8">
+                                                <div className="w-10 h-10 bg-blue-50 rounded-xl flex items-center justify-center">
+                                                    <MapPin className="w-5 h-5 text-blue-500" />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="type">Property Type</Label>
-                                                    <Select value={formData.type} onValueChange={(val) => handleSelectChange('type', val)}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select type" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="Hostel">Hostel</SelectItem>
-                                                            <SelectItem value="PG">PG</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
+                                                <h3 className="text-2xl font-black text-slate-800 font-heading tracking-tight">Location Coordinates</h3>
+                                                <span className="text-xs font-bold text-slate-400">Help students find you on the map</span>
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="space-y-3">
+                                                    <Label className="text-sm font-bold text-slate-700 ml-1">Latitude</Label>
+                                                    <Input
+                                                        name="latitude"
+                                                        value={formData.latitude}
+                                                        onChange={handleInputChange}
+                                                        placeholder="e.g. 23.0225"
+                                                        className="h-16 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg px-6"
+                                                    />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="city">City</Label>
-                                                    <Input id="city" name="city" value={formData.city} onChange={handleInputChange} placeholder="e.g. Ahmedabad" required />
-                                                </div>
-                                                <div className="space-y-2 text-sm">
-                                                    <Label htmlFor="location">Location/Area</Label>
-                                                    <Input id="location" name="location" value={formData.location} onChange={handleInputChange} placeholder="e.g. Navarangpura" required />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="gender">Type</Label>
-                                                    <Select value={formData.gender} onValueChange={(val) => handleSelectChange('gender', val)}>
-                                                        <SelectTrigger>
-                                                            <SelectValue placeholder="Select target gender" />
-                                                        </SelectTrigger>
-                                                        <SelectContent>
-                                                            <SelectItem value="Boys">Boys</SelectItem>
-                                                            <SelectItem value="Girls">Girls</SelectItem>
-                                                            <SelectItem value="Co-ed">Co-ed</SelectItem>
-                                                        </SelectContent>
-                                                    </Select>
-                                                </div>
-                                                <div className="md:col-span-2 space-y-2">
-                                                    <Label htmlFor="address">Full Address</Label>
-                                                    <Textarea id="address" name="address" value={formData.address} onChange={handleInputChange} placeholder="Complete address with street, building number, etc." className="min-h-[100px] rounded-xl border-slate-100 shadow-sm" required />
+                                                <div className="space-y-3">
+                                                    <Label className="text-sm font-bold text-slate-700 ml-1">Longitude</Label>
+                                                    <Input
+                                                        name="longitude"
+                                                        value={formData.longitude}
+                                                        onChange={handleInputChange}
+                                                        placeholder="e.g. 72.5714"
+                                                        className="h-16 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg px-6"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
 
-                                        {/* Section 3: Location Coordinates */}
-                                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
-                                            <div className="flex items-center gap-3 mb-8">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                                    <MapPin className="w-5 h-5" />
+                                        <div className="pt-10 border-t border-slate-100">
+                                            <div className="flex items-center gap-4 mb-8">
+                                                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                                                    <Phone className="w-5 h-5 text-indigo-500" />
                                                 </div>
-                                                <div>
-                                                    <h2 className="text-xl font-heading font-bold text-slate-900">Location Coordinates</h2>
-                                                    <p className="text-sm text-slate-500 font-medium">Help students find you on the map</p>
-                                                </div>
+                                                <h3 className="text-2xl font-black text-slate-800 font-heading tracking-tight">Contact Details</h3>
+                                                <span className="text-xs font-bold text-slate-400">How students will reach out to you</span>
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="latitude">Latitude</Label>
-                                                    <Input id="latitude" name="latitude" value={formData.latitude} onChange={handleInputChange} placeholder="e.g., 23.0225" className="h-12 rounded-xl border-slate-100 shadow-sm" />
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="space-y-3">
+                                                    <Label className="text-sm font-bold text-slate-700 ml-1">Contact Phone</Label>
+                                                    <Input
+                                                        name="phone"
+                                                        value={formData.phone}
+                                                        onChange={handleInputChange}
+                                                        placeholder="+91 98765 43210"
+                                                        className="h-16 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg px-6"
+                                                    />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="longitude">Longitude</Label>
-                                                    <Input id="longitude" name="longitude" value={formData.longitude} onChange={handleInputChange} placeholder="e.g., 72.5714" className="h-12 rounded-xl border-slate-100 shadow-sm" />
-                                                </div>
-                                            </div>
-                                        </div>
-
-                                        {/* Section 4: Contact Information */}
-                                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
-                                            <div className="flex items-center gap-3 mb-8">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                                    <Phone className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <h2 className="text-xl font-heading font-bold text-slate-900">Contact Details</h2>
-                                                    <p className="text-sm text-slate-500 font-medium">How students will reach out to you</p>
-                                                </div>
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="phone">Contact Phone</Label>
-                                                    <Input id="phone" name="phone" value={formData.phone} onChange={handleInputChange} placeholder="+91 98765 43210" required className="h-12 rounded-xl border-slate-100 shadow-sm" />
-                                                </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="email">Contact Email</Label>
-                                                    <Input id="email" name="email" value={formData.email} onChange={handleInputChange} placeholder="contact@example.com" type="email" required className="h-12 rounded-xl border-slate-100 shadow-sm" />
+                                                <div className="space-y-3">
+                                                    <Label className="text-sm font-bold text-slate-700 ml-1">Contact Email</Label>
+                                                    <Input
+                                                        name="email"
+                                                        value={formData.email}
+                                                        onChange={handleInputChange}
+                                                        placeholder="contact@example.com"
+                                                        className="h-16 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg px-6"
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 )}
 
                                 {currentStep === 2 && (
-                                    <motion.div
-                                        key="step2"
-                                        initial={{ opacity: 0, y: 20 }}
-                                        animate={{ opacity: 1, y: 0 }}
-                                        exit={{ opacity: 0, y: -20 }}
-                                        className="space-y-8"
-                                    >
-                                        {/* Section 2: Main Property Price */}
-                                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
-                                            <div className="flex items-center gap-3 mb-8">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                                    <Building2 className="w-5 h-5" />
-                                                </div>
-                                                <div>
-                                                    <h2 className="text-xl font-heading font-bold text-slate-900">Starting Price</h2>
-                                                    <p className="text-sm text-slate-500 font-medium">Base monthly price for your property</p>
-                                                </div>
+                                    <div className="space-y-12 min-h-[500px]">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                                                <IndianRupee className="w-6 h-6 text-primary" />
                                             </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="price">Monthly Starting Price *</Label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">₹</span>
-                                                        <Input
-                                                            id="price"
-                                                            name="price"
-                                                            type="number"
-                                                            placeholder="5000"
-                                                            value={formData.price}
-                                                            onChange={handleInputChange}
-                                                            className="pl-7 h-12 rounded-xl border-slate-100 shadow-sm"
-                                                            required
-                                                        />
-                                                    </div>
-                                                    <p className="text-xs text-slate-500 ml-1">This is the main price displayed in listings</p>
+                                            <h2 className="text-3xl font-black text-slate-800 font-heading">Starting Price</h2>
+                                        </div>
+                                        <p className="text-slate-500 font-medium">Base monthly price for your property</p>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                            <div className="space-y-4">
+                                                <Label className="text-sm font-bold text-slate-700 ml-1">Monthly Starting Price *</Label>
+                                                <div className="relative">
+                                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">₹</div>
+                                                    <Input
+                                                        name="price"
+                                                        type="number"
+                                                        value={formData.price}
+                                                        onChange={handleInputChange}
+                                                        placeholder="5000"
+                                                        className="h-20 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-black text-2xl pl-12 pr-6"
+                                                    />
                                                 </div>
-                                                <div className="space-y-2">
-                                                    <Label htmlFor="original_price">Original Price (Optional)</Label>
-                                                    <div className="relative">
-                                                        <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">₹</span>
-                                                        <Input
-                                                            id="original_price"
-                                                            name="original_price"
-                                                            type="number"
-                                                            placeholder="6000"
-                                                            value={formData.original_price}
-                                                            onChange={handleInputChange}
-                                                            className="pl-7 h-12 rounded-xl border-slate-100 shadow-sm"
-                                                        />
-                                                    </div>
-                                                    <p className="text-xs text-slate-500 ml-1">Show discount with strikethrough price</p>
+                                                <p className="text-xs font-bold text-slate-400 ml-1 italic">This is the main price displayed in listings</p>
+                                            </div>
+                                            <div className="space-y-4">
+                                                <Label className="text-sm font-bold text-slate-700 ml-1">Original Price (Optional)</Label>
+                                                <div className="relative">
+                                                    <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-xl">₹</div>
+                                                    <Input
+                                                        name="originalPrice"
+                                                        type="number"
+                                                        value={formData.originalPrice}
+                                                        onChange={handleInputChange}
+                                                        placeholder="6000"
+                                                        className="h-20 rounded-2xl border-slate-200 bg-white focus:ring-primary/20 transition-all font-black text-2xl pl-12 pr-6"
+                                                    />
                                                 </div>
+                                                <p className="text-xs font-bold text-slate-400 ml-1 italic">Show discount with strikethrough price</p>
+                                            </div>
+                                            <div className="md:col-span-2 space-y-4">
+                                                <Label className="text-sm font-bold text-slate-700 ml-1">Short Description</Label>
+                                                <Textarea
+                                                    name="description"
+                                                    value={formData.description}
+                                                    onChange={handleInputChange}
+                                                    placeholder="Tell students what makes your property special..."
+                                                    className="min-h-[160px] rounded-[2.5rem] border-slate-200 bg-white focus:ring-primary/20 transition-all font-medium text-lg p-8 resize-none"
+                                                />
                                             </div>
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 )}
 
                                 {currentStep === 3 && (
-                                    <motion.div
-                                        key="step2"
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        className="space-y-8"
-                                    >
-                                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-                                                <div>
-                                                    <div className="flex items-center gap-3 mb-8">
-                                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                                            <Check className="w-5 h-5" />
-                                                        </div>
-                                                        <div>
-                                                            <h2 className="text-xl font-heading font-bold text-slate-900">Amenities</h2>
-                                                            <p className="text-sm text-slate-500 font-medium">Select available facilities</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        {amenitiesList.map((item) => (
-                                                            <div
-                                                                key={item.id}
-                                                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer ${formData.amenities.includes(item.id)
-                                                                    ? "bg-primary/5 border-primary/20"
-                                                                    : "bg-white border-slate-100 hover:border-slate-200"
-                                                                    }`}
-                                                                onClick={() => handleToggleAmenity(item.id)}
-                                                            >
-                                                                <Checkbox
-                                                                    id={item.id}
-                                                                    checked={formData.amenities.includes(item.id)}
-                                                                    onCheckedChange={() => handleToggleAmenity(item.id)}
-                                                                    className="rounded-lg"
-                                                                />
-                                                                <Label htmlFor={item.id} className="text-sm font-bold text-slate-700 flex items-center gap-2 cursor-pointer">
-                                                                    {item.icon}
-                                                                    {item.label}
-                                                                </Label>
-                                                            </div>
-                                                        ))}
-                                                    </div>
+                                    <div className="space-y-12">
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                                                    <CheckCircle2 className="w-6 h-6 text-primary" />
                                                 </div>
-                                                <div>
-                                                    <div className="flex items-center gap-3 mb-8">
-                                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                                            <Tv className="w-5 h-5" />
-                                                        </div>
-                                                        <div>
-                                                            <h2 className="text-xl font-heading font-bold text-slate-900">Appliances</h2>
-                                                            <p className="text-sm text-slate-500 font-medium">Electronic gadgets included</p>
-                                                        </div>
-                                                    </div>
-                                                    <div className="grid grid-cols-2 gap-4">
-                                                        {appliancesList.map((item) => (
-                                                            <div
-                                                                key={item.id}
-                                                                className={`flex items-center gap-3 p-4 rounded-2xl border transition-all cursor-pointer ${formData.appliances.includes(item.id)
-                                                                    ? "bg-primary/5 border-primary/20"
-                                                                    : "bg-white border-slate-100 hover:border-slate-200"
-                                                                    }`}
-                                                                onClick={() => handleToggleAppliance(item.id)}
-                                                            >
-                                                                <Checkbox
-                                                                    id={item.id}
-                                                                    checked={formData.appliances.includes(item.id)}
-                                                                    onCheckedChange={() => handleToggleAppliance(item.id)}
-                                                                    className="rounded-lg"
-                                                                />
-                                                                <Label htmlFor={item.id} className="text-sm font-bold text-slate-700 cursor-pointer">{item.label}</Label>
-                                                            </div>
-                                                        ))}
-                                                    </div>
+                                                <h2 className="text-3xl font-black text-slate-800 font-heading">Amenities & Appliances</h2>
+                                            </div>
+                                            <p className="text-slate-500 font-medium ml-1">Select everything your property offers</p>
+                                        </div>
+
+                                        <div className="space-y-10">
+                                            <div className="space-y-6">
+                                                <h3 className="text-xl font-black text-slate-900 border-l-4 border-primary pl-4 py-1">Core Amenities</h3>
+                                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                                    {AMENITIES_LIST.map((item) => (
+                                                        <button
+                                                            key={item}
+                                                            onClick={() => toggleItem('amenities', item)}
+                                                            className={`p-4 rounded-2xl border-2 transition-all duration-300 font-bold text-sm tracking-tight flex items-center justify-center border-dashed ${formData.amenities.includes(item)
+                                                                ? "bg-primary border-primary text-white shadow-lg shadow-primary/20 scale-105"
+                                                                : "bg-white border-slate-100 text-slate-400 hover:border-primary/30 hover:text-primary"
+                                                                }`}
+                                                        >
+                                                            {item.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+
+                                            <div className="space-y-6 pt-6">
+                                                <h3 className="text-xl font-black text-slate-900 border-l-4 border-accent pl-4 py-1">Electrical Appliances</h3>
+                                                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                                    {APPLIANCES_LIST.map((item) => (
+                                                        <button
+                                                            key={item}
+                                                            onClick={() => toggleItem('appliances', item)}
+                                                            className={`p-4 rounded-2xl border-2 transition-all duration-300 font-bold text-sm tracking-tight flex items-center justify-center border-dashed ${formData.appliances.includes(item)
+                                                                ? "bg-accent border-accent text-white shadow-lg shadow-accent/20 scale-105"
+                                                                : "bg-white border-slate-100 text-slate-400 hover:border-accent/30 hover:text-accent"
+                                                                }`}
+                                                        >
+                                                            {item.replace(/_app/g, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                                                        </button>
+                                                    ))}
                                                 </div>
                                             </div>
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 )}
 
                                 {currentStep === 4 && (
-                                    <motion.div
-                                        key="step4"
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        className="space-y-8"
-                                    >
-                                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
-                                            <div className="flex items-center gap-3 mb-8">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                                    <ImageIcon className="w-5 h-5" />
+                                    <div className="space-y-12">
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                                                    <ImageIcon className="w-6 h-6 text-primary" />
                                                 </div>
-                                                <div>
-                                                    <h2 className="text-xl font-heading font-bold text-slate-900">Property Media</h2>
-                                                    <p className="text-sm text-slate-500 font-medium">Showcase your property with high-quality visuals</p>
-                                                </div>
+                                                <h2 className="text-3xl font-black text-slate-800 font-heading">Property Media</h2>
                                             </div>
+                                            <p className="text-slate-500 font-medium ml-1">High-quality photos help your property stand out</p>
+                                        </div>
 
-                                            <div className="space-y-10">
-                                                {/* Main Image Upload */}
-                                                <div className="space-y-4">
-                                                    <Label className="text-base font-bold text-slate-800">Main Thumbnail Image</Label>
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                        <div
-                                                            onClick={() => fileInputRef.current?.click()}
-                                                            className="border-2 border-dashed border-slate-200 rounded-[2rem] p-10 flex flex-col items-center justify-center gap-4 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all text-center group"
-                                                        >
-                                                            <div className="w-16 h-16 rounded-[1.25rem] bg-slate-100 flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-all">
-                                                                <Upload className="w-8 h-8" />
-                                                            </div>
-                                                            <div>
-                                                                <p className="font-bold text-slate-900">Upload Main Image</p>
-                                                                <p className="text-xs text-slate-500 font-medium mt-1">This will be the first image shown</p>
-                                                            </div>
-                                                            <input
-                                                                type="file"
-                                                                ref={fileInputRef}
-                                                                className="hidden"
-                                                                accept="image/*"
-                                                                onChange={handleMainImageChange}
-                                                            />
-                                                        </div>
-
-                                                        {mainImagePreview && (
-                                                            <div className="relative rounded-[2rem] overflow-hidden border-4 border-white shadow-2xl aspect-video group">
-                                                                <img src={mainImagePreview} alt="Main Preview" className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
-                                                                <div className="absolute top-4 left-4 bg-primary text-white text-[10px] font-bold px-3 py-1 rounded-full shadow-lg">PRIMARY IMAGE</div>
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => { setMainImage(null); setMainImagePreview(null); }}
-                                                                    className="absolute top-4 right-4 bg-white/90 backdrop-blur-md hover:bg-white p-2.5 rounded-full text-destructive shadow-lg transition-all scale-0 group-hover:scale-100"
-                                                                >
-                                                                    <X className="w-5 h-5" />
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                </div>
-
-                                                {/* Extra Images Upload */}
-                                                <div className="space-y-4">
-                                                    <Label className="text-base font-bold text-slate-800">Gallery Photos</Label>
-                                                    <div
-                                                        onClick={() => extraFilesInputRef.current?.click()}
-                                                        className="border-2 border-dashed border-slate-100 rounded-2xl p-6 flex items-center justify-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all w-full"
-                                                    >
-                                                        <Plus className="w-5 h-5 text-primary" />
-                                                        <span className="font-bold text-slate-700">Add More Photos</span>
-                                                        <input
-                                                            type="file"
-                                                            ref={extraFilesInputRef}
-                                                            className="hidden"
-                                                            accept="image/*"
-                                                            multiple
-                                                            onChange={handleExtraImagesChange}
-                                                        />
-                                                    </div>
-
-                                                    {extraImagePreviews.length > 0 && (
-                                                        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-6 mt-6">
-                                                            {extraImagePreviews.map((preview, index) => (
-                                                                <div key={index} className="relative rounded-2xl overflow-hidden border-2 border-white shadow-xl aspect-square group">
-                                                                    <img src={preview} alt={`Preview ${index}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => removeExtraImage(index)}
-                                                                        className="absolute top-2 right-2 bg-black/60 backdrop-blur-md hover:bg-destructive p-1.5 rounded-full text-white opacity-0 group-hover:opacity-100 transition-all shadow-xl"
-                                                                    >
-                                                                        <X className="w-4 h-4" />
-                                                                    </button>
-                                                                </div>
-                                                            ))}
-                                                        </div>
+                                        <div className="space-y-12">
+                                            <div className="space-y-6">
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="text-xl font-black text-slate-900">Main Banner Image</h3>
+                                                    {mainImage && (
+                                                        <Button variant="ghost" className="text-orange-600 font-bold" onClick={() => { setMainImage(null); setMainImagePreview(null); }}>
+                                                            Remove
+                                                        </Button>
                                                     )}
                                                 </div>
 
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-10 border-t border-slate-50 pt-10">
-                                                    <div className="space-y-4">
-                                                        <Label className="text-base font-bold text-slate-800">Property Video Tour</Label>
-                                                        <div
-                                                            onClick={() => videoInputRef.current?.click()}
-                                                            className="border-2 border-dashed border-slate-100 rounded-[1.5rem] p-8 flex flex-col items-center justify-center gap-3 cursor-pointer hover:border-primary/50 hover:bg-primary/5 transition-all text-center"
-                                                        >
-                                                            <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center">
-                                                                <Video className="w-6 h-6 text-slate-400" />
-                                                            </div>
-                                                            <p className="font-bold text-slate-700">Upload Video Tour</p>
-                                                            <input
-                                                                type="file"
-                                                                ref={videoInputRef}
-                                                                className="hidden"
-                                                                accept="video/*"
-                                                                onChange={handleVideoChange}
-                                                            />
+                                                {!mainImagePreview ? (
+                                                    <div
+                                                        onClick={() => fileInputRef.current.click()}
+                                                        className="aspect-[21/9] rounded-[2.5rem] border-4 border-dashed border-slate-100 bg-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-slate-50 transition-all hover:border-primary/20 group"
+                                                    >
+                                                        <div className="w-20 h-20 bg-primary/5 rounded-3xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                                                            <Upload className="w-8 h-8 text-primary" />
                                                         </div>
-                                                        {videoPreview && (
-                                                            <div className="relative rounded-2xl overflow-hidden shadow-2xl bg-black aspect-video mt-4">
-                                                                <video src={videoPreview} controls className="w-full h-full object-contain" />
-                                                                <button
-                                                                    type="button"
-                                                                    onClick={() => { setVideoFile(null); setVideoPreview(null); }}
-                                                                    className="absolute top-4 right-4 bg-white/90 p-2 rounded-full text-destructive shadow-xl z-20"
-                                                                >
-                                                                    <X className="w-5 h-5" />
-                                                                </button>
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                    <div className="space-y-4">
-                                                        <Label htmlFor="description" className="text-base font-bold text-slate-800">Property Description</Label>
-                                                        <Textarea
-                                                            id="description"
-                                                            name="description"
-                                                            value={formData.description}
-                                                            onChange={handleInputChange}
-                                                            placeholder="Describe your project's unique vibe..."
-                                                            className="min-h-[200px] rounded-[1.5rem] border-slate-100 shadow-sm focus:border-primary transition-all p-6"
-                                                            required
+                                                        <div className="text-center">
+                                                            <p className="text-xl font-black text-slate-900">Upload Main Image</p>
+                                                            <p className="text-slate-400 font-bold mt-1 uppercase tracking-widest text-[10px]">JPG, PNG or WEBP (Max 5MB)</p>
+                                                        </div>
+                                                        <input
+                                                            type="file"
+                                                            ref={fileInputRef}
+                                                            className="hidden"
+                                                            accept="image/*"
+                                                            onChange={handleMainImageChange}
                                                         />
                                                     </div>
+                                                ) : (
+                                                    <div className="relative aspect-[21/9] rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
+                                                        <img src={mainImagePreview} className="w-full h-full object-cover" alt="Preview" />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-6 pt-10 border-t border-slate-100">
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="text-xl font-black text-slate-900">Virtual Tour / Video</h3>
+                                                    {video && (
+                                                        <Button variant="ghost" className="text-orange-600 font-bold" onClick={() => { setVideo(null); setVideoPreview(null); }}>
+                                                            Remove Video
+                                                        </Button>
+                                                    )}
+                                                </div>
+
+                                                {!videoPreview ? (
+                                                    <div
+                                                        onClick={() => videoInputRef.current.click()}
+                                                        className="aspect-video rounded-[2.5rem] border-4 border-dashed border-slate-100 bg-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-slate-50 transition-all hover:border-accent/20 group"
+                                                    >
+                                                        <div className="w-20 h-20 bg-accent/5 rounded-3xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
+                                                            <Video className="w-8 h-8 text-accent" />
+                                                        </div>
+                                                        <div className="text-center">
+                                                            <p className="text-xl font-black text-slate-900">Upload Property Video</p>
+                                                            <p className="text-slate-400 font-bold mt-1 uppercase tracking-widest text-[10px]">MP4, WEBM or OGG (Max 20MB) • Optional</p>
+                                                        </div>
+                                                        <input
+                                                            type="file"
+                                                            ref={videoInputRef}
+                                                            className="hidden"
+                                                            accept="video/*"
+                                                            onChange={handleVideoChange}
+                                                        />
+                                                    </div>
+                                                ) : (
+                                                    <div className="relative aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white bg-black">
+                                                        <video src={videoPreview} className="w-full h-full object-cover" controls />
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            <div className="space-y-6 pt-10 border-t border-slate-100">
+                                                <div className="flex items-center justify-between">
+                                                    <h3 className="text-xl font-black text-slate-900">Gallery Photos</h3>
+                                                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Optional</span>
+                                                </div>
+                                                <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                                                    {extraImagesPreviews.map((prev, idx) => (
+                                                        <div key={idx} className="relative aspect-square rounded-3xl overflow-hidden shadow-md group border-2 border-white">
+                                                            <img src={prev} className="w-full h-full object-cover" />
+                                                            <button
+                                                                className="absolute top-2 right-2 w-8 h-8 bg-black/50 backdrop-blur-md rounded-xl flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                onClick={() => {
+                                                                    setExtraImages(prevImgs => prevImgs.filter((_, i) => i !== idx));
+                                                                    setExtraImagesPreviews(prevPrevs => prevPrevs.filter((_, i) => i !== idx));
+                                                                }}
+                                                            >
+                                                                <X className="w-4 h-4" />
+                                                            </button>
+                                                        </div>
+                                                    ))}
+                                                    <button
+                                                        onClick={() => extraFilesInputRef.current.click()}
+                                                        className="aspect-square rounded-3xl border-4 border-dashed border-slate-100 bg-white flex flex-col items-center justify-center gap-2 hover:bg-slate-50 transition-all hover:border-primary/20"
+                                                    >
+                                                        <Plus className="w-8 h-8 text-slate-200" />
+                                                        <span className="text-xs font-black text-slate-400 uppercase tracking-widest">Add Photo</span>
+                                                    </button>
+                                                    <input
+                                                        type="file"
+                                                        multiple
+                                                        ref={extraFilesInputRef}
+                                                        className="hidden"
+                                                        accept="image/*"
+                                                        onChange={(e) => {
+                                                            const files = Array.from(e.target.files);
+                                                            setExtraImages(prev => [...prev, ...files]);
+                                                            setExtraImagesPreviews(prev => [...prev, ...files.map(f => URL.createObjectURL(f))]);
+                                                        }}
+                                                    />
                                                 </div>
                                             </div>
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 )}
 
                                 {currentStep === 5 && (
-                                    <motion.div
-                                        key="step5"
-                                        initial={{ opacity: 0, x: 20 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -20 }}
-                                        className="space-y-8"
-                                    >
-                                        <div className="bg-white rounded-[2rem] p-8 shadow-sm border border-slate-100">
-                                            <div className="flex items-center gap-3 mb-8">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                                                    <Building2 className="w-5 h-5" />
+                                    <div className="space-y-12">
+                                        <div className="flex flex-col gap-2">
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-12 h-12 bg-primary/10 rounded-2xl flex items-center justify-center">
+                                                    <Bed className="w-6 h-6 text-primary" />
                                                 </div>
-                                                <div>
-                                                    <h2 className="text-xl font-heading font-bold text-slate-900">Room Types & Pricing</h2>
-                                                    <p className="text-sm text-slate-500 font-medium">Define your inventory and monthly rates</p>
-                                                </div>
+                                                <h2 className="text-3xl font-black text-slate-800 font-heading">Room Management</h2>
                                             </div>
+                                            <p className="text-slate-500 font-medium ml-1">Define the types of rooms available in your property</p>
+                                        </div>
 
-                                            <div className="space-y-6">
-                                                {roomTypes.map((room) => (
-                                                    <div key={room.id} className="p-8 border border-slate-100 rounded-[2rem] space-y-8 bg-slate-50/30">
-                                                        <div className="flex items-center justify-between">
-                                                            <h3 className="text-xl font-bold text-slate-900">{room.name}</h3>
-                                                            <div className="px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest">
-                                                                CATEGORY 0{room.id}
+                                        <div className="space-y-8">
+                                            {formData.rooms.map((room, idx) => (
+                                                <div key={idx} className="relative p-10 bg-white rounded-[2rem] border-2 border-slate-100 shadow-sm transition-all hover:border-primary/10 group">
+                                                    {formData.rooms.length > 1 && (
+                                                        <button
+                                                            onClick={() => removeRoom(idx)}
+                                                            className="absolute top-6 right-6 w-10 h-10 bg-orange-50 text-orange-600 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all hover:bg-orange-600 hover:text-white"
+                                                        >
+                                                            <X className="w-5 h-5" />
+                                                        </button>
+                                                    )}
+
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                                        <div className="space-y-3 lg:col-span-2">
+                                                            <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Room Category Name</Label>
+                                                            <Input
+                                                                value={room.name}
+                                                                onChange={(e) => handleRoomChange(idx, 'name', e.target.value)}
+                                                                placeholder="e.g. Deluxe Triple Sharing"
+                                                                className="h-14 rounded-xl border-slate-100 bg-slate-50/50 focus:ring-primary/20 font-bold"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-3">
+                                                            <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Occupancy</Label>
+                                                            <Select onValueChange={(v) => handleRoomChange(idx, 'occupancy', v)} defaultValue={room.occupancy}>
+                                                                <SelectTrigger className="h-14 rounded-xl border-slate-100 bg-slate-50/50 font-bold">
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent className="rounded-xl font-bold">
+                                                                    <SelectItem value="Single">Single</SelectItem>
+                                                                    <SelectItem value="Double Sharing">Double Sharing</SelectItem>
+                                                                    <SelectItem value="Triple Sharing">Triple Sharing</SelectItem>
+                                                                    <SelectItem value="Four Sharing">Four Sharing</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
+                                                        </div>
+                                                        <div className="space-y-3">
+                                                            <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Monthly Cost</Label>
+                                                            <div className="relative">
+                                                                <div className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">₹</div>
+                                                                <Input
+                                                                    type="number"
+                                                                    value={room.price}
+                                                                    onChange={(e) => handleRoomChange(idx, 'price', e.target.value)}
+                                                                    placeholder="0"
+                                                                    className="h-14 rounded-xl border-slate-100 bg-slate-50/50 pl-10 font-black"
+                                                                />
                                                             </div>
                                                         </div>
+                                                        <div className="space-y-3">
+                                                            <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Beds</Label>
+                                                            <Input 
+                                                                type="number"
+                                                                value={room.beds}
+                                                                onChange={(e) => handleRoomChange(idx, 'beds', parseInt(e.target.value))}
+                                                                className="h-14 rounded-xl border-slate-100 bg-slate-50/50 font-black"
+                                                            />
+                                                        </div>
+                                                        <div className="flex items-center gap-4 pt-4 lg:col-span-4">
+                                                            <Select onValueChange={(v) => handleRoomChange(idx, 'is_ac', v)} defaultValue={room.is_ac}>
+                                                                <SelectTrigger className={`h-12 px-6 rounded-xl font-bold transition-all border-2 ${
+                                                                    room.is_ac === 'AC' 
+                                                                    ? "bg-blue-50 border-blue-200 text-blue-600" 
+                                                                    : "bg-slate-50 border-slate-100 text-slate-500"
+                                                                }`}>
+                                                                    <SelectValue />
+                                                                </SelectTrigger>
+                                                                <SelectContent className="rounded-xl font-bold">
+                                                                    <SelectItem value="AC">AC Room</SelectItem>
+                                                                    <SelectItem value="Non-AC">Non-AC Room</SelectItem>
+                                                                </SelectContent>
+                                                            </Select>
 
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                                            {/* Regular Section */}
-                                                            <div className="space-y-6 p-6 md:p-8 bg-white rounded-3xl border border-slate-100 shadow-sm">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-8 h-8 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-                                                                            <Building2 className="w-4 h-4" />
-                                                                        </div>
-                                                                        <Label className="font-bold text-sm text-slate-700">Regular / Non-AC</Label>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <Checkbox
-                                                                            id={`reg-avail-${room.id}`}
-                                                                            checked={room.regularAvailable}
-                                                                            onCheckedChange={(val) => handleRoomChange(room.id, 'regularAvailable', val)}
-                                                                            className="rounded-md"
-                                                                        />
-                                                                        <Label htmlFor={`reg-avail-${room.id}`} className="text-xs font-bold text-slate-500 cursor-pointer uppercase tracking-tighter">Listed</Label>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="grid grid-cols-2 gap-4">
-                                                                    <div className="space-y-2">
-                                                                        <Label className="text-xs font-bold text-slate-400">Monthly Price</Label>
-                                                                        <div className="relative">
-                                                                            <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">₹</span>
-                                                                            <Input
-                                                                                placeholder="0.00"
-                                                                                value={room.regularPrice}
-                                                                                onChange={(e) => handleRoomChange(room.id, 'regularPrice', e.target.value)}
-                                                                                className="pl-7 h-11 rounded-xl border-slate-100"
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="space-y-2">
-                                                                        <Label className="text-xs font-bold text-slate-400">Total Beds</Label>
-                                                                        <Input
-                                                                            placeholder="e.g. 20"
-                                                                            value={room.regularBeds}
-                                                                            onChange={(e) => handleRoomChange(room.id, 'regularBeds', e.target.value)}
-                                                                            className="h-11 rounded-xl border-slate-100"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-
-                                                            {/* AC Section */}
-                                                            <div className="space-y-6 p-6 md:p-8 bg-white rounded-3xl border border-slate-100 shadow-sm">
-                                                                <div className="flex items-center justify-between">
-                                                                    <div className="flex items-center gap-2">
-                                                                        <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
-                                                                            <Wind className="w-4 h-4" />
-                                                                        </div>
-                                                                        <Label className="font-bold text-sm text-slate-700">AC Premium</Label>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2">
-                                                                        <Checkbox
-                                                                            id={`ac-avail-${room.id}`}
-                                                                            checked={room.acAvailable}
-                                                                            onCheckedChange={(val) => handleRoomChange(room.id, 'acAvailable', val)}
-                                                                            className="rounded-md"
-                                                                        />
-                                                                        <Label htmlFor={`ac-avail-${room.id}`} className="text-xs font-bold text-slate-500 cursor-pointer uppercase tracking-tighter">Listed</Label>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="grid grid-cols-2 gap-4">
-                                                                    <div className="space-y-2">
-                                                                        <Label className="text-xs font-bold text-slate-400">Monthly Price</Label>
-                                                                        <div className="relative">
-                                                                            <span className="absolute left-3 top-2.5 text-slate-400 text-sm font-bold">₹</span>
-                                                                            <Input
-                                                                                placeholder="0.00"
-                                                                                value={room.acPrice}
-                                                                                onChange={(e) => handleRoomChange(room.id, 'acPrice', e.target.value)}
-                                                                                className="pl-7 h-11 rounded-xl border-slate-100"
-                                                                            />
-                                                                        </div>
-                                                                    </div>
-                                                                    <div className="space-y-2">
-                                                                        <Label className="text-xs font-bold text-slate-400">Total Beds</Label>
-                                                                        <Input
-                                                                            placeholder="e.g. 10"
-                                                                            value={room.acBeds}
-                                                                            onChange={(e) => handleRoomChange(room.id, 'acBeds', e.target.value)}
-                                                                            className="h-11 rounded-xl border-slate-100"
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            </div>
+                                                            <button 
+                                                                onClick={() => handleRoomChange(idx, 'available', !room.available)}
+                                                                className={`flex items-center gap-3 px-6 py-3 rounded-xl font-bold transition-all h-12 ${
+                                                                    room.available 
+                                                                    ? "bg-green-50 text-green-600 border-2 border-green-100" 
+                                                                    : "bg-slate-100 text-slate-400 border-2 border-transparent"
+                                                                }`}
+                                                            >
+                                                                <div className={`w-3 h-3 rounded-full ${room.available ? "bg-green-500 animate-pulse" : "bg-slate-300"}`} />
+                                                                {room.available ? "Available" : "Sold Out"}
+                                                            </button>
                                                         </div>
                                                     </div>
-                                                ))}
-                                            </div>
+                                                </div>
+                                            ))}
+
+                                            <Button
+                                                variant="outline"
+                                                className="w-full h-20 rounded-[2rem] border-2 border-dashed border-slate-200 text-slate-400 font-black gap-3 hover:border-primary/30 hover:text-primary hover:bg-slate-50"
+                                                onClick={addRoom}
+                                            >
+                                                <Plus className="w-5 h-5" /> Add Another Room Type
+                                            </Button>
                                         </div>
-                                    </motion.div>
+                                    </div>
                                 )}
+                            </motion.div>
+                        </AnimatePresence>
 
-                            </AnimatePresence>
+                        {/* Navigation Footer */}
+                        <div className="mt-12 flex items-center justify-between bg-white p-6 md:p-10 rounded-[2.5rem] shadow-2xl shadow-slate-200/50 border border-slate-50">
+                            <Button
+                                variant="ghost"
+                                onClick={prevStep}
+                                disabled={currentStep === 1}
+                                className="h-16 px-10 rounded-2xl font-black gap-3 text-slate-400 hover:text-slate-900 transition-all border border-transparent hover:border-slate-100"
+                            >
+                                <ChevronLeft className="w-5 h-5" /> Back
+                            </Button>
 
-                            {/* Navigation Buttons */}
-                            <div className="pt-10 flex items-center justify-between border-t border-slate-200">
-                                {currentStep > 1 ? (
-                                    <Button
-                                        type="button"
-                                        variant="outline"
-                                        onClick={() => setCurrentStep(prev => prev - 1)}
-                                        className="h-14 px-8 rounded-2xl font-bold border-slate-200 hover:bg-slate-50 transition-all text-slate-700 gap-2"
-                                    >
-                                        <ChevronLeft className="w-5 h-5" />
-                                        Back
-                                    </Button>
-                                ) : <div />}
-
-                                {currentStep < steps.length ? (
-                                    <Button
-                                        type="button"
-                                        onClick={() => setCurrentStep(prev => prev + 1)}
-                                        className="h-14 px-10 rounded-2xl font-bold bg-slate-900 text-white hover:bg-black shadow-xl shadow-slate-900/10 transition-all gap-2"
-                                    >
-                                        Next Step
-                                        <ChevronRight className="w-5 h-5" />
-                                    </Button>
-                                ) : (
-                                    <Button
-                                        type="submit"
-                                        disabled={submitting}
-                                        className="h-14 px-10 rounded-2xl font-bold bg-primary text-white hover:bg-primary/90 shadow-xl shadow-primary/20 transition-all gap-2"
-                                    >
-                                        {submitting ? (
-                                            <>
-                                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                                                Listing...
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Check className="w-5 h-5" />
-                                                Publish Listing
-                                            </>
-                                        )}
-                                    </Button>
-                                )}
-                            </div>
-                        </form>
+                            {currentStep < 5 ? (
+                                <Button
+                                    onClick={nextStep}
+                                    className="h-16 px-12 rounded-2xl bg-slate-900 hover:bg-black text-white font-black gap-3 shadow-xl transition-all active:scale-95"
+                                >
+                                    Next Step <ChevronRight className="w-5 h-5" />
+                                </Button>
+                            ) : (
+                                <Button
+                                    onClick={handleSubmit}
+                                    disabled={loading}
+                                    className="h-20 px-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black gap-4 shadow-2xl shadow-primary/30 transition-all active:scale-95"
+                                >
+                                    {loading ? "Listing Property..." : "Finalize & List Property"}
+                                    <Globe className={`w-6 h-6 ${loading ? 'animate-spin' : ''}`} />
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

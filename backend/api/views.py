@@ -93,8 +93,9 @@ import razorpay
 import hmac
 import hashlib
 from django.conf import settings
-from rest_framework.decorators import api_view, permission_classes as perm_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 def get_razorpay_client():
@@ -104,7 +105,8 @@ def get_razorpay_client():
 
 
 @api_view(['POST'])
-@perm_classes([AllowAny])
+@authentication_classes([JWTAuthentication])
+@permission_classes([AllowAny])
 def create_razorpay_order(request):
     """
     Creates a Razorpay order.
@@ -145,12 +147,15 @@ def create_razorpay_order(request):
 
 
 @api_view(['POST'])
-@perm_classes([AllowAny])
+@authentication_classes([JWTAuthentication])
+@permission_classes([AllowAny])
 def verify_razorpay_payment(request):
     """
     Verifies Razorpay payment signature after checkout.
     Body: { razorpay_order_id, razorpay_payment_id, razorpay_signature }
     """
+    logger.info(f"Payment Verification - User: {request.user}, Is Authenticated: {request.user.is_authenticated}")
+    
     try:
         order_id   = request.data.get('razorpay_order_id', '')
         payment_id = request.data.get('razorpay_payment_id', '')

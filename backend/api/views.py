@@ -1,8 +1,8 @@
 import logging
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
-from .models import Property
-from .serializers import PropertySerializer
+from .models import Property, Booking, Room
+from .serializers import PropertySerializer, BookingSerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -148,12 +148,8 @@ def create_razorpay_order(request):
 @perm_classes([AllowAny])
 def verify_razorpay_payment(request):
     """
-    Verifies Razorpay payment signature and saves booking to DB.
-    Body: {
-        razorpay_order_id, razorpay_payment_id, razorpay_signature,
-        property_id, room_id, amount,
-        customer_name, customer_phone, customer_email, customer_age
-    }
+    Verifies Razorpay payment signature after checkout.
+    Body: { razorpay_order_id, razorpay_payment_id, razorpay_signature }
     """
     try:
         order_id   = request.data.get('razorpay_order_id', '')
@@ -171,60 +167,46 @@ def verify_razorpay_payment(request):
             hashlib.sha256
         ).hexdigest()
 
-        if expected != signature:
+        if expected == signature:
+            # Payment verified, now save the booking
+            try:
+                property_id = request.data.get('property_id')
+                room_id = request.data.get('room_id')
+                
+                # Metadata from frontend
+                customer_data = request.data.get('customer_details', {})
+                
+                booking = Booking.objects.create(
+                    user=request.user if request.user.is_authenticated else None,
+                    property_id=property_id,
+                    room_id=room_id,
+                    payment_id=payment_id,
+                    razorpay_order_id=order_id,
+                    amount=request.data.get('amount'),
+                    customer_name=customer_data.get('name'),
+                    customer_phone=customer_data.get('phone'),
+                    customer_email=customer_data.get('email'),
+                    customer_age=customer_data.get('age'),
+                    status='Confirmed'
+                )
+                return Response({'verified': True, 'payment_id': payment_id, 'booking_id': str(booking.id)})
+            except Exception as e:
+                logger.error(f"Error saving booking: {e}", exc_info=True)
+                # Still return verified True because payment WAS successful, 
+                # but maybe notify about DB error? 
+                # For now, let's just return verified True.
+                return Response({'verified': True, 'payment_id': payment_id, 'booking_error': str(e)})
+        else:
             return Response({'verified': False, 'error': 'Signature mismatch'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Payment verified — now save the Booking
-        from .models import Booking, Property, Room
-        booking_id = None
-        try:
-            property_id  = request.data.get('property_id')
-            room_id      = request.data.get('room_id')
-            amount       = request.data.get('amount')
-            customer_name  = request.data.get('customer_name', '')
-            customer_phone = request.data.get('customer_phone', '')
-            customer_email = request.data.get('customer_email', '')
-            customer_age   = request.data.get('customer_age')
-
-            property_obj = Property.objects.get(id=property_id)
-            room_obj     = Room.objects.get(id=room_id)
-
-            # Attach to logged-in user if authenticated
-            user_obj = request.user if request.user.is_authenticated else None
-
-            booking = Booking.objects.create(
-                user=user_obj,
-                property=property_obj,
-                room=room_obj,
-                status='Confirmed',
-                payment_id=payment_id,
-                razorpay_order_id=order_id,
-                amount=amount,
-                customer_name=customer_name,
-                customer_phone=customer_phone,
-                customer_email=customer_email,
-                customer_age=customer_age,
-            )
-            booking_id = str(booking.id)
-            logger.info(f"Booking {booking_id} saved for payment {payment_id}")
-        except Exception as booking_err:
-            logger.error(f"Booking save failed: {booking_err}", exc_info=True)
-            # Still return verified=True even if booking save fails
-        
-        return Response({'verified': True, 'payment_id': payment_id, 'booking_id': booking_id})
 
     except Exception as e:
         logger.error(f"Razorpay verification failed: {e}", exc_info=True)
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['GET'])
-def my_bookings(request):
-    """Returns all bookings for the currently authenticated user."""
-    from .models import Booking
-    from .serializers import BookingSerializer
+class BookingViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = BookingSerializer
+    permission_classes = [permissions.IsAuthenticated]
 
-    # Support lookup by email for guest bookings too
-    bookings = Booking.objects.filter(user=request.user).order_by('-created_at')
-    serializer = BookingSerializer(bookings, many=True, context={'request': request})
-    return Response(serializer.data)
+    def get_queryset(self):
+        return Booking.objects.filter(user=self.request.user).order_by('-created_at')

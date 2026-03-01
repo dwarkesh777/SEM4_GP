@@ -154,7 +154,9 @@ def verify_razorpay_payment(request):
     Verifies Razorpay payment signature after checkout.
     Body: { razorpay_order_id, razorpay_payment_id, razorpay_signature }
     """
-    logger.info(f"Payment Verification - User: {request.user}, Is Authenticated: {request.user.is_authenticated}")
+    logger.info(f"Payment Verification - User: {request.user}, Authenticated: {request.user.is_authenticated}")
+    if request.user.is_authenticated:
+        logger.info(f"Authenticated User Email: {request.user.email}")
     
     try:
         order_id   = request.data.get('razorpay_order_id', '')

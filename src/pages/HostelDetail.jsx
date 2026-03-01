@@ -299,10 +299,14 @@ const HostelDetail = () => {
                 return;
             }
 
+            const token = localStorage.getItem('token');
             // Step 2: Create order on backend
             const orderRes = await fetch(`${API_URL}/api/payment/create-order/`, {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                },
                 body: JSON.stringify({
                     amount: selectedRoom?.price || property?.price,
                     property_id: property?.id,
@@ -341,7 +345,8 @@ const HostelDetail = () => {
                 handler: async (response) => {
                     // Step 4: Verify payment signature
                     try {
-                        const token = localStorage.getItem('access_token');
+                        const token = localStorage.getItem('token');
+
                         const verifyRes = await fetch(`${API_URL}/api/payment/verify/`, {
                             method: "POST",
                             headers: {

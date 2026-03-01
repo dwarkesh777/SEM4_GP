@@ -187,8 +187,18 @@ def verify_razorpay_payment(request):
                 # Metadata from frontend
                 customer_data = request.data.get('customer_details', {})
                 
+                # Smart user detection fallback
+                user = request.user if request.user.is_authenticated else None
+                if not user:
+                    # Fallback: Find user by email provided in customer details
+                    customer_email = customer_data.get('email')
+                    if customer_email:
+                        user = User.objects.filter(email=customer_email).first()
+                        if user:
+                            logger.info(f"Fallback: Associated booking with user {user.email} via email match.")
+
                 booking = Booking.objects.create(
-                    user=request.user if request.user.is_authenticated else None,
+                    user=user,
                     property=prop_obj,
                     room=room_obj,
                     payment_id=payment_id,

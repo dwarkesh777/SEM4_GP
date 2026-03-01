@@ -25,6 +25,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
+import { API_URL } from "@/lib/api";
 
 const UserDashboard = () => {
     const { user, logout } = useAuth();
@@ -352,7 +353,7 @@ const UserDashboard = () => {
                                                             </div>
                                                             <h3 className="font-bold text-slate-900">{enquiry.property_name}</h3>
                                                         </div>
-                                                        <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {enquiry.date}</span>
+                                                        <span className="text-xs font-bold text-slate-400 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {new Date(enquiry.created_at).toLocaleDateString()}</span>
                                                     </div>
                                                     <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100 text-slate-700 text-sm leading-relaxed italic">
                                                         "{enquiry.message}"
@@ -397,7 +398,7 @@ const UserDashboard = () => {
                                                     className="group bg-white rounded-[2.5rem] overflow-hidden shadow-xl shadow-slate-200/50 border border-white hover:border-primary/20 transition-all"
                                                 >
                                                     <div className="relative h-56 overflow-hidden">
-                                                        <img src={item.image} alt={item.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
+                                                        <img src={item.property_details.main_image} alt={item.property_details.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" />
                                                         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                                                         <Button
                                                             variant="secondary"
@@ -410,17 +411,17 @@ const UserDashboard = () => {
                                                     <div className="p-8 space-y-4">
                                                         <div className="flex justify-between items-start">
                                                             <div>
-                                                                <h3 className="text-xl font-black text-slate-900 mb-1">{item.name}</h3>
-                                                                <p className="text-sm text-slate-500 flex items-center gap-1.5 font-medium italic"><MapPin className="w-3.5 h-3.5 text-primary" /> {item.location}</p>
+                                                                <h3 className="text-xl font-black text-slate-900 mb-1">{item.property_details.name}</h3>
+                                                                <p className="text-sm text-slate-500 flex items-center gap-1.5 font-medium italic"><MapPin className="w-3.5 h-3.5 text-primary" /> {item.property_details.location}</p>
                                                             </div>
                                                             <div className="bg-amber-50 text-amber-600 px-3 py-1.5 rounded-xl text-sm font-black flex items-center gap-1.5 border border-amber-100">
-                                                                ⭐ {item.rating}
+                                                                ⭐ {item.property_details.rating}
                                                             </div>
                                                         </div>
                                                         <div className="flex items-center justify-between pt-4 border-t border-slate-50">
                                                             <div>
                                                                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-0.5">Starting at</p>
-                                                                <p className="text-xl font-black text-primary">₹{item.price}<span className="text-sm text-slate-400 font-medium">/mo</span></p>
+                                                                <p className="text-xl font-black text-primary">₹{item.property_details.price}<span className="text-sm text-slate-400 font-medium">/mo</span></p>
                                                             </div>
                                                             <Button className="rounded-2xl px-6 bg-slate-900 hover:bg-primary font-bold shadow-lg transition-all active:scale-95">
                                                                 View Details

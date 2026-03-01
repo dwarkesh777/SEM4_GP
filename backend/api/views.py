@@ -1,8 +1,8 @@
 import logging
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
-from .models import Property, Booking, Room
-from .serializers import PropertySerializer, BookingSerializer
+from .models import Property, Booking, Room, Enquiry, Wishlist
+from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 
@@ -173,13 +173,17 @@ def verify_razorpay_payment(request):
                 property_id = request.data.get('property_id')
                 room_id = request.data.get('room_id')
                 
+                # Fetch instances to handle UUID/ObjectId correctly
+                prop_obj = Property.objects.get(id=property_id)
+                room_obj = Room.objects.get(id=room_id)
+                
                 # Metadata from frontend
                 customer_data = request.data.get('customer_details', {})
                 
                 booking = Booking.objects.create(
                     user=request.user if request.user.is_authenticated else None,
-                    property_id=property_id,
-                    room_id=room_id,
+                    property=prop_obj,
+                    room=room_obj,
                     payment_id=payment_id,
                     razorpay_order_id=order_id,
                     amount=request.data.get('amount'),
@@ -192,9 +196,6 @@ def verify_razorpay_payment(request):
                 return Response({'verified': True, 'payment_id': payment_id, 'booking_id': str(booking.id)})
             except Exception as e:
                 logger.error(f"Error saving booking: {e}", exc_info=True)
-                # Still return verified True because payment WAS successful, 
-                # but maybe notify about DB error? 
-                # For now, let's just return verified True.
                 return Response({'verified': True, 'payment_id': payment_id, 'booking_error': str(e)})
         else:
             return Response({'verified': False, 'error': 'Signature mismatch'}, status=status.HTTP_400_BAD_REQUEST)
@@ -210,3 +211,22 @@ class BookingViewSet(viewsets.ReadOnlyModelViewSet):
 
     def get_queryset(self):
         return Booking.objects.filter(user=self.request.user).order_by('-created_at')
+
+
+class EnquiryViewSet(viewsets.ReadOnlyModelViewSet):
+    serializer_class = EnquirySerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Enquiry.objects.filter(user=self.request.user).order_by('-created_at')
+
+
+class WishlistViewSet(viewsets.ModelViewSet):
+    serializer_class = WishlistSerializer
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        return Wishlist.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)

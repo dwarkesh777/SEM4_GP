@@ -5,6 +5,8 @@ from .models import Property, Booking, Room, Enquiry, Wishlist
 from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from django.core.mail import send_mail
+from django.conf import settings
 
 logger = logging.getLogger(__name__)
 
@@ -64,7 +66,17 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if self.request.user.is_authenticated:
-            serializer.save(owner=self.request.user)
+            property_instance = serializer.save(owner=self.request.user)
+            
+            # Send grateful email to owner
+            try:
+                subject = 'Property Listed Successfully - BedBuddy'
+                message = f'Dear {self.request.user.full_name},\n\nThank you for choosing BedBuddy! Your property "{property_instance.name}" has been successfully listed on our platform.\n\nWe are grateful to have you as a partner. Our team will review the listing and it will be visible to students shortly.\n\nBest regards,\nTeam BedBuddy'
+                recipient_list = [self.request.user.email]
+                send_mail(subject, message, settings.EMAIL_HOST_USER, recipient_list)
+                logger.info(f"Notification email sent to {self.request.user.email} for property {property_instance.name}")
+            except Exception as e:
+                logger.error(f"Failed to send notification email: {e}")
         else:
             # owner is required by the model — raise a clear error
             from rest_framework.exceptions import AuthenticationFailed

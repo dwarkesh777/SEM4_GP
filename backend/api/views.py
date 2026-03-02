@@ -254,6 +254,80 @@ class BookingViewSet(viewsets.ReadOnlyModelViewSet):
         return Booking.objects.filter(user=self.request.user).order_by('-created_at')
 
 
+def send_enquiry_notification_email(enquiry):
+    """
+    Sends a beautiful HTML email to the property owner about a new enquiry.
+    """
+    try:
+        owner_email = enquiry.property.owner.email
+        property_name = enquiry.property.name
+        student_name = enquiry.name or "A Student"
+        student_phone = enquiry.phone or "Not provided"
+        message = enquiry.message
+
+        subject = f'🏠 New Enquiry for {property_name} - BedBuddy'
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                .wrapper {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; background: white; border-radius: 24px; overflow: hidden; shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+                .header {{ background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); padding: 40px; text-align: center; }}
+                .content {{ padding: 40px; color: #1e293b; }}
+                .label {{ color: #64748b; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 4px; }}
+                .value {{ color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 24px; }}
+                .message-box {{ background: #f1f5f9; border-radius: 16px; padding: 24px; font-style: italic; color: #475569; border-left: 4px solid #4f46e5; }}
+                .footer {{ text-align: center; padding: 30px; color: #94a3b8; font-size: 12px; }}
+                .btn {{ display: inline-block; background: #4f46e5; color: white !important; padding: 16px 32px; border-radius: 12px; text-decoration: none; font-weight: 700; margin-top: 20px; }}
+            </style>
+        </head>
+        <body>
+            <div class="wrapper">
+                <div class="container">
+                    <div class="header">
+                        <h1 style="color: white; margin: 0; font-size: 24px;">New Enquiry Received!</h1>
+                        <p style="color: rgba(255,255,255,0.8); margin-top: 8px;">Someone is interested in your property</p>
+                    </div>
+                    <div class="content">
+                        <div class="label">Property</div>
+                        <div class="value">{property_name}</div>
+                        
+                        <div class="label">Student Name</div>
+                        <div class="value">{student_name}</div>
+                        
+                        <div class="label">Contact Number</div>
+                        <div class="value">{student_phone}</div>
+                        
+                        <div class="label">Enquiry Message</div>
+                        <div class="message-box">"{message}"</div>
+                        
+                        <div style="text-align: center;">
+                            <a href="https://bedbuddy.com/dashboard" class="btn">View in Dashboard</a>
+                        </div>
+                    </div>
+                    <div class="footer">
+                        © 2024 BedBuddy • Premium Student Living Platforms
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        send_mail(
+            subject,
+            f"You have a new enquiry for {property_name} from {student_name}.",
+            settings.EMAIL_HOST_USER,
+            [owner_email],
+            fail_silently=False,
+            html_message=html_content
+        )
+        logger.info(f"Enquiry notification sent to {owner_email}")
+    except Exception as e:
+        logger.error(f"Failed to send enquiry email: {e}")
+
 class EnquiryViewSet(viewsets.ModelViewSet):
     serializer_class = EnquirySerializer
     permission_classes = [permissions.IsAuthenticated]
@@ -264,7 +338,9 @@ class EnquiryViewSet(viewsets.ModelViewSet):
         return Enquiry.objects.filter(user=self.request.user).order_by('-created_at')
 
     def perform_create(self, serializer):
-        serializer.save(user=self.request.user)
+        enquiry = serializer.save(user=self.request.user)
+        # Trigger notification email
+        send_enquiry_notification_email(enquiry)
 
 
 class WishlistViewSet(viewsets.ModelViewSet):

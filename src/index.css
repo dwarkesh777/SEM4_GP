@@ -90,7 +90,12 @@
     @apply bg-background text-foreground font-body antialiased;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-heading;
   }
 }
@@ -98,7 +103,7 @@
 @layer utilities {
   .text-gradient {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(217, 91%, 60%), hsl(230, 80%, 50%));
+    background-image: linear-gradient(135deg, hsl(217, 91%, 60%) 0%, hsl(260, 80%, 60%) 50%, hsl(230, 80%, 50%) 100%);
   }
 
   .hero-overlay {
@@ -113,7 +118,7 @@
 
   .card-elevated {
     box-shadow: var(--card-shadow);
-    transition: box-shadow 0.3s ease, transform 0.3s ease;  
+    transition: box-shadow 0.3s ease, transform 0.3s ease;
   }
 
   .card-elevated:hover {

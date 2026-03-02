@@ -1,12 +1,17 @@
 import logging
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
-from .models import Property, Booking, Room, Enquiry, Wishlist
+from .models import Property, Booking, Room, Enquiry, Wishlist, User
 from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.core.mail import send_mail
 from django.conf import settings
+import random
+from django.utils import timezone
+from datetime import timedelta
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
 
 logger = logging.getLogger(__name__)
 
@@ -266,3 +271,94 @@ class WishlistViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+
+# ─── OTP AUTHENTICATION VIEWS ───────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def send_otp(request):
+    """
+    Generates and sends a 6-digit OTP to the user's email.
+    Body: { "email": "user@example.com" }
+    """
+    try:
+        email = request.data.get('email')
+        if not email:
+            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response({"error": "No account found with this email."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Generate 6-digit OTP
+        otp_code = str(random.randint(100000, 999999))
+        user.otp_code = otp_code
+        user.otp_expiry = timezone.now() + timedelta(minutes=5)
+        user.save()
+
+        # Send email
+        subject = 'Your BedBuddy Login OTP'
+        message = f'Your OTP for logging into BedBuddy is: {otp_code}\n\nThis code will expire in 5 minutes.'
+        try:
+            send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
+            logger.info(f"OTP sent to {email}")
+            return Response({"message": "OTP sent successfully to your email."})
+        except Exception as mail_e:
+            logger.error(f"Failed to send OTP email: {mail_e}")
+            return Response({"error": f"Failed to send email: {str(mail_e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+    except Exception as e:
+        logger.error(f"OTP generation error: {e}")
+        return Response({"error": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def verify_otp(request):
+    """
+    Verifies the OTP and returns JWT tokens.
+    Body: { "email": "user@example.com", "otp": "123456" }
+    """
+    try:
+        email = request.data.get('email')
+        otp = request.data.get('otp')
+
+        if not email or not otp:
+            return Response({"error": "Email and OTP are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response({"error": "No account found with this email."}, status=status.HTTP_404_NOT_FOUND)
+
+        # Verify matching code and expiry
+        if user.otp_code != otp:
+            return Response({"error": "Invalid OTP code."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.otp_expiry < timezone.now():
+            return Response({"error": "OTP has expired. Please request a new one."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Success: Clear OTP and generate tokens
+        user.otp_code = None
+        user.otp_expiry = None
+        user.save()
+
+        refresh = RefreshToken.for_user(user)
+        try:
+            user_data = UserSerializer(user).data
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': user_data
+            })
+        except Exception as ser_e:
+            logger.error(f"User serialization error: {ser_e}")
+            return Response({
+                'refresh': str(refresh),
+                'access': str(refresh.access_token),
+                'user': {'email': user.email, 'id': str(user.id)}
+            })
+
+    except Exception as e:
+        logger.error(f"OTP verification error: {e}")
+        return Response({"error": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

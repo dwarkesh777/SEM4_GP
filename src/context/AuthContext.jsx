@@ -140,8 +140,62 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
+    const sendOTP = async (email) => {
+        try {
+            const response = await fetch(`${API_URL}/api/auth/send-otp/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email })
+            });
+
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                return { success: false, error: "Server returned an invalid response. Please check your backend." };
+            }
+
+            if (response.ok) {
+                return { success: true, message: data.message };
+            } else {
+                return { success: false, error: data.error || data.detail || "Failed to send OTP." };
+            }
+        } catch (error) {
+            console.error("Send OTP failed:", error);
+            return { success: false, error: "Network connection failed. Make sure your server is running." };
+        }
+    };
+
+    const loginWithOTP = async (email, otp) => {
+        try {
+            const response = await fetch(`${API_URL}/api/auth/verify-otp/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, otp })
+            });
+
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                return { success: false, error: "Server returned an invalid response." };
+            }
+
+            if (response.ok) {
+                localStorage.setItem("token", data.access);
+                setUser(data.user);
+                return { success: true };
+            } else {
+                return { success: false, error: data.error || data.detail || "Invalid OTP." };
+            }
+        } catch (error) {
+            console.error("OTP Verification failed:", error);
+            return { success: false, error: "Network connection failed." };
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, ownerLogin, signup, logout, loading }}>
+        <AuthContext.Provider value={{ user, login, ownerLogin, signup, logout, loading, sendOTP, loginWithOTP }}>
             {children}
         </AuthContext.Provider>
     );

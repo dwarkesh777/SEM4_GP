@@ -10,12 +10,32 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 
 const OwnerLogin = () => {
+    const [loginMode, setLoginMode] = useState("password"); // "password" or "otp"
     const [email, setEmail] = useState("");
+    const [password, setPassword] = useState("");
     const [otp, setOtp] = useState("");
     const [showOtp, setShowOtp] = useState(false);
     const [loading, setLoading] = useState(false);
-    const { requestOTP, verifyOTP } = useAuth();
+    const { ownerLogin, requestOTP, verifyOTP } = useAuth();
     const navigate = useNavigate();
+
+    const handlePasswordLogin = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+        try {
+            const result = await ownerLogin(email, password);
+            if (result.success) {
+                toast.success("Welcome back, Partner!");
+                navigate("/");
+            } else {
+                toast.error(result.error || "Invalid credentials. Please check your email and password.");
+            }
+        } catch (error) {
+            toast.error("Something went wrong. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleRequestOTP = async (e) => {
         e.preventDefault();
@@ -62,7 +82,7 @@ const OwnerLogin = () => {
                 className="w-full max-w-md"
             >
                 <Card className="border-none shadow-2xl shadow-indigo-500/5 rounded-[2rem] overflow-hidden">
-                    <CardHeader className="space-y-1 pb-8 text-center bg-white">
+                    <CardHeader className="space-y-1 pb-4 text-center bg-white">
                         <div className="mx-auto w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-4">
                             <Building2 className="w-6 h-6 text-indigo-600" />
                         </div>
@@ -72,10 +92,33 @@ const OwnerLogin = () => {
                         <CardDescription className="text-slate-500 font-medium tracking-tight">
                             {showOtp ? `Enter the 6-digit code sent to ${email}` : "Manage your properties and connect with residents."}
                         </CardDescription>
+
+                        {!showOtp && (
+                            <div className="flex bg-slate-100 p-1 rounded-xl mt-6 relative z-0">
+                                <button
+                                    onClick={() => setLoginMode("password")}
+                                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all relative ${loginMode === "password" ? "text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                                >
+                                    {loginMode === "password" && (
+                                        <motion.div layoutId="activeTabOwner" className="absolute inset-0 bg-white rounded-lg -z-10" />
+                                    )}
+                                    Password
+                                </button>
+                                <button
+                                    onClick={() => setLoginMode("otp")}
+                                    className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all relative ${loginMode === "otp" ? "text-indigo-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                                >
+                                    {loginMode === "otp" && (
+                                        <motion.div layoutId="activeTabOwner" className="absolute inset-0 bg-white rounded-lg -z-10" />
+                                    )}
+                                    OTP Login
+                                </button>
+                            </div>
+                        )}
                     </CardHeader>
                     <CardContent className="space-y-6 pt-2 bg-white px-8">
-                        {!showOtp ? (
-                            <form onSubmit={handleRequestOTP} className="space-y-4">
+                        {loginMode === "password" && !showOtp ? (
+                            <form onSubmit={handlePasswordLogin} className="space-y-4">
                                 <div className="space-y-2">
                                     <Label htmlFor="email" className="font-bold text-slate-700 ml-1">Business Email</Label>
                                     <div className="relative group">
@@ -85,6 +128,50 @@ const OwnerLogin = () => {
                                             type="email"
                                             placeholder="partner@company.com"
                                             className="pl-11 py-6 rounded-2xl border-slate-200 focus:ring-indigo-500/20"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between ml-1">
+                                        <Label htmlFor="password" title="password" className="font-bold text-slate-700">Password</Label>
+                                        <Link to="#" className="text-xs font-bold text-indigo-600 hover:underline">Forgot password?</Link>
+                                    </div>
+                                    <div className="relative group">
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                                        <Input
+                                            id="password"
+                                            type="password"
+                                            placeholder="••••••••"
+                                            className="pl-11 py-6 rounded-2xl border-slate-200 focus:ring-indigo-500/20"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            required
+                                        />
+                                    </div>
+                                </div>
+                                <Button
+                                    type="submit"
+                                    className="w-full py-7 rounded-2xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-lg shadow-xl shadow-indigo-600/20 transition-all active:scale-[0.98] mt-4"
+                                    disabled={loading}
+                                >
+                                    {loading ? "Verifying..." : "Login to Dashboard"}
+                                    {!loading && <ArrowRight className="ml-2 w-5 h-5" />}
+                                </Button>
+                            </form>
+                        ) : !showOtp ? (
+                            <form onSubmit={handleRequestOTP} className="space-y-4">
+                                <div className="space-y-2">
+                                    <Label htmlFor="email" className="font-bold text-slate-700 ml-1">Business Email</Label>
+                                    <div className="relative group">
+                                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-colors group-focus-within:text-indigo-600" />
+                                        <Input
+                                            id="email"
+                                            type="email"
+                                            placeholder="partner@company.com"
+                                            className="pl-11 py-6 rounded-2xl border-slate-200 focus:ring-indigo-500/20 transition-all"
                                             value={email}
                                             onChange={(e) => setEmail(e.target.value)}
                                             required
@@ -105,13 +192,13 @@ const OwnerLogin = () => {
                                 <div className="space-y-2">
                                     <Label htmlFor="otp" className="font-bold text-slate-700 ml-1">One-Time Password</Label>
                                     <div className="relative group">
-                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-indigo-600 transition-colors" />
+                                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 transition-colors group-focus-within:text-indigo-600" />
                                         <Input
                                             id="otp"
                                             type="text"
                                             maxLength={6}
                                             placeholder="000000"
-                                            className="pl-11 py-6 rounded-2xl border-slate-200 focus:ring-indigo-500/20 text-center text-2xl tracking-[0.5em] font-bold"
+                                            className="pl-11 py-6 rounded-2xl border-slate-200 focus:ring-indigo-500/20 transition-all text-center text-2xl tracking-[0.5em] font-bold"
                                             value={otp}
                                             onChange={(e) => setOtp(e.target.value)}
                                             required

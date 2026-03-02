@@ -1,10 +1,16 @@
 import logging
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
-from .models import Property, Booking, Room, Enquiry, Wishlist
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.tokens import RefreshToken
+from django.core.mail import send_mail
+from django.conf import settings
+import random
+import string
+from .models import Property, Booking, Room, Enquiry, Wishlist, OTP
 from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
 
 logger = logging.getLogger(__name__)
 
@@ -90,6 +96,91 @@ class UserLoginView(TokenObtainPairView):
 
 class OwnerLoginView(TokenObtainPairView):
     serializer_class = OwnerTokenObtainPairSerializer
+
+
+# ─── OTP AUTH VIEWS ───────────────────────────────────────────────────────────
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def request_otp(request):
+    """
+    Sends a 6-digit OTP to the provided email.
+    Body: { email: <str> }
+    """
+    email = request.data.get('email')
+    if not email:
+        return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Generate 6-digit OTP
+    otp_code = ''.join(random.choices(string.digits, k=6))
+    
+    # Save/Update OTP in database
+    OTP.objects.update_or_create(
+        email=email,
+        defaults={'code': otp_code, 'is_verified': False, 'created_at': settings.DJANGO_TIMEZONE_NOW() if hasattr(settings, 'DJANGO_TIMEZONE_NOW') else None}
+    )
+    # Note: django-mongodb-backend handles auto_now_add=True for created_at
+
+    # Send Email
+    try:
+        subject = f'Your NestNode Login OTP: {otp_code}'
+        message = f'Welcome to NestNode! Your one-time password for login is: {otp_code}. It will expire in 10 minutes.'
+        from_email = settings.DEFAULT_FROM_EMAIL
+        
+        send_mail(subject, message, from_email, [email])
+        
+        return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
+    except Exception as e:
+        logger.error(f"Failed to send OTP email: {e}")
+        # For development, we return the OTP in the response if email fails (optional, but requested implicitly by "solve terminal error" context)
+        # Actually, user wants it to work with email.
+        return Response({'error': f'Failed to send email: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def verify_otp(request):
+    """
+    Verifies OTP and returns JWT tokens.
+    Body: { email: <str>, code: <str> }
+    """
+    email = request.data.get('email')
+    code = request.data.get('code')
+
+    if not email or not code:
+        return Response({'error': 'Email and code are required'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        otp_obj = OTP.objects.filter(email=email, code=code).last()
+        
+        if not otp_obj:
+            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        if otp_obj.is_expired():
+            return Response({'error': 'OTP has expired'}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Mark as verified
+        otp_obj.is_verified = True
+        otp_obj.save()
+
+        # Get or create user
+        from django.contrib.auth import get_user_model
+        User = get_user_model()
+        user, created = User.objects.get_or_create(email=email, defaults={'full_name': email.split('@')[0]})
+
+        # Generate JWT Tokens
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'user': UserSerializer(user).data,
+            'is_new_user': created
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"OTP verification failed: {e}")
+        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ─── RAZORPAY PAYMENT VIEWS ───────────────────────────────────────────────────

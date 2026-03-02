@@ -10,6 +10,8 @@ from django.utils import timezone
 import random
 import string
 from .models import Property, Booking, Room, Enquiry, Wishlist, OTP
+from .utils import generate_booking_pdf
+from django.core.mail import EmailMessage
 from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
 
@@ -327,6 +329,25 @@ def verify_razorpay_payment(request):
                     customer_age=customer_data.get('age'),
                     status='Confirmed'
                 )
+
+                # Send Confirmation Email with PDF Receipt
+                try:
+                    pdf_buffer = generate_booking_pdf(booking)
+                    subject = f"Booking Confirmed: {booking.property.title}"
+                    body = f"Hello {booking.customer_name},\n\nYour booking for {booking.property.title} has been confirmed successfully!\n\nPlease find your receipt attached below.\n\nThank you for choosing NestNode!\n\nBest regards,\nThe NestNode Team"
+                    
+                    email = EmailMessage(
+                        subject,
+                        body,
+                        settings.DEFAULT_FROM_EMAIL,
+                        [booking.customer_email]
+                    )
+                    email.attach(f"Receipt_{booking.id}.pdf", pdf_buffer.getvalue(), "application/pdf")
+                    email.send(fail_silently=False)
+                    logger.info(f"Booking confirmation email sent to {booking.customer_email}")
+                except Exception as mail_err:
+                    logger.error(f"Failed to send booking confirmation email: {mail_err}", exc_info=True)
+
                 return Response({'verified': True, 'payment_id': payment_id, 'booking_id': str(booking.id)})
             except Exception as e:
                 logger.error(f"Error saving booking: {e}", exc_info=True)

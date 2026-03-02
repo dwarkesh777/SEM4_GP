@@ -135,66 +135,13 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const requestOTP = async (email, isOwner = false) => {
-        try {
-            const response = await fetch(`${API_URL}/api/auth/otp/request/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, is_owner: isOwner })
-            });
-            if (response.ok) {
-                return { success: true };
-            } else {
-                const errorData = await response.json().catch(() => ({}));
-                return {
-                    success: false,
-                    error: errorData.error || "Failed to send OTP. Please try again."
-                };
-            }
-        } catch (error) {
-            console.error("Request OTP failed:", error);
-            return {
-                success: false,
-                error: "Network error. Please check your connection."
-            };
-        }
-    };
-
-    const verifyOTP = async (email, code, isOwner = false) => {
-        try {
-            const response = await fetch(`${API_URL}/api/auth/otp/verify/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, code, is_owner: isOwner })
-            });
-            if (response.ok) {
-                const data = await response.json();
-                localStorage.setItem("token", data.access);
-                setUser(data.user);
-                return { success: true };
-            } else {
-                const errorData = await response.json().catch(() => ({}));
-                return {
-                    success: false,
-                    error: errorData.error || "Invalid OTP. Please try again."
-                };
-            }
-        } catch (error) {
-            console.error("Verify OTP failed:", error);
-            return {
-                success: false,
-                error: "Network error. Please check your connection."
-            };
-        }
-    };
-
     const logout = () => {
         localStorage.removeItem("token");
         setUser(null);
     };
 
     return (
-        <AuthContext.Provider value={{ user, login, ownerLogin, signup, logout, requestOTP, verifyOTP, loading }}>
+        <AuthContext.Provider value={{ user, login, ownerLogin, signup, logout, loading }}>
             {children}
         </AuthContext.Provider>
     );

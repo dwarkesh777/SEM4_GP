@@ -1,19 +1,10 @@
 import logging
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
-from rest_framework_simplejwt.views import TokenObtainPairView
-from rest_framework_simplejwt.tokens import RefreshToken
-from django.core.mail import send_mail
-from django.conf import settings
-from django.utils import timezone
-import random
-import string
-from .models import Property, Booking, Room, Enquiry, Wishlist, OTP
-from .utils import generate_booking_pdf
-from django.core.mail import EmailMessage
+from .models import Property, Booking, Room, Enquiry, Wishlist
 from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 logger = logging.getLogger(__name__)
 
@@ -99,111 +90,6 @@ class UserLoginView(TokenObtainPairView):
 
 class OwnerLoginView(TokenObtainPairView):
     serializer_class = OwnerTokenObtainPairSerializer
-
-
-# ─── OTP AUTH VIEWS ───────────────────────────────────────────────────────────
-
-@api_view(['POST'])
-@permission_classes([permissions.AllowAny])
-def request_otp(request):
-    """
-    Sends a 6-digit OTP to the provided email.
-    Body: { email: <str> }
-    """
-    email = request.data.get('email')
-    if not email:
-        return Response({'error': 'Email is required'}, status=status.HTTP_400_BAD_REQUEST)
-
-    # Generate 6-digit OTP
-    otp_code = ''.join(random.choices(string.digits, k=6))
-    
-    # Save/Update OTP in database
-    OTP.objects.update_or_create(
-        email=email,
-        defaults={'code': otp_code, 'is_verified': False, 'created_at': timezone.now()}
-    )
-    # Note: django-mongodb-backend handles auto_now_add=True for created_at
-
-    # Send Email
-    try:
-        subject = f'Your NestNode Login OTP: {otp_code}'
-        message = f'Welcome to NestNode! Your one-time password for login is: {otp_code}. It will expire in 10 minutes.'
-        from_email = settings.DEFAULT_FROM_EMAIL
-        
-        send_mail(subject, message, from_email, [email])
-        
-        return Response({'message': 'OTP sent successfully'}, status=status.HTTP_200_OK)
-    except Exception as e:
-        logger.error(f"Failed to send OTP email: {e}")
-        # For development, we return the OTP in the response if email fails (optional, but requested implicitly by "solve terminal error" context)
-        # Actually, user wants it to work with email.
-        return Response({'error': f'Failed to send email: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['POST'])
-@permission_classes([permissions.AllowAny])
-def verify_otp(request):
-    """
-    Verifies OTP and returns JWT tokens.
-    Body: { email: <str>, code: <str> }
-    """
-    email = request.data.get('email')
-    code = request.data.get('code')
-    is_owner = request.data.get('is_owner', False)
-
-    if not email or not code:
-        return Response({'error': 'Email and code are required'}, status=status.HTTP_400_BAD_REQUEST)
-
-    try:
-        otp_obj = OTP.objects.filter(email=email, code=code).last()
-        
-        if not otp_obj:
-            return Response({'error': 'Invalid OTP'}, status=status.HTTP_400_BAD_REQUEST)
-        
-        if otp_obj.is_expired():
-            return Response({'error': 'OTP has expired'}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Mark as verified
-        otp_obj.is_verified = True
-        otp_obj.save()
-
-        # Get or create user
-        from django.contrib.auth import get_user_model
-        User = get_user_model()
-        
-        user = User.objects.filter(email=email).first()
-        created = False
-        
-        if not user:
-            # Create a brand new user
-            user = User.objects.create_user(
-                email=email,
-                password=None, # No password needed for OTP-only users
-                full_name=email.split('@')[0],
-                is_owner=is_owner
-            )
-            created = True
-            logger.info(f"Created new user {email} with is_owner={is_owner} via OTP.")
-        else:
-            # User exists, check if roles match portal expectations
-            if is_owner and not user.is_owner:
-                return Response({'error': 'This account is not registered as an owner. Please use the Student Portal.'}, status=status.HTTP_403_FORBIDDEN)
-            if not is_owner and user.is_owner:
-                return Response({'error': 'This is an owner account. Please login via the Owner Portal.'}, status=status.HTTP_403_FORBIDDEN)
-
-        # Generate JWT Tokens
-        refresh = RefreshToken.for_user(user)
-        
-        return Response({
-            'access': str(refresh.access_token),
-            'refresh': str(refresh),
-            'user': UserSerializer(user).data,
-            'is_new_user': created
-        }, status=status.HTTP_200_OK)
-
-    except Exception as e:
-        logger.error(f"OTP verification failed: {e}")
-        return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 # ─── RAZORPAY PAYMENT VIEWS ───────────────────────────────────────────────────
@@ -329,25 +215,6 @@ def verify_razorpay_payment(request):
                     customer_age=customer_data.get('age'),
                     status='Confirmed'
                 )
-
-                # Send Confirmation Email with PDF Receipt
-                try:
-                    pdf_buffer = generate_booking_pdf(booking)
-                    subject = f"Booking Confirmed: {booking.property.title}"
-                    body = f"Hello {booking.customer_name},\n\nYour booking for {booking.property.title} has been confirmed successfully!\n\nPlease find your receipt attached below.\n\nThank you for choosing NestNode!\n\nBest regards,\nThe NestNode Team"
-                    
-                    email = EmailMessage(
-                        subject,
-                        body,
-                        settings.DEFAULT_FROM_EMAIL,
-                        [booking.customer_email]
-                    )
-                    email.attach(f"Receipt_{booking.id}.pdf", pdf_buffer.getvalue(), "application/pdf")
-                    email.send(fail_silently=False)
-                    logger.info(f"Booking confirmation email sent to {booking.customer_email}")
-                except Exception as mail_err:
-                    logger.error(f"Failed to send booking confirmation email: {mail_err}", exc_info=True)
-
                 return Response({'verified': True, 'payment_id': payment_id, 'booking_id': str(booking.id)})
             except Exception as e:
                 logger.error(f"Error saving booking: {e}", exc_info=True)

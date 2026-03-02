@@ -6,6 +6,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView
 from rest_framework_simplejwt.tokens import RefreshToken
 from django.core.mail import send_mail
 from django.conf import settings
+from django.utils import timezone
 import random
 import string
 from .models import Property, Booking, Room, Enquiry, Wishlist, OTP
@@ -117,7 +118,7 @@ def request_otp(request):
     # Save/Update OTP in database
     OTP.objects.update_or_create(
         email=email,
-        defaults={'code': otp_code, 'is_verified': False, 'created_at': settings.DJANGO_TIMEZONE_NOW() if hasattr(settings, 'DJANGO_TIMEZONE_NOW') else None}
+        defaults={'code': otp_code, 'is_verified': False, 'created_at': timezone.now()}
     )
     # Note: django-mongodb-backend handles auto_now_add=True for created_at
 
@@ -146,6 +147,7 @@ def verify_otp(request):
     """
     email = request.data.get('email')
     code = request.data.get('code')
+    is_owner = request.data.get('is_owner', False)
 
     if not email or not code:
         return Response({'error': 'Email and code are required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -166,7 +168,26 @@ def verify_otp(request):
         # Get or create user
         from django.contrib.auth import get_user_model
         User = get_user_model()
-        user, created = User.objects.get_or_create(email=email, defaults={'full_name': email.split('@')[0]})
+        
+        user = User.objects.filter(email=email).first()
+        created = False
+        
+        if not user:
+            # Create a brand new user
+            user = User.objects.create_user(
+                email=email,
+                password=None, # No password needed for OTP-only users
+                full_name=email.split('@')[0],
+                is_owner=is_owner
+            )
+            created = True
+            logger.info(f"Created new user {email} with is_owner={is_owner} via OTP.")
+        else:
+            # User exists, check if roles match portal expectations
+            if is_owner and not user.is_owner:
+                return Response({'error': 'This account is not registered as an owner. Please use the Student Portal.'}, status=status.HTTP_403_FORBIDDEN)
+            if not is_owner and user.is_owner:
+                return Response({'error': 'This is an owner account. Please login via the Owner Portal.'}, status=status.HTTP_403_FORBIDDEN)
 
         # Generate JWT Tokens
         refresh = RefreshToken.for_user(user)

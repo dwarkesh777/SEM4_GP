@@ -152,6 +152,8 @@ class OTP(models.Model):
         # OTP expires in 10 minutes
         from django.utils import timezone
         from datetime import timedelta
+        if not self.created_at:
+            return True
         return timezone.now() > self.created_at + timedelta(minutes=10)
 
     def __str__(self):

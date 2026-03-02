@@ -21,7 +21,7 @@ const StudentLogin = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const result = await requestOTP(email);
+            const result = await requestOTP(email, false);
             if (result.success) {
                 setShowOtp(true);
                 toast.success("OTP sent to your email!");
@@ -39,7 +39,7 @@ const StudentLogin = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const result = await verifyOTP(email, otp);
+            const result = await verifyOTP(email, otp, false);
             if (result.success) {
                 toast.success("Login successful!");
                 navigate("/");

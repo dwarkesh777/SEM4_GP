@@ -21,7 +21,7 @@ const OwnerLogin = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const result = await requestOTP(email);
+            const result = await requestOTP(email, true);
             if (result.success) {
                 setShowOtp(true);
                 toast.success("Login OTP sent to your business email!");
@@ -39,7 +39,7 @@ const OwnerLogin = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const result = await verifyOTP(email, otp);
+            const result = await verifyOTP(email, otp, true);
             if (result.success) {
                 toast.success("Welcome back, Partner!");
                 navigate("/");

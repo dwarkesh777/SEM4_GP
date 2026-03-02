@@ -135,12 +135,12 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const requestOTP = async (email) => {
+    const requestOTP = async (email, isOwner = false) => {
         try {
             const response = await fetch(`${API_URL}/api/auth/otp/request/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email })
+                body: JSON.stringify({ email, is_owner: isOwner })
             });
             if (response.ok) {
                 return { success: true };
@@ -160,12 +160,12 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const verifyOTP = async (email, code) => {
+    const verifyOTP = async (email, code, isOwner = false) => {
         try {
             const response = await fetch(`${API_URL}/api/auth/otp/verify/`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email, code })
+                body: JSON.stringify({ email, code, is_owner: isOwner })
             });
             if (response.ok) {
                 const data = await response.json();

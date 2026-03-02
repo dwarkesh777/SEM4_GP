@@ -259,6 +259,9 @@ const HostelDetail = () => {
     const [bookingForm, setBookingForm] = useState({
         name: "", phone: "", age: "", email: ""
     });
+    const [enquiryForm, setEnquiryForm] = useState({
+        name: "", phone: "", message: ""
+    });
     const [formErrors, setFormErrors] = useState({});
 
     const openBookingModal = (room) => {
@@ -474,9 +477,38 @@ const HostelDetail = () => {
         }
     };
 
-    const handleBooking = (e) => {
+    const handleEnquiry = async (e) => {
         e.preventDefault();
-        toast({ title: "Booking Request Sent!", description: "We'll get back to you within 24 hours." });
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_URL}/api/enquiries/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    ...(token ? { "Authorization": `Bearer ${token}` } : {})
+                },
+                body: JSON.stringify({
+                    property: id,
+                    name: enquiryForm.name,
+                    phone: enquiryForm.phone,
+                    message: enquiryForm.message,
+                }),
+            });
+
+            if (res.ok) {
+                toast({ title: "Enquiry Sent!", description: "The owner will contact you soon." });
+                setEnquiryForm({ name: "", phone: "", message: "" });
+            } else {
+                const errData = await res.json();
+                toast({
+                    title: "Error",
+                    description: errData.error || "Failed to send enquiry. Please log in first.",
+                    variant: "destructive"
+                });
+            }
+        } catch (err) {
+            toast({ title: "Error", description: "Something went wrong.", variant: "destructive" });
+        }
     };
 
     return (
@@ -864,13 +896,19 @@ const HostelDetail = () => {
                                             )}
                                         </div>
 
-                                        <form onSubmit={handleBooking} className="space-y-6">
+                                        <form onSubmit={handleEnquiry} className="space-y-6">
                                             <div className="space-y-4">
                                                 <div className="group relative">
                                                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 ml-1 block group-focus-within:text-primary transition-colors">Your Contact Name</Label>
                                                     <div className="relative">
                                                         <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-primary" />
-                                                        <Input placeholder="E.g. Dwarkesh Patel" className="pl-12 h-14 rounded-2xl bg-white/50 border-slate-100 focus:bg-white focus:ring-primary/20 transition-all font-bold text-slate-700" required />
+                                                        <Input
+                                                            placeholder="E.g. Dwarkesh Patel"
+                                                            className="pl-12 h-14 rounded-2xl bg-white/50 border-slate-100 focus:bg-white focus:ring-primary/20 transition-all font-bold text-slate-700"
+                                                            required
+                                                            value={enquiryForm.name}
+                                                            onChange={(e) => setEnquiryForm({ ...enquiryForm, name: e.target.value })}
+                                                        />
                                                     </div>
                                                 </div>
 
@@ -878,19 +916,31 @@ const HostelDetail = () => {
                                                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 ml-1 block group-focus-within:text-primary transition-colors">Connect via Phone</Label>
                                                     <div className="relative">
                                                         <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-primary" />
-                                                        <Input type="tel" placeholder="+91 XXXXX XXXXX" className="pl-12 h-14 rounded-2xl bg-white/50 border-slate-100 focus:bg-white focus:ring-primary/20 transition-all font-bold text-slate-700" required />
+                                                        <Input
+                                                            type="tel"
+                                                            placeholder="+91 XXXXX XXXXX"
+                                                            className="pl-12 h-14 rounded-2xl bg-white/50 border-slate-100 focus:bg-white focus:ring-primary/20 transition-all font-bold text-slate-700"
+                                                            required
+                                                            value={enquiryForm.phone}
+                                                            onChange={(e) => setEnquiryForm({ ...enquiryForm, phone: e.target.value })}
+                                                        />
                                                     </div>
                                                 </div>
 
                                                 <div className="group relative">
                                                     <Label className="text-[10px] font-black uppercase tracking-widest text-slate-400 mb-1 ml-1 block group-focus-within:text-primary transition-colors">Any Specific Request?</Label>
-                                                    <Textarea placeholder="E.g. Prefer corner room, need single occupancy..." className="min-h-[100px] rounded-2xl bg-white/50 border-slate-100 focus:bg-white focus:ring-primary/20 transition-all font-bold text-slate-700 p-4 resize-none" />
+                                                    <Textarea
+                                                        placeholder="E.g. Prefer corner room, need single occupancy..."
+                                                        className="min-h-[100px] rounded-2xl bg-white/50 border-slate-100 focus:bg-white focus:ring-primary/20 transition-all font-bold text-slate-700 p-4 resize-none"
+                                                        value={enquiryForm.message}
+                                                        onChange={(e) => setEnquiryForm({ ...enquiryForm, message: e.target.value })}
+                                                    />
                                                 </div>
                                             </div>
 
                                             <div className="pt-2">
                                                 <Button type="submit" className="w-full h-16 rounded-2xl bg-gradient-to-r from-indigo-600 via-indigo-700 to-violet-700 hover:from-indigo-700 hover:via-indigo-800 hover:to-violet-800 text-white font-black text-lg shadow-xl shadow-indigo-200 hover:shadow-indigo-300 transition-all duration-300 active:scale-[0.98] group border-none">
-                                                    Check Availability
+                                                    Send Enquiry
                                                     <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-2 transition-transform" />
                                                 </Button>
                                                 <p className="text-[10px] text-center font-bold text-slate-400 uppercase tracking-widest mt-4 flex items-center justify-center gap-2">

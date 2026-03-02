@@ -193,7 +193,7 @@ class EnquirySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Enquiry
-        fields = ['id', 'user', 'property', 'property_name', 'property_image', 'message', 'created_at']
+        fields = ['id', 'user', 'property', 'property_name', 'property_image', 'name', 'phone', 'message', 'created_at']
         read_only_fields = ['user', 'created_at']
 
     def get_property_image(self, obj):

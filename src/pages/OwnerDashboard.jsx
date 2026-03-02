@@ -15,7 +15,8 @@ import {
     Phone,
     Mail,
     Camera,
-    LogOut
+    LogOut,
+    Calendar
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,25 +25,110 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 
-const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properties = [], bookings = [] }) => {
+const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properties = [], bookings = [], enquiries = [] }) => {
     const navigate = useNavigate();
     const [view, setView] = useState("home"); // home, profile, verify
 
     const stats = [
         { label: "Total Properties", value: properties.length.toString(), icon: Building2, color: "text-blue-600", bg: "bg-blue-50" },
-        { label: "Profile Completion", value: "100%", icon: User, color: "text-indigo-600", bg: "bg-indigo-50" },
+        { label: "Total Queries", value: enquiries.length.toString(), icon: Mail, color: "text-indigo-600", bg: "bg-indigo-50" },
     ];
 
     const quickActions = [
         { id: "add", label: "Add New Property", icon: PlusCircle, color: "bg-blue-600", textColor: "text-white", action: () => navigate("/add-property") },
         { id: "listings", label: `Listed Property (${properties.length})`, icon: Building2, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("listings") },
         { id: "bookings", label: `Recent Booking (${bookings.length})`, icon: CheckCircle2, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("bookings") },
-        { id: "queries", label: "Recent Query", icon: Mail, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => { } },
+        { id: "queries", label: `Recent Query (${enquiries.length})`, icon: Mail, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("queries") },
         { id: "profile", label: "Complete Profile", icon: FileText, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("profile") },
         { id: "verify", label: "Get Verified", icon: ShieldCheck, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("verify") },
         { id: "analytics", label: "View Analytics", icon: BarChart3, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => { } },
         { id: "logout", label: "Sign Out", icon: LogOut, color: "bg-orange-50", textColor: "text-orange-600", border: "border-orange-100", action: logout },
     ];
+
+    if (view === "queries") {
+        return (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-900 font-heading">Student Queries</h1>
+                        <p className="text-slate-500">Respond to students interested in your properties</p>
+                    </div>
+                    <Button variant="outline" onClick={() => setView("home")} className="rounded-xl gap-2 border-blue-200 text-blue-600 hover:bg-blue-50">
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Dashboard
+                    </Button>
+                </div>
+
+                <div className="grid gap-6">
+                    {enquiries.length > 0 ? (
+                        enquiries.map((enquiry) => (
+                            <Card key={enquiry.id} className="rounded-3xl border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-indigo-600 shadow-sm">
+                                                <Mail className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-900 text-lg">{enquiry.name || "Anonymous Student"}</h3>
+                                                <p className="text-xs text-slate-500 flex items-center gap-1">
+                                                    <Calendar className="w-3 h-3" /> Received on {new Date(enquiry.created_at).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Badge className="bg-indigo-50 text-indigo-600 border-indigo-100 font-bold px-4 py-1.5 rounded-full">
+                                            New Enquiry
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                        <div className="space-y-2">
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Property</p>
+                                            <p className="font-bold text-slate-800">{enquiry.property_name}</p>
+                                            {enquiry.property_image && (
+                                                <img src={enquiry.property_image} alt="" className="w-20 h-14 rounded-lg object-cover border border-slate-100" />
+                                            )}
+                                        </div>
+                                        <div className="space-y-2">
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Contact Info</p>
+                                            <p className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                                <Phone className="w-4 h-4 text-blue-500" /> {enquiry.phone || "Not provided"}
+                                            </p>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                className="mt-2 rounded-xl text-blue-600 border-blue-200"
+                                                onClick={() => window.open(`tel:${enquiry.phone}`)}
+                                            >
+                                                Call Now
+                                            </Button>
+                                        </div>
+                                        <div className="col-span-full space-y-2 mt-4 pt-4 border-t border-slate-50">
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Message</p>
+                                            <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 italic text-slate-600">
+                                                "{enquiry.message}"
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))
+                    ) : (
+                        <Card className="rounded-[40px] border-slate-100 shadow-xl shadow-slate-200/50 p-12 text-center">
+                            <div className="w-20 h-20 rounded-[32px] bg-slate-50 flex items-center justify-center mx-auto mb-6">
+                                <Mail className="w-10 h-10 text-slate-300" />
+                            </div>
+                            <p className="text-xl font-bold text-slate-900 mb-2">No queries yet</p>
+                            <p className="text-slate-500 font-medium max-w-sm mx-auto">
+                                When students enquire about your properties, their details will appear here.
+                            </p>
+                        </Card>
+                    )}
+                </div>
+            </div>
+        );
+    }
 
     if (view === "profile") {
         return (

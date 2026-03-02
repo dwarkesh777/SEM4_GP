@@ -71,13 +71,15 @@ const UserDashboard = () => {
                 const headers = { 'Authorization': `Bearer ${token}` };
 
                 if (user?.is_owner) {
-                    const [propertiesRes, bookingsRes] = await Promise.all([
+                    const [propertiesRes, bookingsRes, enquiriesRes] = await Promise.all([
                         fetch(`${API_URL}/api/properties/?owner_id=${user.id}`, { headers }),
-                        fetch(`${API_URL}/api/bookings/`, { headers })
+                        fetch(`${API_URL}/api/bookings/`, { headers }),
+                        fetch(`${API_URL}/api/enquiries/`, { headers })
                     ]);
 
                     if (propertiesRes.ok) setProperties(await propertiesRes.json());
                     if (bookingsRes.ok) setBookings(await bookingsRes.json());
+                    if (enquiriesRes.ok) setEnquiries(await enquiriesRes.json());
                 } else {
                     const [bookingsRes, enquiriesRes, wishlistRes] = await Promise.all([
                         fetch(`${API_URL}/api/bookings/`, { headers }),
@@ -101,18 +103,20 @@ const UserDashboard = () => {
         e.preventDefault();
         setIsLoading(true);
         try {
-            await new Promise(resolve => setTimeout(resolve, 800));
-            toast({
-                title: "Profile Updated",
-                description: "Your information has been saved successfully.",
-                variant: "success",
+            const token = localStorage.getItem('token');
+            const res = await fetch(`${API_URL}/api/auth/profile/`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify(profileData)
             });
+            if (res.ok) {
+                toast({ title: "Profile Updated", description: "Your changes have been saved." });
+            }
         } catch (error) {
-            toast({
-                title: "Error",
-                description: "Failed to update profile. Please try again.",
-                variant: "destructive",
-            });
+            toast({ title: "Error", description: "Failed to update profile.", variant: "destructive" });
         } finally {
             setIsLoading(false);
         }
@@ -126,7 +130,7 @@ const UserDashboard = () => {
     ].filter(tab => !user?.is_owner || tab.id === "profile");
 
     return (
-        <div className="min-h-screen bg-slate-50/50">
+        <div className="min-h-screen bg-[#F8FAFC]">
             <Navbar />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
@@ -138,6 +142,7 @@ const UserDashboard = () => {
                         logout={logout}
                         properties={properties}
                         bookings={bookings}
+                        enquiries={enquiries}
                     />
                 ) : (
                     <div className="flex flex-col lg:flex-row gap-10">

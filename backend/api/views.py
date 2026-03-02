@@ -254,12 +254,17 @@ class BookingViewSet(viewsets.ReadOnlyModelViewSet):
         return Booking.objects.filter(user=self.request.user).order_by('-created_at')
 
 
-class EnquiryViewSet(viewsets.ReadOnlyModelViewSet):
+class EnquiryViewSet(viewsets.ModelViewSet):
     serializer_class = EnquirySerializer
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if self.request.user.is_owner:
+            return Enquiry.objects.filter(property__owner=self.request.user).order_by('-created_at')
         return Enquiry.objects.filter(user=self.request.user).order_by('-created_at')
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 class WishlistViewSet(viewsets.ModelViewSet):

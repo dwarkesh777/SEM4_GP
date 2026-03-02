@@ -295,7 +295,7 @@ const UserDashboard = () => {
                                                                     <p className="text-xs text-slate-500">{new Date(booking.created_at).toLocaleDateString()}</p>
                                                                 </div>
                                                             </div>
-                                                            <Badge variant={booking.status === "confirmed" ? "success" : "secondary"}>
+                                                            <Badge variant={booking.status === "Confirmed" ? "success" : "secondary"}>
                                                                 {booking.status}
                                                             </Badge>
                                                         </Card>

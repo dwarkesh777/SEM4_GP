@@ -1248,10 +1248,11 @@ const HostelDetail = () => {
                                         </button>
                                         {/* Done button */}
                                         <button
-                                            onClick={closeBookingModal}
-                                            className="flex-1 h-14 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-black text-sm transition-all active:scale-[0.98]"
+                                            onClick={() => navigate("/dashboard", { state: { activeTab: "bookings" } })}
+                                            className="flex-1 h-14 rounded-2xl bg-orange-50 hover:bg-orange-100 text-orange-600 font-black text-sm transition-all active:scale-[0.98] border border-orange-100 flex items-center justify-center gap-2"
                                         >
-                                            Done
+                                            <LayoutDashboard className="w-4 h-4" />
+                                            Go to Dashboard
                                         </button>
                                     </motion.div>
                                 </div>

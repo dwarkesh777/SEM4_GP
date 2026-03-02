@@ -232,6 +232,8 @@ class BookingViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
+        if self.request.user.is_owner:
+            return Booking.objects.filter(property__owner=self.request.user).order_by('-created_at')
         return Booking.objects.filter(user=self.request.user).order_by('-created_at')
 
 

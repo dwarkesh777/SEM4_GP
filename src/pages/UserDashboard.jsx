@@ -71,11 +71,13 @@ const UserDashboard = () => {
                 const headers = { 'Authorization': `Bearer ${token}` };
 
                 if (user?.is_owner) {
-                    const propertiesRes = await fetch(`${API_URL}/api/properties/?owner_id=${user.id}`, { headers });
-                    if (propertiesRes.ok) {
-                        const data = await propertiesRes.json();
-                        setProperties(data);
-                    }
+                    const [propertiesRes, bookingsRes] = await Promise.all([
+                        fetch(`${API_URL}/api/properties/?owner_id=${user.id}`, { headers }),
+                        fetch(`${API_URL}/api/bookings/`, { headers })
+                    ]);
+
+                    if (propertiesRes.ok) setProperties(await propertiesRes.json());
+                    if (bookingsRes.ok) setBookings(await bookingsRes.json());
                 } else {
                     const [bookingsRes, enquiriesRes, wishlistRes] = await Promise.all([
                         fetch(`${API_URL}/api/bookings/`, { headers }),
@@ -135,6 +137,7 @@ const UserDashboard = () => {
                         isLoading={isLoading}
                         logout={logout}
                         properties={properties}
+                        bookings={bookings}
                     />
                 ) : (
                     <div className="flex flex-col lg:flex-row gap-10">

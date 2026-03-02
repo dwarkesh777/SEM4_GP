@@ -24,7 +24,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 
-const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properties = [] }) => {
+const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properties = [], bookings = [] }) => {
     const navigate = useNavigate();
     const [view, setView] = useState("home"); // home, profile, verify
 
@@ -36,7 +36,7 @@ const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properti
     const quickActions = [
         { id: "add", label: "Add New Property", icon: PlusCircle, color: "bg-blue-600", textColor: "text-white", action: () => navigate("/add-property") },
         { id: "listings", label: `Listed Property (${properties.length})`, icon: Building2, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("listings") },
-        { id: "bookings", label: "Recent Booking", icon: CheckCircle2, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => { } },
+        { id: "bookings", label: `Recent Booking (${bookings.length})`, icon: CheckCircle2, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("bookings") },
         { id: "queries", label: "Recent Query", icon: Mail, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => { } },
         { id: "profile", label: "Complete Profile", icon: FileText, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("profile") },
         { id: "verify", label: "Get Verified", icon: ShieldCheck, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("verify") },
@@ -192,6 +192,83 @@ const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properti
                             </ul>
                         </Card>
                     </div>
+                </div>
+            </div>
+        );
+    }
+
+    if (view === "bookings") {
+        return (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-900 font-heading">Recent Bookings</h1>
+                        <p className="text-slate-500">Manage and view all guest bookings for your properties</p>
+                    </div>
+                    <Button variant="outline" onClick={() => setView("home")} className="rounded-xl gap-2 border-blue-200 text-blue-600 hover:bg-blue-50">
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Dashboard
+                    </Button>
+                </div>
+
+                <div className="grid gap-6">
+                    {bookings.length > 0 ? (
+                        bookings.map((booking) => (
+                            <Card key={booking.id} className="rounded-3xl border-slate-100 overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+                                <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-6">
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-white flex items-center justify-center text-blue-600 shadow-sm">
+                                                <User className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-bold text-slate-900 text-lg">{booking.customer_name}</h3>
+                                                <p className="text-xs text-slate-500 flex items-center gap-1">
+                                                    <Calendar className="w-3 h-3" /> Booked on {new Date(booking.created_at).toLocaleDateString()}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Badge className="bg-emerald-50 text-emerald-600 border-emerald-100 font-bold px-4 py-1.5 rounded-full">
+                                            {booking.status}
+                                        </Badge>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-6">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Property & Room</p>
+                                            <p className="font-bold text-slate-800">{booking.property_name}</p>
+                                            <p className="text-sm font-medium text-slate-500">{booking.room_name}</p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Contact Info</p>
+                                            <p className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                                <Phone className="w-3.5 h-3.5" /> {booking.customer_phone}
+                                            </p>
+                                            <p className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                                <Mail className="w-3.5 h-3.5" /> {booking.customer_email}
+                                            </p>
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Payment Status</p>
+                                            <p className="text-sm font-bold text-blue-600">Paid ₹{booking.amount}</p>
+                                            <p className="text-[10px] text-slate-400 font-mono select-all">ID: {booking.payment_id}</p>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        ))
+                    ) : (
+                        <Card className="rounded-[40px] border-slate-100 shadow-xl shadow-slate-200/50 p-12 text-center">
+                            <div className="w-20 h-20 rounded-[32px] bg-slate-50 flex items-center justify-center mx-auto mb-6">
+                                <CheckCircle2 className="w-10 h-10 text-slate-300" />
+                            </div>
+                            <p className="text-xl font-bold text-slate-900 mb-2">No bookings yet</p>
+                            <p className="text-slate-500 font-medium max-w-sm mx-auto">
+                                New bookings will appear here as soon as guests book your properties.
+                            </p>
+                        </Card>
+                    )}
                 </div>
             </div>
         );

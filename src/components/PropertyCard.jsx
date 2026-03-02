@@ -76,17 +76,17 @@ const PropertyCard = ({
                         </Badge>
                     </div>
 
-                    <div className="absolute bottom-4 right-4 z-20">
+                    <div className="absolute bottom-5 right-5 z-20">
                         <motion.button
-                            whileHover={{ scale: 1.15 }}
+                            whileHover={{ scale: 1.1, rotate: 5 }}
                             whileTap={{ scale: 0.9 }}
                             onClick={(e) => {
                                 e.preventDefault();
                                 setIsWishlisted(!isWishlisted);
                             }}
-                            className={`flex items-center justify-center aspect-square w-11 rounded-full backdrop-blur-md border border-white/30 transition-all shadow-lg ${isWishlisted ? 'bg-red-500 text-white' : 'bg-white/90 text-slate-900 hover:bg-white'}`}
+                            className={`flex items-center justify-center aspect-square w-14 rounded-full backdrop-blur-xl border-2 border-white/40 transition-all shadow-2xl ${isWishlisted ? 'bg-red-500 text-white border-red-400' : 'bg-white/80 text-slate-900 hover:bg-white'}`}
                         >
-                            <Heart className={`w-5 h-5 ${isWishlisted ? 'fill-current' : ''}`} />
+                            <Heart className={`w-7 h-7 ${isWishlisted ? 'fill-current' : ''}`} />
                         </motion.button>
                     </div>
 

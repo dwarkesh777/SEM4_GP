@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Headphones, User, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, MapPin, LogOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import {
     DropdownMenu,
@@ -126,19 +127,42 @@ const Navbar = () => {
                             <DropdownMenuContent className="w-64 p-3 rounded-3xl mt-2 mr-0 shadow-2xl shadow-black/10 border-slate-100" align="end">
                                 <DropdownMenuLabel className="font-heading p-2">
                                     <div className="flex flex-col">
-                                        <span className="text-base font-black text-slate-900">{user.full_name}</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-base font-black text-slate-900">{user.full_name}</span>
+                                            {user.is_owner && (
+                                                <Badge className="bg-primary/10 text-primary border-none text-[10px] py-0.5 px-2 hover:bg-primary/20">Owner</Badge>
+                                            )}
+                                        </div>
                                         <span className="text-xs font-medium text-slate-500 truncate">{user.email}</span>
                                     </div>
                                 </DropdownMenuLabel>
                                 <DropdownMenuSeparator className="my-2 bg-slate-100" />
-                                <DropdownMenuItem onClick={() => navigate("/dashboard")} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
-                                    <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                                    <span className="font-bold text-slate-600">User Dashboard</span>
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => navigate("/settings")} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+
+                                {user.is_owner ? (
+                                    <>
+                                        <DropdownMenuItem onClick={() => navigate("/dashboard")} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                                            <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                                            <span className="font-bold text-slate-600">Owner Dashboard</span>
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => navigate("/add-property")} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                                            <Building2 className="w-4 h-4 text-slate-400" />
+                                            <span className="font-bold text-slate-600">Owner System</span>
+                                        </DropdownMenuItem>
+                                    </>
+                                ) : (
+                                    <DropdownMenuItem onClick={() => navigate("/dashboard")} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                                        <LayoutDashboard className="w-4 h-4 text-slate-400" />
+                                        <span className="font-bold text-slate-600">User Dashboard</span>
+                                    </DropdownMenuItem>
+                                )}
+
+                                <DropdownMenuItem onClick={() => navigate("/dashboard", { state: { activeTab: "profile" } })} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
                                     <Settings className="w-4 h-4 text-slate-400" />
-                                    <span className="font-bold text-slate-600">Settings</span>
+                                    <span className="font-bold text-slate-600">
+                                        Settings
+                                    </span>
                                 </DropdownMenuItem>
+
                                 <DropdownMenuSeparator className="my-2 bg-slate-100" />
                                 <DropdownMenuItem onClick={logout} className="p-3 rounded-xl cursor-pointer hover:bg-orange-50 transition-colors gap-3 text-orange-600 group">
                                     <LogOut className="w-4 h-4 text-orange-400 transition-colors" />
@@ -214,7 +238,29 @@ const Navbar = () => {
                                         <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
                                             <User className="w-4 h-4 text-primary" />
                                         </div>
-                                        Dashboard
+                                        {user.is_owner ? "Owner Dashboard" : "User Dashboard"}
+                                    </Button>
+                                    {user.is_owner && (
+                                        <Button
+                                            onClick={() => { navigate("/add-property"); setMobileOpen(false); }}
+                                            className="w-full h-16 rounded-2xl bg-slate-50 text-slate-900 font-bold justify-start px-6 gap-4"
+                                            variant="ghost"
+                                        >
+                                            <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                                                <Building2 className="w-4 h-4 text-slate-600" />
+                                            </div>
+                                            Owner System
+                                        </Button>
+                                    )}
+                                    <Button
+                                        onClick={() => { navigate("/dashboard", { state: { activeTab: "profile" } }); setMobileOpen(false); }}
+                                        className="w-full h-16 rounded-2xl bg-slate-50 text-slate-900 font-bold justify-start px-6 gap-4"
+                                        variant="ghost"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-slate-200 flex items-center justify-center">
+                                            <Settings className="w-4 h-4 text-slate-600" />
+                                        </div>
+                                        Settings
                                     </Button>
                                     <Button
                                         onClick={() => { logout(); setMobileOpen(false); }}

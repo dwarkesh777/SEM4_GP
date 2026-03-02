@@ -10,7 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 class PropertyViewSet(viewsets.ModelViewSet):
-    queryset = Property.objects.all()
+    def get_queryset(self):
+        queryset = Property.objects.all()
+        owner_id = self.request.query_params.get('owner_id')
+        if owner_id:
+            queryset = queryset.filter(owner_id=owner_id)
+        return queryset
     serializer_class = PropertySerializer
     parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 

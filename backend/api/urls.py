@@ -4,7 +4,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet
 
 router = DefaultRouter()
-router.register(r'properties', PropertyViewSet)
+router.register(r'properties', PropertyViewSet, basename='property')
 router.register(r'bookings', BookingViewSet, basename='booking')
 router.register(r'enquiries', EnquiryViewSet, basename='enquiry')
 router.register(r'wishlist', WishlistViewSet, basename='wishlist')

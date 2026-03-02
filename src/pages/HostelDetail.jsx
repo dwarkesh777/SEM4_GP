@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     ArrowLeft, ArrowRight, MapPin, Star, Phone, Mail, Wifi, Sofa, Droplets, Shield,
@@ -241,6 +241,7 @@ const generateReceiptPDF = ({ paymentId, bookingForm, selectedRoom, property, or
 };
 
 const HostelDetail = () => {
+    const navigate = useNavigate();
     const { id } = useParams();
     const { data: property, isLoading, error } = useQuery({
         queryKey: ["property", id],

@@ -15,14 +15,11 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-kh0u0i5zn@(^@8#1lxb
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',') + ['hastiest-lorretta-strengtheningly.ngrok-free.dev']
   
-# Gmail SMTP Configuration
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 465
-EMAIL_USE_SSL = True
-EMAIL_HOST_USER = 'bed.buddy777@gmail.com'
-EMAIL_HOST_PASSWORD = 'mowcwbcjslpbtsov'  # Use App Password, not Gmail password
-DEFAULT_FROM_EMAIL = 'bed.buddy777@gmail.com'
+# Resend Email Configuration
+EMAIL_BACKEND = 'api.email_backend.ResendBackend'
+RESEND_API_KEY = os.getenv('RESEND_API_KEY')
+DEFAULT_FROM_EMAIL = 'onboarding@resend.dev' # Default for unverified domains, user should change to verified domain
+# EMAIL_HOST_USER = 'bed.buddy777@gmail.com' # Kept for reference but not used by Resend
 
 INSTALLED_APPS = [
     'django.contrib.auth',

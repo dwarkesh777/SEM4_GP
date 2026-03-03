@@ -78,7 +78,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 subject = 'Property Listed Successfully - BedBuddy'
                 message = f'Dear {self.request.user.full_name},\n\nThank you for choosing BedBuddy! Your property "{property_instance.name}" has been successfully listed on our platform.\n\nWe are grateful to have you as a partner. Our team will review the listing and it will be visible to students shortly.\n\nBest regards,\nTeam BedBuddy'
                 recipient_list = [self.request.user.email]
-                send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, recipient_list)
+                send_mail(subject, message, settings.EMAIL_HOST_USER, recipient_list)
                 logger.info(f"Notification email sent to {self.request.user.email} for property {property_instance.name}")
             except Exception as e:
                 logger.error(f"Failed to send notification email: {e}")
@@ -319,7 +319,7 @@ def send_enquiry_notification_email(enquiry):
         send_mail(
             subject,
             f"You have a new enquiry for {property_name} from {student_name}.",
-            settings.DEFAULT_FROM_EMAIL,
+            settings.EMAIL_HOST_USER,
             [owner_email],
             fail_silently=False,
             html_message=html_content
@@ -382,7 +382,7 @@ def send_otp(request):
         subject = 'Your BedBuddy Login OTP'
         message = f'Your OTP for logging into BedBuddy is: {otp_code}\n\nThis code will expire in 5 minutes.'
         try:
-            send_mail(subject, message, settings.DEFAULT_FROM_EMAIL, [email])
+            send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
             logger.info(f"OTP sent to {email}")
             return Response({"message": "OTP sent successfully to your email."})
         except Exception as mail_e:

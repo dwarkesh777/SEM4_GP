@@ -5,23 +5,38 @@ import { ArrowRight, Building2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "@/lib/api";
 
-const fetchProperties = async (searchQuery = "", lat = null, lng = null) => {
+const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters = {}) => {
     let url = `${API_URL}/api/properties/?`;
     if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
     if (lat && lng) url += `lat=${lat}&lng=${lng}&`;
+
+    // Add advanced filters
+    if (filters.gender?.length > 0) {
+        filters.gender.forEach(g => url += `gender=${g}&`);
+    }
+    if (filters.type?.length > 0) {
+        filters.type.forEach(t => url += `type=${t}&`);
+    }
+    if (filters.amenities?.length > 0) {
+        filters.amenities.forEach(a => url += `amenities=${a}&`);
+    }
+    if (filters.ordering) {
+        url += `ordering=${filters.ordering}&`;
+    }
 
     const res = await fetch(url);
     if (!res.ok) throw new Error("Network response was not ok");
     return res.json();
 };
 
-const PopularListings = ({ searchQuery = "", collegeCoords = null }) => {
+const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} }) => {
     const { data: properties, isLoading, error } = useQuery({
-        queryKey: ["properties", searchQuery, collegeCoords],
+        queryKey: ["properties", searchQuery, collegeCoords, filters],
         queryFn: () => fetchProperties(
             searchQuery,
             collegeCoords?.lat,
-            collegeCoords?.lng
+            collegeCoords?.lng,
+            filters
         ),
     });
 

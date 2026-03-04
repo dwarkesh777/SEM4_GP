@@ -21,16 +21,13 @@ logger = logging.getLogger(__name__)
 class PropertyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Property.objects.all()
+        
+        # 1. Base Filters
         owner_id = self.request.query_params.get('owner_id')
-        search_query = self.request.query_params.get('search')
-        
-        # New distance-based filtering
-        college_lat = self.request.query_params.get('lat')
-        college_lng = self.request.query_params.get('lng')
-        
         if owner_id:
             queryset = queryset.filter(owner_id=owner_id)
-        
+            
+        search_query = self.request.query_params.get('search')
         if search_query:
             queryset = queryset.filter(
                 Q(name__icontains=search_query) |
@@ -38,17 +35,43 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 Q(location__icontains=search_query)
             )
 
+        # 2. Advanced Filters
+        genders = self.request.query_params.getlist('gender')
+        if genders:
+            queryset = queryset.filter(gender__in=genders)
+
+        types = self.request.query_params.getlist('type')
+        if types:
+            queryset = queryset.filter(type__in=types)
+
+        amenities = self.request.query_params.getlist('amenities')
+        if amenities:
+            for amenity in amenities:
+                queryset = queryset.filter(amenities__name__icontains=amenity)
+
+        min_price = self.request.query_params.get('min_price')
+        if min_price:
+            queryset = queryset.filter(price__gte=int(min_price))
+
+        max_price = self.request.query_params.get('max_price')
+        if max_price:
+            queryset = queryset.filter(price__lte=int(max_price))
+
+        # 3. Distance calculation (if lat/lng provided)
+        college_lat = self.request.query_params.get('lat')
+        college_lng = self.request.query_params.get('lng')
+        
+        results = list(queryset)
         if college_lat and college_lng:
             try:
                 c_lat = float(college_lat)
                 c_lng = float(college_lng)
                 
-                # We'll calculate distance for each property and sort
-                properties_with_distance = []
-                for prop in queryset:
+                filtered_results = []
+                for prop in results:
                     if prop.latitude is not None and prop.longitude is not None:
                         # Haversine formula
-                        R = 6371.0 # Earth radius in km
+                        R = 6371.0
                         lat1, lon1 = math.radians(c_lat), math.radians(c_lng)
                         lat2, lon2 = math.radians(prop.latitude), math.radians(prop.longitude)
                         
@@ -59,17 +82,28 @@ class PropertyViewSet(viewsets.ModelViewSet):
                         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
                         distance = R * c
                         
-                        if distance <= 30: # 30km radius
+                        if distance <= 30:
                             prop.distance = round(distance, 2)
-                            properties_with_distance.append(prop)
-                
-                # Sort by distance
-                properties_with_distance.sort(key=lambda x: x.distance)
-                return properties_with_distance
+                            filtered_results.append(prop)
+                results = filtered_results
+                # Default sorting for distance search
+                results.sort(key=lambda x: x.distance)
             except (ValueError, TypeError) as e:
                 logger.error(f"Error calculating distance: {e}")
-            
-        return queryset
+
+        # 4. Sorting (only if not distance-sorted or if explicit sort provided)
+        ordering = self.request.query_params.get('ordering')
+        if ordering:
+            if ordering == 'price_asc':
+                results.sort(key=lambda x: x.price)
+            elif ordering == 'price_desc':
+                results.sort(key=lambda x: x.price, reverse=True)
+            elif ordering == 'rating_desc':
+                results.sort(key=lambda x: x.rating, reverse=True)
+            elif ordering == 'distance_asc' and hasattr(results[0] if results else None, 'distance'):
+                results.sort(key=lambda x: x.distance)
+        
+        return results
     serializer_class = PropertySerializer
     parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 

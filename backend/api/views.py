@@ -1,4 +1,5 @@
 import logging
+import math
 from django.db.models import Q
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
@@ -23,6 +24,10 @@ class PropertyViewSet(viewsets.ModelViewSet):
         owner_id = self.request.query_params.get('owner_id')
         search_query = self.request.query_params.get('search')
         
+        # New distance-based filtering
+        college_lat = self.request.query_params.get('lat')
+        college_lng = self.request.query_params.get('lng')
+        
         if owner_id:
             queryset = queryset.filter(owner_id=owner_id)
         
@@ -32,6 +37,37 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 Q(city__icontains=search_query) |
                 Q(location__icontains=search_query)
             )
+
+        if college_lat and college_lng:
+            try:
+                c_lat = float(college_lat)
+                c_lng = float(college_lng)
+                
+                # We'll calculate distance for each property and sort
+                properties_with_distance = []
+                for prop in queryset:
+                    if prop.latitude is not None and prop.longitude is not None:
+                        # Haversine formula
+                        R = 6371.0 # Earth radius in km
+                        lat1, lon1 = math.radians(c_lat), math.radians(c_lng)
+                        lat2, lon2 = math.radians(prop.latitude), math.radians(prop.longitude)
+                        
+                        dlat = lat2 - lat1
+                        dlon = lon2 - lon1
+                        
+                        a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+                        c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+                        distance = R * c
+                        
+                        if distance <= 30: # 30km radius
+                            prop.distance = round(distance, 2)
+                            properties_with_distance.append(prop)
+                
+                # Sort by distance
+                properties_with_distance.sort(key=lambda x: x.distance)
+                return properties_with_distance
+            except (ValueError, TypeError) as e:
+                logger.error(f"Error calculating distance: {e}")
             
         return queryset
     serializer_class = PropertySerializer

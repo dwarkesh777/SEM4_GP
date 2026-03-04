@@ -88,6 +88,7 @@ class PropertySerializer(serializers.ModelSerializer):
     # price is required but use EmptyStringIntField so blank string gives a clear error
     price = EmptyStringIntField()
     owner = serializers.ReadOnlyField(source='owner.email')
+    distance = serializers.SerializerMethodField()
 
     # NOTE: uploaded_images intentionally NOT declared as a DRF field.
     # DRF's ListField(child=ImageField()) is incompatible with MultiPartParser
@@ -100,7 +101,12 @@ class PropertySerializer(serializers.ModelSerializer):
             'latitude', 'longitude', 'type', 'gender', 'rating', 'reviews',
             'price', 'originalPrice', 'amenities', 'appliances',
             'description', 'rooms', 'reviews_list', 'address', 'phone', 'email', 'owner',
+            'distance',
         ]
+
+    def get_distance(self, obj):
+        # The distance is calculated in get_queryset and attached to the object
+        return getattr(obj, 'distance', None)
 
     def create(self, validated_data):
         import json

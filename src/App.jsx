@@ -21,6 +21,8 @@ import OwnerSignup from "./pages/OwnerSignup";
 import UserDashboard from "./pages/UserDashboard";
 import NotFound from "./pages/NotFound";
 import AddProperty from "./pages/AddProperty";
+import CollegeSearch from "./pages/CollegeSearch";
+
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,8 @@ const App = () => (
                     <Routes>
                         <Route path="/" element={<Index />} />
                         <Route path="/hostel/:id" element={<HostelDetail />} />
+                        <Route path="/college-search" element={<CollegeSearch />} />
+
 
                         {/* Auth Routes */}
                         <Route path="/login" element={<Login />} />

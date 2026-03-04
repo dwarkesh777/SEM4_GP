@@ -16,8 +16,9 @@ import {
 
 const navLinks = [
     { label: "Hostels & PGs", href: "/#listings" },
-    { label: "Search by College", href: "/#search" },
+    { label: "Search by College", href: "/college-search" },
 ];
+
 
 const Navbar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
@@ -69,14 +70,15 @@ const Navbar = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ delay: 0.1 * i + 0.2 }}
                         >
-                            <a
-                                href={link.href}
+                            <Link
+                                to={link.href}
                                 className={`text-sm font-semibold transition-colors relative group ${effectiveScrolled ? "text-slate-600" : "text-white"
                                     } hover:text-primary`}
                             >
                                 {link.label}
                                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
-                            </a>
+                            </Link>
+
                         </motion.div>
                     ))}
 
@@ -216,15 +218,16 @@ const Navbar = () => {
                         <div className="container py-8 flex flex-col gap-6">
                             <div className="flex flex-col gap-2">
                                 {navLinks.map((link) => (
-                                    <a
+                                    <Link
                                         key={link.label}
-                                        href={link.href}
+                                        to={link.href}
                                         className="text-lg font-bold text-slate-800 hover:text-primary transition-colors py-3 border-b border-slate-100 flex items-center justify-between group"
                                         onClick={() => setMobileOpen(false)}
                                     >
                                         {link.label}
                                         <ChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 -translate-x-2 group-hover:translate-x-0 transition-all" />
-                                    </a>
+                                    </Link>
+
                                 ))}
                             </div>
 

@@ -1,23 +1,28 @@
 import { motion } from "framer-motion";
 import PropertyCard from "./PropertyCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Building2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "@/lib/api";
 
-const fetchProperties = async (searchQuery = "") => {
-    const url = searchQuery
-        ? `${API_URL}/api/properties/?search=${encodeURIComponent(searchQuery)}`
-        : `${API_URL}/api/properties/`;
+const fetchProperties = async (searchQuery = "", lat = null, lng = null) => {
+    let url = `${API_URL}/api/properties/?`;
+    if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
+    if (lat && lng) url += `lat=${lat}&lng=${lng}&`;
+
     const res = await fetch(url);
     if (!res.ok) throw new Error("Network response was not ok");
     return res.json();
 };
 
-const PopularListings = ({ searchQuery = "" }) => {
+const PopularListings = ({ searchQuery = "", collegeCoords = null }) => {
     const { data: properties, isLoading, error } = useQuery({
-        queryKey: ["properties", searchQuery],
-        queryFn: () => fetchProperties(searchQuery),
+        queryKey: ["properties", searchQuery, collegeCoords],
+        queryFn: () => fetchProperties(
+            searchQuery,
+            collegeCoords?.lat,
+            collegeCoords?.lng
+        ),
     });
 
     if (isLoading) return (
@@ -98,6 +103,25 @@ const PopularListings = ({ searchQuery = "" }) => {
                         </Button>
                     </motion.div>
                 </div>
+
+                {/* College Search Summary */}
+                {collegeCoords && (
+                    <motion.div
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-12 p-6 rounded-2xl bg-indigo-50 border border-indigo-100 flex flex-col md:flex-row items-center gap-6"
+                    >
+                        <div className="w-14 h-14 rounded-xl bg-white flex items-center justify-center text-indigo-600 shadow-sm shrink-0">
+                            <Building2 className="w-7 h-7" />
+                        </div>
+                        <div className="flex-1 text-center md:text-left">
+                            <h3 className="text-xl font-bold text-slate-900 mb-1">{collegeCoords.name}</h3>
+                            <p className="text-slate-600 font-medium">
+                                Found <span className="text-indigo-600 font-bold">{properties?.length || 0}</span> hostels & PGs within 30km radius sorted by distance
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
 
                 <motion.div
                     variants={containerVariants}

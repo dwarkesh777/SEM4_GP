@@ -12,7 +12,7 @@ const amenityIcons = {
 };
 
 const PropertyCard = ({
-    id, main_image, images, name, location, type, gender, rating, reviews, price, originalPrice, amenities, index,
+    id, main_image, images, name, location, type, gender, rating, reviews, price, originalPrice, amenities, index, distance
 }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [currentImgIndex, setCurrentImgIndex] = useState(0);
@@ -63,8 +63,14 @@ const PropertyCard = ({
                     </AnimatePresence>
 
                     {/* High Contrast Overlays */}
-                    <div className="absolute top-4 left-4 flex gap-2">
-                        <Badge className="bg-[#FF0080] hover:bg-[#FF0080] text-white border-none font-black text-[10px] uppercase tracking-[0.1em] py-1.5 px-4 rounded-full shadow-lg">
+                    <div className="absolute top-4 left-4 flex flex-col gap-2">
+                        {distance !== undefined && distance !== null && (
+                            <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] text-white border-none font-black text-[10px] uppercase tracking-wide py-1.5 px-3 rounded-full shadow-lg flex items-center gap-1 w-fit">
+                                <MapPin className="w-3 h-3" />
+                                {distance} km
+                            </Badge>
+                        )}
+                        <Badge className="bg-[#FF0080] hover:bg-[#FF0080] text-white border-none font-black text-[10px] uppercase tracking-[0.1em] py-1.5 px-4 rounded-full shadow-lg w-fit">
                             {type}
                         </Badge>
                     </div>

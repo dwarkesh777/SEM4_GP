@@ -5,16 +5,19 @@ import { ArrowRight } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "@/lib/api";
 
-const fetchProperties = async () => {
-    const res = await fetch(`${API_URL}/api/properties/`);
+const fetchProperties = async (searchQuery = "") => {
+    const url = searchQuery
+        ? `${API_URL}/api/properties/?search=${encodeURIComponent(searchQuery)}`
+        : `${API_URL}/api/properties/`;
+    const res = await fetch(url);
     if (!res.ok) throw new Error("Network response was not ok");
     return res.json();
 };
 
-const PopularListings = () => {
+const PopularListings = ({ searchQuery = "" }) => {
     const { data: properties, isLoading, error } = useQuery({
-        queryKey: ["properties"],
-        queryFn: fetchProperties,
+        queryKey: ["properties", searchQuery],
+        queryFn: () => fetchProperties(searchQuery),
     });
 
     if (isLoading) return (

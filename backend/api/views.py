@@ -1,4 +1,5 @@
 import logging
+from django.db.models import Q
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
 from .models import Property, Booking, Room, Enquiry, Wishlist, User
@@ -20,8 +21,18 @@ class PropertyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Property.objects.all()
         owner_id = self.request.query_params.get('owner_id')
+        search_query = self.request.query_params.get('search')
+        
         if owner_id:
             queryset = queryset.filter(owner_id=owner_id)
+        
+        if search_query:
+            queryset = queryset.filter(
+                Q(name__icontains=search_query) |
+                Q(city__icontains=search_query) |
+                Q(location__icontains=search_query)
+            )
+            
         return queryset
     serializer_class = PropertySerializer
     parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]

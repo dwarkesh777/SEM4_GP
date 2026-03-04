@@ -2,8 +2,20 @@ import { motion } from "framer-motion";
 import { Search, MapPin, Building, Users } from "lucide-react";
 import { useState } from "react";
 
-const HeroSection = () => {
+const HeroSection = ({ onSearch }) => {
     const [query, setQuery] = useState("");
+
+    const handleSearch = () => {
+        if (onSearch) {
+            onSearch(query);
+        }
+    };
+
+    const handleKeyDown = (e) => {
+        if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
 
     const containerVariants = {
         hidden: { opacity: 0 },
@@ -84,10 +96,14 @@ const HeroSection = () => {
                             type="text"
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
+                            onKeyDown={handleKeyDown}
                             placeholder="Enter city, college, or area..."
                             className="flex-1 px-6 md:px-8 py-4 bg-transparent text-slate-800 placeholder:text-slate-400 outline-none text-base md:text-lg font-medium"
                         />
-                        <button className="flex items-center gap-3 px-8 md:px-12 py-4 md:py-5 rounded-[1.8rem] bg-slate-900 text-white font-bold text-base md:text-lg hover:bg-black transition-all shadow-xl active:scale-95 group/btn">
+                        <button
+                            onClick={handleSearch}
+                            className="flex items-center gap-3 px-8 md:px-12 py-4 md:py-5 rounded-[1.8rem] bg-slate-900 text-white font-bold text-base md:text-lg hover:bg-black transition-all shadow-xl active:scale-95 group/btn"
+                        >
                             <Search className="w-5 h-5 group-hover/btn:scale-110 transition-transform" />
                             Search
                         </button>

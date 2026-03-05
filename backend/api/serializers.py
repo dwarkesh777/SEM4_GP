@@ -188,10 +188,6 @@ class BookingSerializer(serializers.ModelSerializer):
 
     def get_property_image(self, obj):
         if obj.property.main_image:
-            # Check if request exists in context (it should if called via ViewSet)
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.property.main_image.url)
             return obj.property.main_image.url
         return None
 

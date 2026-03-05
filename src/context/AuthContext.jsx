@@ -215,8 +215,10 @@ export const AuthProvider = ({ children }) => {
                 return { success: true };
             } else {
                 const errorData = await response.json().catch(() => ({}));
-                toast.error(errorData.error || "Firebase authentication failed.");
-                return { success: false, error: errorData.error };
+                console.error("Backend login failed:", response.status, errorData);
+                const errorMessage = errorData.error || `Server error (${response.status})`;
+                toast.error(errorMessage);
+                return { success: false, error: errorMessage };
             }
         } catch (error) {
             console.error("Google login failed:", error);
@@ -225,7 +227,8 @@ export const AuthProvider = ({ children }) => {
             } else if (error.code === 'auth/unauthorized-domain') {
                 toast.error("This domain is not authorized for Firebase auth. Add it in Firebase Console.");
             } else {
-                toast.error("Google login failed. Please check your Firebase configuration.");
+                // Show the specific error message to help debug
+                toast.error(`Google login failed: ${error.message || "Unknown error"}`);
             }
             return { success: false, error: error.message };
         }

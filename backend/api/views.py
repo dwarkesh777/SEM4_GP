@@ -551,17 +551,22 @@ def firebase_login(request):
     """
     try:
         token = request.data.get('token')
+        logger.info(f"Firebase login attempt with token: {token[:10]}...")
+        
         if not token:
             return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         # Verify the Firebase token
         try:
             decoded_token = firebase_auth.verify_id_token(token)
+            logger.info(f"Token verified successfully. UID: {decoded_token.get('uid')}")
+            
             uid = decoded_token['uid']
             email = decoded_token.get('email')
             full_name = decoded_token.get('name', '')
             
             if not email:
+                logger.error("No email found in Firebase token")
                 return Response({"error": "Google account must have an email."}, status=status.HTTP_400_BAD_REQUEST)
 
             # Get or create the user
@@ -572,6 +577,7 @@ def firebase_login(request):
                     'is_owner': False,  # Default to student for Google login
                 }
             )
+            logger.info(f"User {'created' if created else 'found'}: {email}")
 
             # Generate tokens
             refresh = RefreshToken.for_user(user)
@@ -585,9 +591,9 @@ def firebase_login(request):
             })
 
         except Exception as auth_e:
-            logger.error(f"Firebase token verification failed: {auth_e}")
-            return Response({"error": "Invalid or expired Firebase token."}, status=status.HTTP_401_UNAUTHORIZED)
+            logger.error(f"Firebase token verification failed: {auth_e}", exc_info=True)
+            return Response({"error": f"Firebase verification failed: {str(auth_e)}"}, status=status.HTTP_401_UNAUTHORIZED)
 
     except Exception as e:
-        logger.error(f"Firebase login error: {e}")
+        logger.error(f"Global Firebase login error: {e}", exc_info=True)
         return Response({"error": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

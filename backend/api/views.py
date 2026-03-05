@@ -57,6 +57,9 @@ class PropertyViewSet(viewsets.ModelViewSet):
         if max_price:
             queryset = queryset.filter(price__lte=int(max_price))
 
+        if getattr(self, 'action', None) != 'list':
+            return queryset
+
         # 3. Distance calculation (if lat/lng provided)
         college_lat = self.request.query_params.get('lat')
         college_lng = self.request.query_params.get('lng')

@@ -429,6 +429,7 @@ class EnquiryViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
+    parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
     
     def get_queryset(self):
         property_id = self.request.query_params.get('property_id')
@@ -442,8 +443,17 @@ class ReviewViewSet(viewsets.ModelViewSet):
         return [permissions.AllowAny()]
 
     def perform_create(self, serializer):
-        # Save the review
-        review = serializer.save(user=self.request.user if self.request.user.is_authenticated else None)
+        user = self.request.user if self.request.user.is_authenticated else None
+        
+        # Use provided name, or fallback to user's full name, or "Anonymous"
+        name = self.request.data.get('name', '').strip()
+        if not name and user:
+            name = user.full_name
+        elif not name:
+            name = "Anonymous"
+
+        # Save the review with the evaluated name
+        review = serializer.save(user=user, name=name)
         
         # Update Property rating and reviews_count
         prop = review.property

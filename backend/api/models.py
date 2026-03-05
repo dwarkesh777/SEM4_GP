@@ -107,6 +107,7 @@ class Review(models.Model):
     rating = models.IntegerField()
     date = models.DateField(auto_now_add=True)
     comment = models.TextField()
+    image = models.ImageField(upload_to='reviews/', null=True, blank=True)
 
 class Booking(models.Model):
     STATUS_CHOICES = [

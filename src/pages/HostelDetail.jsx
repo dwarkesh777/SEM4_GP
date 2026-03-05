@@ -265,7 +265,7 @@ const HostelDetail = () => {
     });
     const [reviewDialog, setReviewDialog] = useState(false);
     const [reviewForm, setReviewForm] = useState({
-        rating: 5, comment: ""
+        rating: 5, comment: "", name: "", image: null
     });
     const [submittingReview, setSubmittingReview] = useState(false);
     const [formErrors, setFormErrors] = useState({});
@@ -280,26 +280,32 @@ const HostelDetail = () => {
 
         setSubmittingReview(true);
         try {
+            const formData = new FormData();
+            formData.append('property', id);
+            formData.append('rating', reviewForm.rating);
+            formData.append('comment', reviewForm.comment);
+
+            if (reviewForm.name.trim()) {
+                formData.append('name', reviewForm.name.trim());
+            }
+
+            if (reviewForm.image) {
+                formData.append('image', reviewForm.image);
+            }
+
             const res = await fetch(`${API_URL}/api/reviews/`, {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json",
                     "Authorization": `Bearer ${token}`
                 },
-                body: JSON.stringify({
-                    property: id,
-                    rating: reviewForm.rating,
-                    comment: reviewForm.comment,
-                    name: "User" // Fallback; backend uses authenticated user
-                }),
+                body: formData,
             });
 
             if (res.ok) {
                 toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
                 setReviewDialog(false);
-                setReviewForm({ rating: 5, comment: "" });
-                // Refetch property data (the query will handle this if we invalidate it)
-                window.location.reload(); // Simple refresh for now
+                setReviewForm({ rating: 5, comment: "", name: "", image: null });
+                window.location.reload();
             } else {
                 const errData = await res.json();
                 toast({ title: "Error", description: errData.error || "Failed to submit review.", variant: "destructive" });
@@ -931,6 +937,17 @@ const HostelDetail = () => {
                                                     </div>
 
                                                     <div>
+                                                        <Label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-2">Your Name (Optional)</Label>
+                                                        <Input
+                                                            type="text"
+                                                            placeholder="Leave blank to use your profile name or post anonymously"
+                                                            className="h-12 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:ring-primary/20 transition-all font-bold text-slate-700 px-4"
+                                                            value={reviewForm.name}
+                                                            onChange={(e) => setReviewForm({ ...reviewForm, name: e.target.value })}
+                                                        />
+                                                    </div>
+
+                                                    <div>
                                                         <Label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-2">Detailed Feedback</Label>
                                                         <Textarea
                                                             placeholder="What was your experience like? (Safety, Cleanliness, Food...)"
@@ -939,6 +956,31 @@ const HostelDetail = () => {
                                                             value={reviewForm.comment}
                                                             onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
                                                         />
+                                                    </div>
+
+                                                    <div>
+                                                        <Label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-2">Add Photo (Optional)</Label>
+                                                        <div className="relative">
+                                                            <Input
+                                                                type="file"
+                                                                accept="image/*"
+                                                                className="h-12 rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:ring-primary/20 transition-all font-bold text-slate-700 px-4 pt-2.5 file:mr-4 file:py-1 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-white hover:file:bg-primary/90"
+                                                                onChange={(e) => setReviewForm({ ...reviewForm, image: e.target.files[0] })}
+                                                            />
+                                                            {reviewForm.image && (
+                                                                <button
+                                                                    type="button"
+                                                                    onClick={() => {
+                                                                        const fileInput = document.querySelector('input[type="file"]');
+                                                                        if (fileInput) fileInput.value = '';
+                                                                        setReviewForm({ ...reviewForm, image: null })
+                                                                    }}
+                                                                    className="absolute right-3 top-3.5 text-slate-400 hover:text-red-500"
+                                                                >
+                                                                    <XIcon className="w-5 h-5" />
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     </div>
 
                                                     <Button
@@ -967,10 +1009,10 @@ const HostelDetail = () => {
                                             <div className="flex items-center justify-between mb-4">
                                                 <div className="flex items-center gap-3">
                                                     <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary font-black text-lg shadow-inner">
-                                                        {review.name?.[0]}
+                                                        {(review.name || review.user || "A")[0].toUpperCase()}
                                                     </div>
                                                     <div>
-                                                        <h4 className="font-black text-slate-800 tracking-tight">{review.name}</h4>
+                                                        <h4 className="font-black text-slate-800 tracking-tight">{review.name || review.user || "Anonymous"}</h4>
                                                         <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
                                                             {review.date ? new Date(review.date).toLocaleDateString("en-IN", { month: "long", year: "numeric" }) : "Verified Student"}
                                                         </p>
@@ -985,6 +1027,18 @@ const HostelDetail = () => {
                                             <p className="text-sm font-medium text-slate-500 leading-relaxed italic">
                                                 "{review.comment}"
                                             </p>
+
+                                            {/* Display Image if present */}
+                                            {review.image && (
+                                                <div className="mt-4 rounded-xl overflow-hidden border border-slate-100">
+                                                    <img
+                                                        src={review.image.startsWith('http') ? review.image : `${API_URL}${review.image}`}
+                                                        alt="Review attachment"
+                                                        className="w-full max-h-48 object-cover hover:scale-105 transition-transform duration-500 cursor-pointer"
+                                                        onClick={() => window.open(review.image.startsWith('http') ? review.image : `${API_URL}${review.image}`, '_blank')}
+                                                    />
+                                                </div>
+                                            )}
 
                                             <div className="absolute top-0 right-0 p-3 opacity-5 group-hover:scale-110 transition-transform">
                                                 <Star className="w-8 h-8" />

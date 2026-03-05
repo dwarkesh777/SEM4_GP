@@ -14,24 +14,8 @@ from django.utils import timezone
 from datetime import timedelta
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
-import firebase_admin
-from firebase_admin import auth as firebase_auth, credentials
-import os
 
 logger = logging.getLogger(__name__)
-
-# Initialize Firebase Admin SDK
-try:
-    # Try to load from environment variable or standard filename
-    cred_path = os.getenv('FIREBASE_SERVICE_ACCOUNT_JSON', os.path.join(settings.BASE_DIR, 'firebase-service-account.json'))
-    if os.path.exists(cred_path):
-        cred = credentials.Certificate(cred_path)
-        firebase_admin.initialize_app(cred)
-        logger.info("Firebase Admin initialized successfully.")
-    else:
-        logger.warning("Firebase service account JSON not found. Firebase Login will not work.")
-except Exception as e:
-    logger.error(f"Error initializing Firebase Admin: {e}")
 
 
 class PropertyViewSet(viewsets.ModelViewSet):
@@ -539,61 +523,4 @@ def verify_otp(request):
 
     except Exception as e:
         logger.error(f"OTP verification error: {e}")
-        return Response({"error": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-
-@api_view(['POST'])
-@permission_classes([permissions.AllowAny])
-def firebase_login(request):
-    """
-    Verifies a Firebase ID token and returns JWT tokens.
-    Body: { "token": "firebase-id-token" }
-    """
-    try:
-        token = request.data.get('token')
-        logger.info(f"Firebase login attempt with token: {token[:10]}...")
-        
-        if not token:
-            return Response({"error": "Token is required"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Verify the Firebase token
-        try:
-            decoded_token = firebase_auth.verify_id_token(token)
-            logger.info(f"Token verified successfully. UID: {decoded_token.get('uid')}")
-            
-            uid = decoded_token['uid']
-            email = decoded_token.get('email')
-            full_name = decoded_token.get('name', '')
-            
-            if not email:
-                logger.error("No email found in Firebase token")
-                return Response({"error": "Google account must have an email."}, status=status.HTTP_400_BAD_REQUEST)
-
-            # Get or create the user
-            user, created = User.objects.get_or_create(
-                email=email,
-                defaults={
-                    'full_name': full_name,
-                    'is_owner': False,  # Default to student for Google login
-                }
-            )
-            logger.info(f"User {'created' if created else 'found'}: {email}")
-
-            # Generate tokens
-            refresh = RefreshToken.for_user(user)
-            user_data = UserSerializer(user).data
-            
-            return Response({
-                'refresh': str(refresh),
-                'access': str(refresh.access_token),
-                'user': user_data,
-                'created': created
-            })
-
-        except Exception as auth_e:
-            logger.error(f"Firebase token verification failed: {auth_e}", exc_info=True)
-            return Response({"error": f"Firebase verification failed: {str(auth_e)}"}, status=status.HTTP_401_UNAUTHORIZED)
-
-    except Exception as e:
-        logger.error(f"Global Firebase login error: {e}", exc_info=True)
         return Response({"error": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

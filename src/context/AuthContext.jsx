@@ -1,8 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { API_URL } from "@/lib/api";
-import { signInWithPopup } from "firebase/auth";
-import { auth, googleProvider } from "@/lib/firebase";
 
 const AuthContext = createContext();
 
@@ -196,46 +194,8 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
-    const loginWithGoogle = async () => {
-        try {
-            const result = await signInWithPopup(auth, googleProvider);
-            const idToken = await result.user.getIdToken();
-
-            const response = await fetch(`${API_URL}/api/auth/firebase-login/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ token: idToken })
-            });
-
-            if (response.ok) {
-                const data = await response.json();
-                localStorage.setItem("token", data.access);
-                setUser(data.user);
-                toast.success(`Welcome ${data.user.full_name || 'back'}!`);
-                return { success: true };
-            } else {
-                const errorData = await response.json().catch(() => ({}));
-                console.error("Backend login failed:", response.status, errorData);
-                const errorMessage = errorData.error || `Server error (${response.status})`;
-                toast.error(errorMessage);
-                return { success: false, error: errorMessage };
-            }
-        } catch (error) {
-            console.error("Google login failed:", error);
-            if (error.code === 'auth/popup-closed-by-user') {
-                toast.error("Login popup closed. Please try again.");
-            } else if (error.code === 'auth/unauthorized-domain') {
-                toast.error("This domain is not authorized for Firebase auth. Add it in Firebase Console.");
-            } else {
-                // Show the specific error message to help debug
-                toast.error(`Google login failed: ${error.message || "Unknown error"}`);
-            }
-            return { success: false, error: error.message };
-        }
-    };
-
     return (
-        <AuthContext.Provider value={{ user, login, ownerLogin, signup, logout, loading, sendOTP, loginWithOTP, loginWithGoogle }}>
+        <AuthContext.Provider value={{ user, login, ownerLogin, signup, logout, loading, sendOTP, loginWithOTP }}>
             {children}
         </AuthContext.Provider>
     );

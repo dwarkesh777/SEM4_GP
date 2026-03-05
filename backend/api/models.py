@@ -102,9 +102,10 @@ class Room(models.Model):
 
 class Review(models.Model):
     property = models.ForeignKey(Property, related_name='reviews_list', on_delete=models.CASCADE)
+    user = models.ForeignKey(User, related_name='reviews', on_delete=models.SET_NULL, null=True, blank=True)
     name = models.CharField(max_length=100)
     rating = models.IntegerField()
-    date = models.DateField()
+    date = models.DateField(auto_now_add=True)
     comment = models.TextField()
 
 class Booking(models.Model):

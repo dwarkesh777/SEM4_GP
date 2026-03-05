@@ -30,9 +30,12 @@ class RoomSerializer(serializers.ModelSerializer):
 
 class ReviewSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
+    user = serializers.ReadOnlyField(source='user.full_name')
+
     class Meta:
         model = Review
-        fields = ['id', 'name', 'rating', 'date', 'comment']
+        fields = ['id', 'user', 'name', 'rating', 'date', 'comment', 'property']
+        read_only_fields = ['id', 'user', 'date']
 
 
 class EmptyStringFloatField(serializers.FloatField):

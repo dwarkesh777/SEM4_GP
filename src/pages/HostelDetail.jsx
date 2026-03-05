@@ -263,7 +263,53 @@ const HostelDetail = () => {
     const [enquiryForm, setEnquiryForm] = useState({
         name: "", phone: "", message: ""
     });
+    const [reviewDialog, setReviewDialog] = useState(false);
+    const [reviewForm, setReviewForm] = useState({
+        rating: 5, comment: ""
+    });
+    const [submittingReview, setSubmittingReview] = useState(false);
     const [formErrors, setFormErrors] = useState({});
+
+    const handleReviewSubmit = async (e) => {
+        e.preventDefault();
+        const token = localStorage.getItem('token');
+        if (!token) {
+            toast({ title: "Authorization Required", description: "Please log in to leave a review.", variant: "destructive" });
+            return;
+        }
+
+        setSubmittingReview(true);
+        try {
+            const res = await fetch(`${API_URL}/api/reviews/`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    property: id,
+                    rating: reviewForm.rating,
+                    comment: reviewForm.comment,
+                    name: "User" // Fallback; backend uses authenticated user
+                }),
+            });
+
+            if (res.ok) {
+                toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
+                setReviewDialog(false);
+                setReviewForm({ rating: 5, comment: "" });
+                // Refetch property data (the query will handle this if we invalidate it)
+                window.location.reload(); // Simple refresh for now
+            } else {
+                const errData = await res.json();
+                toast({ title: "Error", description: errData.error || "Failed to submit review.", variant: "destructive" });
+            }
+        } catch (err) {
+            toast({ title: "Error", description: "Something went wrong.", variant: "destructive" });
+        } finally {
+            setSubmittingReview(false);
+        }
+    };
 
     const openBookingModal = (room) => {
         setSelectedRoom(room);
@@ -829,11 +875,84 @@ const HostelDetail = () => {
                             >
                                 <div className="flex items-center justify-between mb-8">
                                     <h2 className="text-3xl font-heading font-black text-slate-900 tracking-tight">Verified <span className="text-primary italic">Reviews</span></h2>
-                                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-100 shadow-sm font-bold text-slate-600">
-                                        <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
-                                        {property.rating?.toFixed(1)} <span className="text-slate-200">|</span> {property.reviews_list?.length || 0} Ratings
+                                    <div className="flex items-center gap-3">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setReviewDialog(true)}
+                                            className="px-6 rounded-full border-slate-200 text-slate-600 hover:text-primary hover:border-primary/30 font-bold transition-all shadow-sm"
+                                        >
+                                            <Star className="w-4 h-4 mr-2" /> Rate & Review
+                                        </Button>
+                                        <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-100 shadow-sm font-bold text-slate-600">
+                                            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
+                                            {property.rating?.toFixed(1)} <span className="text-slate-200">|</span> {property.reviews_list?.length || 0} Ratings
+                                        </div>
                                     </div>
                                 </div>
+
+                                {/* Review Dialog */}
+                                <AnimatePresence>
+                                    {reviewDialog && (
+                                        <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-md"
+                                        >
+                                            <motion.div
+                                                initial={{ opacity: 0, scale: 0.95 }}
+                                                animate={{ opacity: 1, scale: 1 }}
+                                                exit={{ opacity: 0, scale: 0.95 }}
+                                                className="relative w-full max-w-md bg-white rounded-[2.5rem] p-8 shadow-2xl"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <div className="flex items-center justify-between mb-6">
+                                                    <h3 className="text-2xl font-black text-slate-900">Your Review</h3>
+                                                    <button onClick={() => setReviewDialog(false)} className="p-2 hover:bg-slate-100 rounded-full">
+                                                        <XIcon className="w-5 h-5 text-slate-400" />
+                                                    </button>
+                                                </div>
+
+                                                <form onSubmit={handleReviewSubmit} className="space-y-6">
+                                                    <div>
+                                                        <Label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-3">Rating Score</Label>
+                                                        <div className="flex items-center gap-2">
+                                                            {[1, 2, 3, 4, 5].map((star) => (
+                                                                <button
+                                                                    key={star}
+                                                                    type="button"
+                                                                    onClick={() => setReviewForm({ ...reviewForm, rating: star })}
+                                                                    className="hover:scale-110 transition-transform"
+                                                                >
+                                                                    <Star className={`w-10 h-10 ${star <= reviewForm.rating ? "fill-amber-400 text-amber-400" : "text-slate-200"}`} />
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+
+                                                    <div>
+                                                        <Label className="text-xs font-black uppercase tracking-widest text-slate-400 block mb-2">Detailed Feedback</Label>
+                                                        <Textarea
+                                                            placeholder="What was your experience like? (Safety, Cleanliness, Food...)"
+                                                            className="min-h-[120px] rounded-2xl bg-slate-50 border-slate-100 focus:bg-white focus:ring-primary/20 transition-all font-bold text-slate-700 p-4"
+                                                            required
+                                                            value={reviewForm.comment}
+                                                            onChange={(e) => setReviewForm({ ...reviewForm, comment: e.target.value })}
+                                                        />
+                                                    </div>
+
+                                                    <Button
+                                                        type="submit"
+                                                        disabled={submittingReview}
+                                                        className="w-full h-14 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg transition-all"
+                                                    >
+                                                        {submittingReview ? <Loader2 className="w-5 h-5 animate-spin" /> : "Submit Review"}
+                                                    </Button>
+                                                </form>
+                                            </motion.div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {property.reviews_list?.map((review, i) => (

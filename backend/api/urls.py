@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet, send_otp, verify_otp
+from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet, send_otp, verify_otp, ReviewViewSet
 from .colleges_view import get_colleges
 
 router = DefaultRouter()
@@ -9,6 +9,7 @@ router.register(r'properties', PropertyViewSet, basename='property')
 router.register(r'bookings', BookingViewSet, basename='booking')
 router.register(r'enquiries', EnquiryViewSet, basename='enquiry')
 router.register(r'wishlist', WishlistViewSet, basename='wishlist')
+router.register(r'reviews', ReviewViewSet, basename='review')
 
 urlpatterns = [
     path('', include(router.urls)),

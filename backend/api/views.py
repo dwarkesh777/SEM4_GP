@@ -3,8 +3,8 @@ import math
 from django.db.models import Q
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
-from .models import Property, Booking, Room, Enquiry, Wishlist, User
-from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer
+from .models import Property, Booking, Room, Enquiry, Wishlist, User, Review
+from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer, ReviewSerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.core.mail import send_mail
@@ -426,6 +426,34 @@ class EnquiryViewSet(viewsets.ModelViewSet):
         # Trigger notification email
         send_enquiry_notification_email(enquiry)
 
+
+class ReviewViewSet(viewsets.ModelViewSet):
+    serializer_class = ReviewSerializer
+    
+    def get_queryset(self):
+        property_id = self.request.query_params.get('property_id')
+        if property_id:
+            return Review.objects.filter(property_id=property_id).order_by('-date')
+        return Review.objects.all().order_by('-date')
+
+    def get_permissions(self):
+        if self.action in ['create', 'update', 'partial_update', 'destroy']:
+            return [permissions.IsAuthenticated()]
+        return [permissions.AllowAny()]
+
+    def perform_create(self, serializer):
+        # Save the review
+        review = serializer.save(user=self.request.user if self.request.user.is_authenticated else None)
+        
+        # Update Property rating and reviews_count
+        prop = review.property
+        reviews = prop.reviews_list.all()
+        count = reviews.count()
+        avg_rating = sum(r.rating for r in reviews) / count if count > 0 else 0
+        
+        prop.rating = round(avg_rating, 1)
+        prop.reviews_count = count
+        prop.save()
 
 class WishlistViewSet(viewsets.ModelViewSet):
     serializer_class = WishlistSerializer

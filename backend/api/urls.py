@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet, send_otp, verify_otp, ReviewViewSet
+from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet, send_otp, verify_otp, ReviewViewSet, get_review_images
 from .colleges_view import get_colleges
 
 router = DefaultRouter()
@@ -14,6 +14,7 @@ router.register(r'reviews', ReviewViewSet, basename='review')
 urlpatterns = [
     path('', include(router.urls)),
     path('colleges/', get_colleges, name='get_colleges'),
+    path('review-images/', get_review_images, name='get_review_images'),
     path('auth/register/', RegisterView.as_view(), name='register'),
     path('auth/profile/', UserProfileView.as_view(), name='profile'),
     path('auth/login/', UserLoginView.as_view(), name='token_obtain_pair'),

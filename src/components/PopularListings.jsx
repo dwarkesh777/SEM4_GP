@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "@/lib/api";
 import { useState } from "react";
 import ShowAllProperties from "./ShowAllProperties";
+import ImageGallery from "./ImageGallery";
 
 const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters = {}, limit = null) => {
     let url = `${API_URL}/api/properties/?`;
@@ -43,6 +44,7 @@ const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters
 
 const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} }) => {
     const [showAll, setShowAll] = useState(false);
+    const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     
     const { data: properties, isLoading, error, refetch } = useQuery({
         queryKey: ["properties", searchQuery, collegeCoords, filters, showAll],
@@ -127,7 +129,11 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} 
                         viewport={{ once: true }}
                         transition={{ duration: 0.6 }}
                     >
-                        <Button variant="outline" className="h-14 px-8 rounded-2xl font-bold border-slate-200 hover:border-primary hover:text-primary transition-all group">
+                        <Button 
+                            variant="outline" 
+                            className="h-14 px-8 rounded-2xl font-bold border-slate-200 hover:border-primary hover:text-primary transition-all group"
+                            onClick={() => setIsGalleryOpen(true)}
+                        >
                             Explore Gallery
                             <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
                         </Button>
@@ -174,6 +180,11 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} 
                     onBackToHome={() => setShowAll(false)}
                 />
             </div>
+            
+            <ImageGallery 
+                isOpen={isGalleryOpen} 
+                onClose={() => setIsGalleryOpen(false)} 
+            />
         </section>
     );
 };

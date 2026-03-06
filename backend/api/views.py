@@ -485,6 +485,67 @@ class ReviewViewSet(viewsets.ModelViewSet):
         prop.reviews_count = count
         prop.save()
 
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def get_review_images(request):
+    """
+    Get all review images with property information for the gallery.
+    Returns: [{
+        'id': review_id,
+        'image': image_url,
+        'property_name': property_name,
+        'property_id': property_id,
+        'rating': review_rating,
+        'comment': review_comment,
+        'reviewer_name': reviewer_name
+    }, ...]
+    """
+    try:
+        # Get all reviews that have images
+        reviews_with_images = Review.objects.filter(image__isnull=False).exclude(image='')
+        
+        gallery_data = []
+        for review in reviews_with_images:
+            if review.image and review.property:
+                # Handle Cloudinary URLs properly
+                image_url = None
+                if review.image:
+                    if review.image.url.startswith('http'):
+                        # Already a full URL (Cloudinary)
+                        image_url = review.image.url
+                    else:
+                        # Local file, build absolute URI
+                        image_url = request.build_absolute_uri(review.image.url)
+                
+                gallery_data.append({
+                    'id': str(review.id),
+                    'image': image_url,
+                    'property_name': review.property.name,
+                    'property_id': str(review.property.id),
+                    'rating': review.rating,
+                    'comment': review.comment[:200] + '...' if len(review.comment) > 200 else review.comment,
+                    'reviewer_name': review.name,
+                    'date': review.date.strftime('%B %d, %Y')
+                })
+        
+        print(f"DEBUG: Returning {len(gallery_data)} review images")
+        for item in gallery_data:
+            print(f"Image URL: {item['image']}")
+        
+        return Response({
+            'success': True,
+            'data': gallery_data,
+            'count': len(gallery_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"Error fetching review images: {e}")
+        return Response({
+            'success': False,
+            'error': 'Failed to fetch review images'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 class WishlistViewSet(viewsets.ModelViewSet):
     serializer_class = WishlistSerializer
     permission_classes = [permissions.IsAuthenticated]

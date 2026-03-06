@@ -104,7 +104,7 @@ class PropertySerializer(serializers.ModelSerializer):
             'latitude', 'longitude', 'type', 'gender', 'rating', 'reviews',
             'price', 'originalPrice', 'amenities', 'appliances',
             'description', 'rooms', 'reviews_list', 'address', 'phone', 'email', 'owner',
-            'distance',
+            'distance', 'is_verified',
         ]
 
     def get_distance(self, obj):

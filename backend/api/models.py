@@ -83,6 +83,7 @@ class Property(models.Model):
     video = models.FileField(upload_to='properties/videos/', null=True, blank=True)
     amenities = models.ManyToManyField(Amenity, related_name='properties', blank=True)
     appliances = models.ManyToManyField(Appliance, related_name='properties', blank=True)
+    is_verified = models.BooleanField(default=None, null=True, blank=True)  # None=pending, True=approved, False=rejected
 
     def __str__(self):
         return self.name

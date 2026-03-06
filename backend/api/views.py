@@ -22,6 +22,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Property.objects.all()
         
+        # IMPORTANT: Only show verified properties on the public website
+        # Admin can see all properties (including pending/rejected)
+        if not (self.request.user and self.request.user.is_staff):
+            queryset = queryset.filter(is_verified=True)
+        
         # 1. Base Filters
         owner_id = self.request.query_params.get('owner_id')
         if owner_id:
@@ -122,7 +127,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
         logger.info(f"POST /api/properties/ - files: {list(request.FILES.keys())}")
         logger.info(f"POST /api/properties/ - user: {request.user} authenticated: {request.user.is_authenticated}")
 
-        serializer = self.get_serializer(data=request.data)
+        # Set is_verified to None (pending) for new properties
+        mutable_data = request.data.copy()
+        mutable_data['is_verified'] = None  # New properties start as pending
+        
+        serializer = self.get_serializer(data=mutable_data)
         if not serializer.is_valid():
             # Log and return the exact validation errors so frontend can show them
             logger.error(f"Validation errors: {serializer.errors}")
@@ -133,6 +142,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
         try:
             self.perform_create(serializer)
+            logger.info(f"Property created successfully: {serializer.data.get('name')} - ID: {serializer.data.get('id')} - Status: Pending")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error(f"Error during property creation: {e}", exc_info=True)

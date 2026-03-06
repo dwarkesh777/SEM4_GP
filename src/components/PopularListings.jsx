@@ -4,11 +4,22 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Building2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "@/lib/api";
+import { useState } from "react";
 
-const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters = {}) => {
+const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters = {}, limit = null) => {
     let url = `${API_URL}/api/properties/?`;
     if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
     if (lat && lng) url += `lat=${lat}&lng=${lng}&`;
+    
+    // Default to rating_desc ordering for top properties
+    if (!filters.ordering && (!lat || !lng)) {
+        url += `ordering=rating_desc&`;
+    }
+    
+    // Add limit parameter if specified
+    if (limit) {
+        url += `limit=${limit}&`;
+    }
 
     // Add advanced filters
     if (filters.gender?.length > 0) {
@@ -30,13 +41,16 @@ const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters
 };
 
 const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} }) => {
-    const { data: properties, isLoading, error } = useQuery({
-        queryKey: ["properties", searchQuery, collegeCoords, filters],
+    const [showAll, setShowAll] = useState(false);
+    
+    const { data: properties, isLoading, error, refetch } = useQuery({
+        queryKey: ["properties", searchQuery, collegeCoords, filters, showAll],
         queryFn: () => fetchProperties(
             searchQuery,
             collegeCoords?.lat,
             collegeCoords?.lng,
-            filters
+            filters,
+            showAll ? null : 6 // Show only 6 properties initially, all when showAll is true
         ),
     });
 
@@ -132,7 +146,7 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} 
                         <div className="flex-1 text-center md:text-left">
                             <h3 className="text-xl font-bold text-slate-900 mb-1">{collegeCoords.name}</h3>
                             <p className="text-slate-600 font-medium">
-                                Found <span className="text-indigo-600 font-bold">{properties?.length || 0}</span> hostels & PGs within 30km radius sorted by distance
+                                Found <span className="text-indigo-600 font-bold">{properties?.length || 0}</span> hostels & PGs within 30km radius {showAll ? "" : "(showing top 6)"}
                             </p>
                         </div>
                     </motion.div>
@@ -159,15 +173,27 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} 
                     transition={{ duration: 0.6, delay: 0.4 }}
                     className="flex flex-col items-center mt-20"
                 >
-                    <div className="p-1 rounded-[2.5rem] bg-slate-100/80 backdrop-blur-sm border border-white">
-                        <Button size="lg" className="h-16 px-12 rounded-[2.25rem] bg-primary text-white hover:bg-primary/90 shadow-2xl shadow-primary/20 transition-all text-lg font-bold group">
-                            Show All Properties
-                            <div className="ml-3 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-1 transition-transform">
-                                <ArrowRight className="w-4 h-4" />
-                            </div>
-                        </Button>
-                    </div>
-                    <p className="mt-6 text-sm text-slate-400 font-medium">Over <span className="text-slate-600 font-bold">2,500+</span> verified properties available</p>
+                    {!showAll && properties && properties.length >= 6 && (
+                        <div className="p-1 rounded-[2.5rem] bg-slate-100/80 backdrop-blur-sm border border-white">
+                            <Button 
+                                size="lg" 
+                                className="h-16 px-12 rounded-[2.25rem] bg-primary text-white hover:bg-primary/90 shadow-2xl shadow-primary/20 transition-all text-lg font-bold group"
+                                onClick={() => setShowAll(true)}
+                            >
+                                Show All Properties
+                                <div className="ml-3 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-1 transition-transform">
+                                    <ArrowRight className="w-4 h-4" />
+                                </div>
+                            </Button>
+                        </div>
+                    )}
+                    <p className="mt-6 text-sm text-slate-400 font-medium">
+                        {showAll ? (
+                            <>Showing all <span className="text-slate-600 font-bold">{properties?.length || 0}</span> verified properties</>
+                        ) : (
+                            <>Over <span className="text-slate-600 font-bold">2,500+</span> verified properties available</>
+                        )}
+                    </p>
                 </motion.div>
             </div>
         </section>

@@ -65,7 +65,17 @@ class PropertyViewSet(viewsets.ModelViewSet):
         if getattr(self, 'action', None) != 'list':
             return queryset
 
-        # 3. Distance calculation (if lat/lng provided)
+        # 3. Limit parameter for showing top properties
+        limit = self.request.query_params.get('limit')
+        if limit:
+            try:
+                limit = int(limit)
+                if limit > 0:
+                    queryset = queryset[:limit]
+            except (ValueError, TypeError):
+                pass
+
+        # 4. Distance calculation (if lat/lng provided)
         college_lat = self.request.query_params.get('lat')
         college_lng = self.request.query_params.get('lng')
         

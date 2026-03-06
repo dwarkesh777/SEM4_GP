@@ -5,6 +5,7 @@ import { ArrowRight, Building2 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "@/lib/api";
 import { useState } from "react";
+import ShowAllProperties from "./ShowAllProperties";
 
 const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters = {}, limit = null) => {
     let url = `${API_URL}/api/properties/?`;
@@ -166,35 +167,12 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} 
                     ))}
                 </motion.div>
 
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.6, delay: 0.4 }}
-                    className="flex flex-col items-center mt-20"
-                >
-                    {!showAll && properties && properties.length >= 6 && (
-                        <div className="p-1 rounded-[2.5rem] bg-slate-100/80 backdrop-blur-sm border border-white">
-                            <Button 
-                                size="lg" 
-                                className="h-16 px-12 rounded-[2.25rem] bg-primary text-white hover:bg-primary/90 shadow-2xl shadow-primary/20 transition-all text-lg font-bold group"
-                                onClick={() => setShowAll(true)}
-                            >
-                                Show All Properties
-                                <div className="ml-3 w-8 h-8 rounded-full bg-white/20 flex items-center justify-center group-hover:translate-x-1 transition-transform">
-                                    <ArrowRight className="w-4 h-4" />
-                                </div>
-                            </Button>
-                        </div>
-                    )}
-                    <p className="mt-6 text-sm text-slate-400 font-medium">
-                        {showAll ? (
-                            <>Showing all <span className="text-slate-600 font-bold">{properties?.length || 0}</span> verified properties</>
-                        ) : (
-                            <>Over <span className="text-slate-600 font-bold">2,500+</span> verified properties available</>
-                        )}
-                    </p>
-                </motion.div>
+                <ShowAllProperties 
+                    showAll={showAll} 
+                    onShowAll={() => setShowAll(true)}
+                    propertiesCount={properties?.length || 0}
+                    onBackToHome={() => setShowAll(false)}
+                />
             </div>
         </section>
     );

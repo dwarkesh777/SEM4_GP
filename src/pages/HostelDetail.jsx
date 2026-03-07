@@ -440,17 +440,27 @@ const HostelDetail = () => {
                         if (verifyData.verified) {
                             setPaymentId(response.razorpay_payment_id);
                             setOrderId(response.razorpay_order_id);
-                            setBookingStep("success");
-                            // Auto-trigger receipt generation after a short delay
-                            setTimeout(() => {
-                                generateReceiptPDF({
-                                    paymentId: response.razorpay_payment_id,
-                                    bookingForm,
-                                    selectedRoom,
-                                    property,
-                                    orderId: response.razorpay_order_id,
-                                });
-                            }, 800);
+                            
+                            // Create booking data for success page
+                            const bookingData = {
+                                id: verifyData.booking_id,
+                                property_name: property?.name,
+                                property_location: property?.location,
+                                property_city: property?.city,
+                                room_name: selectedRoom?.name,
+                                amount: selectedRoom?.price,
+                                payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                customer_name: bookingForm.name,
+                                customer_email: bookingForm.email,
+                                customer_phone: bookingForm.phone,
+                                customer_age: bookingForm.age,
+                                status: 'Confirmed',
+                                created_at: new Date().toISOString()
+                            };
+                            
+                            // Navigate to booking success page with booking data
+                            navigate('/booking-success', { state: { bookingData } });
                         } else {
                             setBookingStep("failed");
                         }

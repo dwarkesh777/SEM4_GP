@@ -19,6 +19,7 @@ import StudentSignup from "./pages/StudentSignup";
 import OwnerLogin from "./pages/OwnerLogin";
 import OwnerSignup from "./pages/OwnerSignup";
 import UserDashboard from "./pages/UserDashboard";
+import BookingSuccess from "./pages/BookingSuccess";
 import NotFound from "./pages/NotFound";
 import AddProperty from "./pages/AddProperty";
 import CollegeSearch from "./pages/CollegeSearch";
@@ -56,6 +57,7 @@ const App = () => (
                         <Route path="/terms" element={<TermsOfService />} />
                         <Route path="/privacy" element={<PrivacyPolicy />} />
                         <Route path="/dashboard" element={<UserDashboard />} />
+                        <Route path="/booking-success" element={<BookingSuccess />} />
                         {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                         <Route path="*" element={<NotFound />} />
                     </Routes>

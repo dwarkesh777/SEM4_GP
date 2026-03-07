@@ -180,9 +180,11 @@ class PropertySerializer(serializers.ModelSerializer):
 
 
 class BookingSerializer(serializers.ModelSerializer):
-    property_name = serializers.ReadOnlyField(source='property.name')
-    room_name = serializers.ReadOnlyField(source='room.name')
+    property_name = serializers.CharField(source='property.name', read_only=True)
+    room_name = serializers.CharField(source='room.name', read_only=True)
     property_image = serializers.SerializerMethodField()
+    property_location = serializers.CharField(source='property.location', read_only=True)
+    property_city = serializers.CharField(source='property.city', read_only=True)
 
     class Meta:
         model = Booking
@@ -190,7 +192,8 @@ class BookingSerializer(serializers.ModelSerializer):
             'id', 'user', 'property', 'property_name', 'property_image', 
             'room', 'room_name', 'status', 'created_at',
             'payment_id', 'razorpay_order_id', 'amount',
-            'customer_name', 'customer_phone', 'customer_email', 'customer_age'
+            'customer_name', 'customer_phone', 'customer_email', 'customer_age',
+            'property_location', 'property_city'
         ]
         read_only_fields = ['user', 'status', 'created_at']
 

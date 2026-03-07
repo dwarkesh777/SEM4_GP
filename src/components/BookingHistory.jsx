@@ -318,7 +318,7 @@ const BookingHistory = ({ isOpen, onClose }) => {
                                                         <CardTitle className="text-lg">{booking.property_name}</CardTitle>
                                                         <div className="flex items-center gap-2 text-slate-600">
                                                             <MapPin className="w-4 h-4" />
-                                                            <span className="text-sm">{booking.property?.location}, {booking.property?.city}</span>
+                                                            <span className="text-sm">{booking.property_location}, {booking.property_city}</span>
                                                         </div>
                                                         <div className="flex items-center gap-2 text-slate-600">
                                                             <Home className="w-4 h-4" />
@@ -336,7 +336,7 @@ const BookingHistory = ({ isOpen, onClose }) => {
                                                     </div>
                                                 </div>
                                             </CardHeader>
-                                            <CardContent className="space-y-4">
+                                            <CardContent className="p-4">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     <div className="space-y-2">
                                                         <div className="flex items-center gap-2 text-slate-600">

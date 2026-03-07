@@ -315,13 +315,23 @@ const UserDashboard = () => {
                                                     <h2 className="text-3xl font-black text-slate-900 font-heading">My Bookings</h2>
                                                     <p className="text-slate-500">View your accommodation bookings and download receipts.</p>
                                                 </div>
-                                                <Button
-                                                    onClick={() => setShowBookingHistory(true)}
-                                                    className="flex items-center gap-2 h-12 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black shadow-lg shadow-blue-100"
-                                                >
-                                                    <History className="w-5 h-5" />
-                                                    View Full History
-                                                </Button>
+                                                <div className="flex gap-2">
+                                                    <Button
+                                                        onClick={() => setShowBookingHistory(true)}
+                                                        className="flex items-center gap-2 h-12 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black shadow-lg shadow-blue-100"
+                                                    >
+                                                        <History className="w-5 h-5" />
+                                                        View Full History
+                                                    </Button>
+                                                    <Button
+                                                        onClick={() => window.location.reload()}
+                                                        variant="outline"
+                                                        size="sm"
+                                                        className="h-12 px-4"
+                                                    >
+                                                        Refresh
+                                                    </Button>
+                                                </div>
                                             </div>
                                             
                                             {bookingsLoading ? (
@@ -348,11 +358,17 @@ const UserDashboard = () => {
                                                                         <Building2 className="w-6 h-6" />
                                                                     </div>
                                                                     <div>
-                                                                        <h3 className="font-bold text-slate-900">{booking.property_name || booking.property?.name}</h3>
+                                                                        <h3 className="font-bold text-slate-900">{booking.property_name}</h3>
                                                                         <p className="text-xs text-slate-500">
-                                                                            {booking.room_name || booking.room?.name} • 
+                                                                            {booking.room_name} • 
                                                                             {new Date(booking.created_at).toLocaleDateString('en-IN')}
                                                                         </p>
+                                                                        {booking.property_location && (
+                                                                            <p className="text-xs text-slate-400 flex items-center gap-1 mt-1">
+                                                                                <MapPin className="w-3 h-3" />
+                                                                                {booking.property_location}, {booking.property_city}
+                                                                            </p>
+                                                                        )}
                                                                     </div>
                                                                 </div>
                                                                 <div className="flex items-center gap-3">

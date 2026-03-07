@@ -315,6 +315,7 @@ def verify_razorpay_payment(request):
                 
                 # Smart user detection fallback
                 user = request.user if request.user.is_authenticated else None
+                
                 if not user:
                     # Fallback: Find user by email provided in customer details
                     customer_email = customer_data.get('email')
@@ -336,6 +337,7 @@ def verify_razorpay_payment(request):
                     customer_age=customer_data.get('age'),
                     status='Confirmed'
                 )
+                
                 return Response({'verified': True, 'payment_id': payment_id, 'booking_id': str(booking.id)})
             except Exception as e:
                 logger.error(f"Error saving booking: {e}", exc_info=True)
@@ -348,14 +350,17 @@ def verify_razorpay_payment(request):
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-class BookingViewSet(viewsets.ReadOnlyModelViewSet):
+class BookingViewSet(viewsets.ModelViewSet):
     serializer_class = BookingSerializer
     permission_classes = [permissions.IsAuthenticated]
-
+    
     def get_queryset(self):
         if self.request.user.is_owner:
-            return Booking.objects.filter(property__owner=self.request.user).order_by('-created_at')
-        return Booking.objects.filter(user=self.request.user).order_by('-created_at')
+            bookings = Booking.objects.filter(property__owner=self.request.user).order_by('-created_at')
+            return bookings
+        
+        bookings = Booking.objects.filter(user=self.request.user).order_by('-created_at')
+        return bookings
 
 
 def send_enquiry_notification_email(enquiry):

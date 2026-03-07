@@ -436,6 +436,15 @@ const HostelDetail = () => {
                                 }
                             }),
                         });
+                        
+                        console.log('DEBUG: Payment verification request sent');
+                        console.log('DEBUG: Token present:', !!token);
+                        console.log('DEBUG: Customer details:', {
+                            name: bookingForm.name,
+                            phone: bookingForm.phone,
+                            email: bookingForm.email,
+                            age: bookingForm.age,
+                        });
                         const verifyData = await verifyRes.json();
                         if (verifyData.verified) {
                             setPaymentId(response.razorpay_payment_id);

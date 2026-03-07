@@ -319,13 +319,27 @@ def verify_razorpay_payment(request):
                 # Smart user detection fallback
                 user = request.user if request.user.is_authenticated else None
                 
+                print(f"DEBUG: Request user: {request.user}")
+                print(f"DEBUG: User authenticated: {request.user.is_authenticated}")
+                print(f"DEBUG: User email: {request.user.email if request.user.is_authenticated else 'None'}")
+                print(f"DEBUG: Auth header: {request.headers.get('Authorization', 'None')[:20]}...")
+                
                 if not user:
                     # Fallback: Find user by email provided in customer details
                     customer_email = customer_data.get('email')
+                    print(f"DEBUG: Looking for user by email: {customer_email}")
                     if customer_email:
                         user = User.objects.filter(email=customer_email).first()
                         if user:
+                            print(f"DEBUG: Found user by email: {user.email}")
                             logger.info(f"Fallback: Associated booking with user {user.email} via email match.")
+                        else:
+                            print(f"DEBUG: No user found with email: {customer_email}")
+                            print(f"DEBUG: Available users: {list(User.objects.values_list('email', flat=True))}")
+                    else:
+                        print(f"DEBUG: No customer email provided")
+                else:
+                    print(f"DEBUG: Using authenticated user: {user.email}")
 
                 booking = Booking.objects.create(
                     user=user,
@@ -341,11 +355,15 @@ def verify_razorpay_payment(request):
                     status='Confirmed'
                 )
                 
-                # Debug: Verify the booking was created with property relationship
+                # Debug: Verify the booking was created with user and property relationship
                 print(f"DEBUG: Booking created - ID: {booking.id}")
+                print(f"DEBUG: Booking user: {booking.user}")
+                print(f"DEBUG: Booking user email: {booking.user.email if booking.user else 'None'}")
                 print(f"DEBUG: Booking property: {booking.property}")
                 print(f"DEBUG: Booking property name: {booking.property.name if booking.property else 'None'}")
                 print(f"DEBUG: Booking property location: {booking.property.location if booking.property else 'None'}")
+                print(f"DEBUG: Booking room: {booking.room}")
+                print(f"DEBUG: Booking room name: {booking.room.name if booking.room else 'None'}")
                 
                 return Response({'verified': True, 'payment_id': payment_id, 'booking_id': str(booking.id)})
             except Exception as e:
@@ -364,6 +382,11 @@ class BookingViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
+        print(f"DEBUG: BookingViewSet.get_queryset called for user: {self.request.user}")
+        print(f"DEBUG: User authenticated: {self.request.user.is_authenticated}")
+        print(f"DEBUG: User is_owner: {getattr(self.request.user, 'is_owner', False)}")
+        print(f"DEBUG: User email: {self.request.user.email if self.request.user.is_authenticated else 'None'}")
+        
         if self.request.user.is_owner:
             bookings = Booking.objects.filter(property__owner=self.request.user).order_by('-created_at')
             print(f"DEBUG: Owner bookings count: {bookings.count()}")
@@ -375,6 +398,12 @@ class BookingViewSet(viewsets.ModelViewSet):
         print(f"DEBUG: User bookings count: {bookings.count()}")
         for booking in bookings:
             print(f"DEBUG: User Booking - ID: {booking.id}, Property: {booking.property.name if booking.property else 'None'}, User: {booking.user}")
+        
+        # Also check all bookings for debugging
+        all_bookings = Booking.objects.all()
+        print(f"DEBUG: Total bookings in database: {all_bookings.count()}")
+        for booking in all_bookings:
+            print(f"DEBUG: All Booking - ID: {booking.id}, User: {booking.user}, Property: {booking.property.name if booking.property else 'None'}")
         
         return bookings
 

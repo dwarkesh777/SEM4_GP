@@ -22,6 +22,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SimilarProperties from "@/components/SimilarProperties";
+import SupportButton from "@/components/SupportButton";
 import { useToast } from "@/hooks/use-toast";
 import { API_URL } from "@/lib/api";
 
@@ -1179,19 +1180,27 @@ const HostelDetail = () => {
                                     </div>
                                 </Card>
 
-                                <div className="p-8 rounded-[2.5rem] bg-indigo-900 overflow-hidden relative group">
+                                <div className="p-8 rounded-[2.5rem] bg-gradient-to-br from-emerald-600 to-teal-700 overflow-hidden relative group">
+                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-10 -translate-y-10 group-hover:scale-110 transition-transform" />
                                     <div className="relative z-10 text-white space-y-4">
-                                        <h4 className="text-xl font-black tracking-tight">Need Expert Advice?</h4>
-                                        <p className="text-sm font-medium text-indigo-100/80 leading-relaxed">
+                                        <h4 className="text-xl font-black tracking-tight flex items-center gap-2">
+                                            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                                                <Phone className="w-4 h-4" />
+                                            </div>
+                                            Need Expert Advice?
+                                        </h4>
+                                        <p className="text-sm font-medium text-emerald-50 leading-relaxed">
                                             Our student consultants help you find the best hostels based on your college location.
                                         </p>
-                                        <Button className="w-full rounded-xl bg-white text-indigo-900 border-none hover:bg-indigo-50 font-bold">
+                                        <SupportButton 
+                                            variant="primary" 
+                                            size="lg"
+                                            icon="phone"
+                                            onClick={() => navigate('/support')}
+                                        >
                                             Talk to Consultant
-                                        </Button>
+                                        </SupportButton>
                                     </div>
-
-                                    {/* Decoration */}
-                                    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full translate-x-10 -translate-y-10 group-hover:scale-110 transition-transform" />
                                     <Coffee className="absolute bottom-4 right-4 w-12 h-12 text-white/10 group-hover:rotate-12 transition-transform" />
                                 </div>
                             </motion.div>

@@ -1,8 +1,11 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Headphones, User, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, MapPin, LogOut } from "lucide-react";
+import { 
+    Menu, X, Headphones, User, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, MapPin, LogOut 
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import SupportButton from '@/components/SupportButton';
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/context/AuthContext";
 import {
@@ -189,11 +192,13 @@ const Navbar = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.5 }}
                     >
-                        <Button variant="ghost" size="sm" className={`gap-2 font-semibold rounded-full px-5 ${effectiveScrolled ? "text-slate-600 hover:bg-slate-100/50" : "text-white hover:bg-white/10"
-                            }`}>
-                            <Headphones className="w-4 h-4" />
+                        <SupportButton 
+                            variant="primary" 
+                            size="sm"
+                            onClick={() => navigate('/support')}
+                        >
                             Support
-                        </Button>
+                        </SupportButton>
                     </motion.div>
                 </div>
 

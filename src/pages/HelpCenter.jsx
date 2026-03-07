@@ -3,6 +3,7 @@ import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Search, BookOpen, CreditCard, ShieldCheck, UserCircle, MessageCircle, Phone } from "lucide-react";
+import SupportButton from '@/components/SupportButton';
 
 const HelpCenter = () => {
     const fadeIn = {
@@ -118,14 +119,22 @@ const HelpCenter = () => {
                         </p>
 
                         <div className="flex flex-wrap justify-center gap-6 relative z-10">
-                            <a href="mailto:hello@bedbuddy.in" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 px-8 py-4 rounded-2xl transition-all border border-white/10 group">
-                                <MessageCircle className="w-5 h-5 text-primary" />
-                                <span className="font-bold">Email Support</span>
-                            </a>
-                            <a href="tel:+919876543210" className="flex items-center gap-3 bg-white/10 hover:bg-white/20 px-8 py-4 rounded-2xl transition-all border border-white/10 group">
-                                <Phone className="w-5 h-5 text-[#FF66AA]" />
-                                <span className="font-bold">Call Us</span>
-                            </a>
+                            <SupportButton 
+                                variant="primary" 
+                                size="lg"
+                                onClick={() => window.location.href = '/support'}
+                                icon="message"
+                            >
+                                Email Support
+                            </SupportButton>
+                            <SupportButton 
+                                variant="secondary" 
+                                size="lg"
+                                onClick={() => window.location.href = '/support'}
+                                icon="phone"
+                            >
+                                Call Us
+                            </SupportButton>
                         </div>
                     </div>
                 </section>

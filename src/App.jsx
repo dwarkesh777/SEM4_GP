@@ -20,6 +20,7 @@ import OwnerLogin from "./pages/OwnerLogin";
 import OwnerSignup from "./pages/OwnerSignup";
 import UserDashboard from "./pages/UserDashboard";
 import BookingSuccess from "./pages/BookingSuccess";
+import SupportPage from "./pages/SupportPage";
 import NotFound from "./pages/NotFound";
 import AddProperty from "./pages/AddProperty";
 import CollegeSearch from "./pages/CollegeSearch";
@@ -52,6 +53,7 @@ const App = () => (
 
                         <Route path="/about" element={<AboutUs />} />
                         <Route path="/help" element={<HelpCenter />} />
+                        <Route path="/support" element={<SupportPage />} />
                         <Route path="/safety" element={<SafetyInfo />} />
                         <Route path="/cancellation" element={<CancellationPolicy />} />
                         <Route path="/terms" element={<TermsOfService />} />

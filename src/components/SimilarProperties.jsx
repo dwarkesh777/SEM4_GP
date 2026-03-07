@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Link } from 'react-router-dom';
 import { API_URL } from '@/lib/api';
@@ -10,33 +10,65 @@ import {
     Home,
     Wifi,
     Car,
-    Dumbbell
+    Dumbbell,
+    Loader2
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+
+// Simple cache for similar properties
+const similarPropertiesCache = new Map();
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
 const SimilarProperties = ({ propertyId, currentPropertyType, currentPropertyGender }) => {
     const [similarProperties, setSimilarProperties] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Memoize cache key
+    const cacheKey = useMemo(() => `similar_${propertyId}`, [propertyId]);
+
     useEffect(() => {
         fetchSimilarProperties();
-    }, [propertyId]);
+    }, [propertyId, cacheKey]);
 
     const fetchSimilarProperties = async () => {
+        // Check cache first
+        const cached = similarPropertiesCache.get(cacheKey);
+        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+            setSimilarProperties(cached.data);
+            setLoading(false);
+            return;
+        }
+
         try {
-            const response = await fetch(`${API_URL}/api/properties/${propertyId}/similar/`);
+            setLoading(true);
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
+
+            const response = await fetch(`${API_URL}/api/properties/${propertyId}/similar/`, {
+                signal: controller.signal
+            });
+            
+            clearTimeout(timeoutId);
+            
             if (response.ok) {
                 const data = await response.json();
+                
+                // Cache the result
+                similarPropertiesCache.set(cacheKey, {
+                    data,
+                    timestamp: Date.now()
+                });
+                
                 setSimilarProperties(data);
             } else {
-                setError('Failed to load similar properties');
+                throw new Error('Failed to load similar properties');
             }
         } catch (err) {
             console.error('Error fetching similar properties:', err);
-            setError('Failed to load similar properties');
+            setError(err.name === 'AbortError' ? 'Request timeout' : 'Failed to load similar properties');
         } finally {
             setLoading(false);
         }
@@ -55,19 +87,11 @@ const SimilarProperties = ({ propertyId, currentPropertyType, currentPropertyGen
         return (
             <div className="mt-16">
                 <h2 className="text-2xl font-bold text-slate-900 mb-6">Similar Properties</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {[1, 2, 3, 4, 5, 6].map((i) => (
-                        <div key={i} className="animate-pulse">
-                            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden">
-                                <div className="h-48 bg-slate-200"></div>
-                                <div className="p-4 space-y-3">
-                                    <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-                                    <div className="h-3 bg-slate-200 rounded w-1/2"></div>
-                                    <div className="h-3 bg-slate-200 rounded w-1/4"></div>
-                                </div>
-                            </div>
-                        </div>
-                    ))}
+                <div className="flex items-center justify-center py-12">
+                    <div className="flex flex-col items-center gap-4">
+                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                        <p className="text-slate-500 font-medium">Finding similar properties...</p>
+                    </div>
                 </div>
             </div>
         );

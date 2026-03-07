@@ -708,22 +708,25 @@ def verify_otp(request):
 @permission_classes([permissions.AllowAny])
 def get_similar_properties(request, property_id):
     """
-    Get similar properties based on price range and other criteria
+    Get similar properties based on price range and other criteria - OPTIMIZED
     """
     try:
-        # Get the current property
-        current_property = Property.objects.get(id=property_id)
+        # Use select_related and prefetch_related for faster queries
+        current_property = Property.objects.select_related('owner').get(id=property_id)
         
         # Define price range (±20% of current property price)
         min_price = current_property.price * 0.8
         max_price = current_property.price * 1.2
         
-        # Get similar properties
+        # Optimized query with select_related and only() to reduce data transfer
         similar_properties = Property.objects.filter(
             is_verified=True,
             price__gte=min_price,
             price__lte=max_price
-        ).exclude(id=property_id)  # Exclude current property
+        ).exclude(id=property_id).select_related('owner').only(
+            'id', 'name', 'price', 'main_image', 'location', 'city', 'type', 'gender', 
+            'rating', 'reviews_count', 'amenities', 'occupancy', 'beds', 'owner_id'
+        )
         
         # Filter by same type and gender if possible
         similar_properties = similar_properties.filter(
@@ -738,7 +741,10 @@ def get_similar_properties(request, property_id):
                 price__gte=min_price,
                 price__lte=max_price,
                 type=current_property.type
-            ).exclude(id=property_id)
+            ).exclude(id=property_id).select_related('owner').only(
+                'id', 'name', 'price', 'main_image', 'location', 'city', 'type', 'gender', 
+                'rating', 'reviews_count', 'amenities', 'occupancy', 'beds', 'owner_id'
+            )
         
         # If still not enough, relax more criteria
         if similar_properties.count() < 3:
@@ -746,9 +752,12 @@ def get_similar_properties(request, property_id):
                 is_verified=True,
                 price__gte=min_price,
                 price__lte=max_price
-            ).exclude(id=property_id)
+            ).exclude(id=property_id).select_related('owner').only(
+                'id', 'name', 'price', 'main_image', 'location', 'city', 'type', 'gender', 
+                'rating', 'reviews_count', 'amenities', 'occupancy', 'beds', 'owner_id'
+            )
         
-        # Limit to 6 properties and order by rating and price
+        # Limit to 6 properties and order by rating and price - use slicing for efficiency
         similar_properties = similar_properties.order_by('-rating', 'price')[:6]
         
         serializer = PropertySerializer(similar_properties, many=True)

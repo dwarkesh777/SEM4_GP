@@ -702,3 +702,60 @@ def verify_otp(request):
     except Exception as e:
         logger.error(f"OTP verification error: {e}")
         return Response({"error": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def get_similar_properties(request, property_id):
+    """
+    Get similar properties based on price range and other criteria
+    """
+    try:
+        # Get the current property
+        current_property = Property.objects.get(id=property_id)
+        
+        # Define price range (±20% of current property price)
+        min_price = current_property.price * 0.8
+        max_price = current_property.price * 1.2
+        
+        # Get similar properties
+        similar_properties = Property.objects.filter(
+            is_verified=True,
+            price__gte=min_price,
+            price__lte=max_price
+        ).exclude(id=property_id)  # Exclude current property
+        
+        # Filter by same type and gender if possible
+        similar_properties = similar_properties.filter(
+            type=current_property.type,
+            gender=current_property.gender
+        )
+        
+        # If not enough similar properties, relax the criteria
+        if similar_properties.count() < 3:
+            similar_properties = Property.objects.filter(
+                is_verified=True,
+                price__gte=min_price,
+                price__lte=max_price,
+                type=current_property.type
+            ).exclude(id=property_id)
+        
+        # If still not enough, relax more criteria
+        if similar_properties.count() < 3:
+            similar_properties = Property.objects.filter(
+                is_verified=True,
+                price__gte=min_price,
+                price__lte=max_price
+            ).exclude(id=property_id)
+        
+        # Limit to 6 properties and order by rating and price
+        similar_properties = similar_properties.order_by('-rating', 'price')[:6]
+        
+        serializer = PropertySerializer(similar_properties, many=True)
+        return Response(serializer.data)
+        
+    except Property.DoesNotExist:
+        return Response({'error': 'Property not found'}, status=404)
+    except Exception as e:
+        logger.error(f"Error fetching similar properties: {e}")
+        return Response({'error': 'Failed to fetch similar properties'}, status=500)

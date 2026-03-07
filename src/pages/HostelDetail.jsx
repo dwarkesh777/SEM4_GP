@@ -21,6 +21,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import SimilarProperties from "@/components/SimilarProperties";
 import { useToast } from "@/hooks/use-toast";
 import { API_URL } from "@/lib/api";
 
@@ -1196,6 +1197,15 @@ const HostelDetail = () => {
                             </motion.div>
                         </div>
                     </div>
+                    
+                    {/* Similar Properties Section */}
+                    {property && (
+                        <SimilarProperties 
+                            propertyId={property.id} 
+                            currentPropertyType={property.type}
+                            currentPropertyGender={property.gender}
+                        />
+                    )}
                 </div>
             </main>
 

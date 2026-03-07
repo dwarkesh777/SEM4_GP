@@ -31,11 +31,19 @@ class RoomSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
     user = serializers.ReadOnlyField(source='user.full_name')
+    property_name = serializers.ReadOnlyField(source='property.name')
 
     class Meta:
         model = Review
-        fields = ['id', 'user', 'name', 'rating', 'date', 'comment', 'property', 'image']
+        fields = ['id', 'user', 'name', 'rating', 'date', 'comment', 'property', 'image', 'property_name']
         read_only_fields = ['id', 'user', 'date']
+        extra_kwargs = {
+            'name': {
+                'required': False,
+                'allow_blank': True,
+                'allow_null': True
+            }
+        }
 
 
 class EmptyStringFloatField(serializers.FloatField):

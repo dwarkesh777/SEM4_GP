@@ -64,7 +64,7 @@ const ImageGallery = ({ isOpen, onClose }) => {
                     </div>
 
                     {/* Content */}
-                    <div className="flex-1 overflow-y-auto p-6">
+                    <div className="flex-1 overflow-y-auto max-h-[60vh] p-6">
                         {isLoading ? (
                             <div className="flex items-center justify-center h-64">
                                 <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
@@ -95,6 +95,10 @@ const ImageGallery = ({ isOpen, onClose }) => {
                                                 src={image.image}
                                                 alt={`${image.property_name} - Review by ${image.reviewer_name}`}
                                                 className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                onError={(e) => {
+                                                    e.target.src = '/placeholder-image.jpg';
+                                                    e.target.onerror = null;
+                                                }}
                                             />
                                         </div>
 
@@ -105,7 +109,7 @@ const ImageGallery = ({ isOpen, onClose }) => {
                                                     initial={{ opacity: 0 }}
                                                     animate={{ opacity: 1 }}
                                                     exit={{ opacity: 0 }}
-                                                    className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/50 to-transparent rounded-xl p-4 flex flex-col justify-end"
+                                                    className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent rounded-xl p-4 flex flex-col justify-end"
                                                 >
                                                     {/* Property Name */}
                                                     <h3 className="text-white font-bold text-lg mb-2 line-clamp-1">

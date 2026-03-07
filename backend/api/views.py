@@ -465,6 +465,10 @@ class ReviewViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None
         
+        print(f"DEBUG: Review submission data: {self.request.data}")
+        print(f"DEBUG: User authenticated: {self.request.user.is_authenticated if self.request.user else False}")
+        print(f"DEBUG: User: {user}")
+        
         # Use provided name, or fallback to user's full name, or "Anonymous"
         name = self.request.data.get('name', '').strip()
         if not name and user:
@@ -484,7 +488,9 @@ class ReviewViewSet(viewsets.ModelViewSet):
         prop.rating = round(avg_rating, 1)
         prop.reviews_count = count
         prop.save()
-
+        
+        print(f"DEBUG: Review saved successfully: {review.id}")
+        return review
 
 @api_view(['GET'])
 @permission_classes([permissions.AllowAny])

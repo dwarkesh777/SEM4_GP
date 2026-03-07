@@ -273,6 +273,7 @@ const HostelDetail = () => {
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
         const token = localStorage.getItem('token');
+        console.log('DEBUG: Token from localStorage:', token);
         if (!token) {
             toast({ title: "Authorization Required", description: "Please log in to leave a review.", variant: "destructive" });
             return;
@@ -292,6 +293,12 @@ const HostelDetail = () => {
             if (reviewForm.image) {
                 formData.append('image', reviewForm.image);
             }
+            
+            console.log('DEBUG: Submitting review to:', `${API_URL}/api/reviews/`);
+            console.log('DEBUG: FormData contents:');
+            for (let [key, value] of formData.entries()) {
+                console.log(key, value);
+            }
 
             const res = await fetch(`${API_URL}/api/reviews/`, {
                 method: "POST",
@@ -301,6 +308,9 @@ const HostelDetail = () => {
                 body: formData,
             });
 
+            console.log('DEBUG: Response status:', res.status);
+            console.log('DEBUG: Response ok:', res.ok);
+            
             if (res.ok) {
                 toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
                 setReviewDialog(false);
@@ -308,9 +318,11 @@ const HostelDetail = () => {
                 window.location.reload();
             } else {
                 const errData = await res.json();
+                console.log('DEBUG: Error response:', errData);
                 toast({ title: "Error", description: errData.error || "Failed to submit review.", variant: "destructive" });
             }
         } catch (err) {
+            console.log('DEBUG: Caught error:', err);
             toast({ title: "Error", description: "Something went wrong.", variant: "destructive" });
         } finally {
             setSubmittingReview(false);

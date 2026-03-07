@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useAuth } from "@/context/AuthContext";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
+import BookingHistory from "@/components/BookingHistory";
 import { useLocation, useNavigate } from "react-router-dom";
 import { API_URL } from "@/lib/api";
 import OwnerDashboard from "./OwnerDashboard";
@@ -16,7 +17,8 @@ import {
     Loader2,
     Building2,
     MapPin,
-    Star
+    Star,
+    History
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -24,6 +26,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 
 const UserDashboard = () => {
     const { user, logout } = useAuth();
@@ -128,6 +131,32 @@ const UserDashboard = () => {
         { id: "enquiries", label: "Enquiries", icon: MessageSquare },
         { id: "wishlist", label: "Wishlist", icon: Heart },
     ].filter(tab => !user?.is_owner || tab.id === "profile");
+
+    // Booking History State
+    const [showBookingHistory, setShowBookingHistory] = useState(false);
+
+    // Fetch booking data
+    const { data: bookingData = [], isLoading: bookingsLoading, error: bookingsError } = useQuery({
+        queryKey: ['user-bookings'],
+        queryFn: async () => {
+            const token = localStorage.getItem('token');
+            if (!token) return [];
+            
+            const response = await fetch(`${API_URL}/api/bookings/`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json',
+                },
+            });
+            
+            if (!response.ok) {
+                throw new Error('Failed to fetch bookings');
+            }
+            
+            const data = await response.json();
+            return data.results || data;
+        },
+    });
 
     return (
         <div className="min-h-screen bg-[#F8FAFC]">
@@ -281,23 +310,70 @@ const UserDashboard = () => {
 
                                     {activeTab === "bookings" && (
                                         <div className="space-y-6">
-                                            <h2 className="text-3xl font-black text-slate-900 font-heading">My Bookings</h2>
-                                            {bookings.length > 0 ? (
+                                            <div className="flex items-center justify-between">
+                                                <div>
+                                                    <h2 className="text-3xl font-black text-slate-900 font-heading">My Bookings</h2>
+                                                    <p className="text-slate-500">View your accommodation bookings and download receipts.</p>
+                                                </div>
+                                                <Button
+                                                    onClick={() => setShowBookingHistory(true)}
+                                                    className="flex items-center gap-2 h-12 px-6 rounded-2xl bg-blue-600 hover:bg-blue-700 text-white font-black shadow-lg shadow-blue-100"
+                                                >
+                                                    <History className="w-5 h-5" />
+                                                    View Full History
+                                                </Button>
+                                            </div>
+                                            
+                                            {bookingsLoading ? (
+                                                <div className="flex items-center justify-center h-64">
+                                                    <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
+                                                </div>
+                                            ) : bookingsError ? (
+                                                <Card className="rounded-[40px] border-red-100 bg-red-50/30 p-12 text-center">
+                                                    <div className="w-20 h-20 rounded-[32px] bg-red-50 flex items-center justify-center mx-auto mb-6">
+                                                        <Calendar className="w-10 h-10 text-red-300" />
+                                                    </div>
+                                                    <p className="text-xl font-bold text-red-900 mb-2">Error Loading Bookings</p>
+                                                    <p className="text-red-600 font-medium max-w-sm mx-auto">
+                                                        Failed to load your booking data. Please try again later.
+                                                    </p>
+                                                </Card>
+                                            ) : bookingData.length > 0 ? (
                                                 <div className="grid gap-4">
-                                                    {bookings.map((booking) => (
-                                                        <Card key={booking.id} className="rounded-3xl border-slate-100 p-6 flex items-center justify-between">
-                                                            <div className="flex items-center gap-4">
-                                                                <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
-                                                                    <Building2 className="w-6 h-6" />
+                                                    {bookingData.map((booking) => (
+                                                        <Card key={booking.id} className="rounded-3xl border-slate-100 p-6 hover:shadow-lg transition-shadow">
+                                                            <div className="flex items-center justify-between">
+                                                                <div className="flex items-center gap-4">
+                                                                    <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-blue-600">
+                                                                        <Building2 className="w-6 h-6" />
+                                                                    </div>
+                                                                    <div>
+                                                                        <h3 className="font-bold text-slate-900">{booking.property_name || booking.property?.name}</h3>
+                                                                        <p className="text-xs text-slate-500">
+                                                                            {booking.room_name || booking.room?.name} • 
+                                                                            {new Date(booking.created_at).toLocaleDateString('en-IN')}
+                                                                        </p>
+                                                                    </div>
                                                                 </div>
-                                                                <div>
-                                                                    <h3 className="font-bold text-slate-900">{booking.property_name}</h3>
-                                                                    <p className="text-xs text-slate-500">{new Date(booking.created_at).toLocaleDateString()}</p>
+                                                                <div className="flex items-center gap-3">
+                                                                    <div className="text-right">
+                                                                        <div className="text-lg font-bold text-slate-900">
+                                                                            ₹{booking.amount?.toLocaleString('en-IN') || 'N/A'}
+                                                                        </div>
+                                                                        <div className="text-xs text-slate-500">per month</div>
+                                                                    </div>
+                                                                    <Badge 
+                                                                        className={booking.status === 'Confirmed' 
+                                                                            ? 'bg-green-100 text-green-800' 
+                                                                            : booking.status === 'Pending' 
+                                                                            ? 'bg-yellow-100 text-yellow-800'
+                                                                            : 'bg-red-100 text-red-800'
+                                                                        }
+                                                                    >
+                                                                        {booking.status}
+                                                                    </Badge>
                                                                 </div>
                                                             </div>
-                                                            <Badge variant={booking.status === "Confirmed" ? "success" : "secondary"}>
-                                                                {booking.status}
-                                                            </Badge>
                                                         </Card>
                                                     ))}
                                                 </div>
@@ -398,6 +474,12 @@ const UserDashboard = () => {
             <div className="py-10 text-center text-slate-400 text-xs font-medium uppercase tracking-[0.2em]">
                 &copy; 2024 BedBuddy • Premium Student Living
             </div>
+
+            {/* Booking History Modal */}
+            <BookingHistory 
+                isOpen={showBookingHistory} 
+                onClose={() => setShowBookingHistory(false)} 
+            />
         </div>
     );
 };

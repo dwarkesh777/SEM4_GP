@@ -338,6 +338,12 @@ def verify_razorpay_payment(request):
                     status='Confirmed'
                 )
                 
+                # Debug: Verify the booking was created with property relationship
+                print(f"DEBUG: Booking created - ID: {booking.id}")
+                print(f"DEBUG: Booking property: {booking.property}")
+                print(f"DEBUG: Booking property name: {booking.property.name if booking.property else 'None'}")
+                print(f"DEBUG: Booking property location: {booking.property.location if booking.property else 'None'}")
+                
                 return Response({'verified': True, 'payment_id': payment_id, 'booking_id': str(booking.id)})
             except Exception as e:
                 logger.error(f"Error saving booking: {e}", exc_info=True)
@@ -357,9 +363,16 @@ class BookingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.user.is_owner:
             bookings = Booking.objects.filter(property__owner=self.request.user).order_by('-created_at')
+            print(f"DEBUG: Owner bookings count: {bookings.count()}")
+            for booking in bookings:
+                print(f"DEBUG: Owner Booking - ID: {booking.id}, Property: {booking.property.name if booking.property else 'None'}, User: {booking.user}")
             return bookings
         
         bookings = Booking.objects.filter(user=self.request.user).order_by('-created_at')
+        print(f"DEBUG: User bookings count: {bookings.count()}")
+        for booking in bookings:
+            print(f"DEBUG: User Booking - ID: {booking.id}, Property: {booking.property.name if booking.property else 'None'}, User: {booking.user}")
+        
         return bookings
 
 

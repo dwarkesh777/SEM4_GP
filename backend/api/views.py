@@ -310,6 +310,9 @@ def verify_razorpay_payment(request):
                 prop_obj = Property.objects.get(id=property_id)
                 room_obj = Room.objects.get(id=room_id)
                 
+                print(f"DEBUG: Property found: {prop_obj.name}")
+                print(f"DEBUG: Room found: {room_obj.name}")
+                
                 # Metadata from frontend
                 customer_data = request.data.get('customer_details', {})
                 

@@ -142,6 +142,8 @@ const UserDashboard = () => {
             const token = localStorage.getItem('token');
             if (!token) return [];
             
+            console.log('DEBUG: Fetching bookings from:', `${API_URL}/api/bookings/`);
+            
             const response = await fetch(`${API_URL}/api/bookings/`, {
                 headers: {
                     'Authorization': `Bearer ${token}`,
@@ -149,11 +151,16 @@ const UserDashboard = () => {
                 },
             });
             
+            console.log('DEBUG: Bookings response status:', response.status);
+            
             if (!response.ok) {
                 throw new Error('Failed to fetch bookings');
             }
             
             const data = await response.json();
+            console.log('DEBUG: Raw bookings data:', data);
+            console.log('DEBUG: Processed bookings array:', data.results || data);
+            
             return data.results || data;
         },
     });

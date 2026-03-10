@@ -16,7 +16,8 @@ import {
     Mail,
     Camera,
     LogOut,
-    Calendar
+    Calendar,
+    Edit
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -395,9 +396,15 @@ const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properti
                                     </p>
                                     <div className="flex items-center justify-between pt-4 border-t border-slate-50">
                                         <span className="font-black text-blue-600">₹{property.price}/mo</span>
-                                        <Button variant="ghost" size="sm" className="text-xs font-bold text-slate-400 hover:text-blue-600" onClick={() => navigate(`/hostel/${property.id}`)}>
-                                            View Page
-                                        </Button>
+                                        <div className="flex gap-2">
+                                            <Button variant="outline" size="sm" className="text-xs font-bold text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600" onClick={() => navigate(`/edit-property/${property.id}`)}>
+                                                <Edit className="w-3 h-3 mr-1" />
+                                                Edit
+                                            </Button>
+                                            <Button variant="ghost" size="sm" className="text-xs font-bold text-slate-400 hover:text-blue-600" onClick={() => navigate(`/hostel/${property.id}`)}>
+                                                View Page
+                                            </Button>
+                                        </div>
                                     </div>
                                 </div>
                             </Card>

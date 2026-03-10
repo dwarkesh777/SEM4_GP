@@ -23,6 +23,7 @@ import BookingSuccess from "./pages/BookingSuccess";
 import SupportPage from "./pages/SupportPage";
 import NotFound from "./pages/NotFound";
 import AddProperty from "./pages/AddProperty";
+import EditProperty from "./pages/EditProperty";
 import CollegeSearch from "./pages/CollegeSearch";
 
 
@@ -50,6 +51,7 @@ const App = () => (
                         <Route path="/owner/signup" element={<OwnerSignup />} />
 
                         <Route path="/add-property" element={<AddProperty />} />
+                        <Route path="/edit-property/:id" element={<EditProperty />} />
 
                         <Route path="/about" element={<AboutUs />} />
                         <Route path="/help" element={<HelpCenter />} />

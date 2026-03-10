@@ -23,6 +23,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import SimilarProperties from "@/components/SimilarProperties";
 import SupportButton from "@/components/SupportButton";
+import ImageGallery from "@/components/ImageGallery";
 import { useToast } from "@/hooks/use-toast";
 import { API_URL } from "@/lib/api";
 
@@ -266,6 +267,7 @@ const HostelDetail = () => {
         name: "", phone: "", message: ""
     });
     const [reviewDialog, setReviewDialog] = useState(false);
+    const [galleryOpen, setGalleryOpen] = useState(false);
     const [reviewForm, setReviewForm] = useState({
         rating: 5, comment: "", name: "", image: null
     });
@@ -294,6 +296,14 @@ const HostelDetail = () => {
 
             if (reviewForm.image) {
                 formData.append('image', reviewForm.image);
+                // Try alternative field names that backend might expect
+                formData.append('review_image', reviewForm.image);
+                formData.append('photo', reviewForm.image);
+                formData.append('upload', reviewForm.image);
+                console.log('DEBUG: Image file being uploaded:', reviewForm.image);
+                console.log('DEBUG: Image file name:', reviewForm.image.name);
+                console.log('DEBUG: Image file type:', reviewForm.image.type);
+                console.log('DEBUG: Image file size:', reviewForm.image.size);
             }
             
             console.log('DEBUG: Submitting review to:', `${API_URL}/api/reviews/`);
@@ -316,8 +326,19 @@ const HostelDetail = () => {
             if (res.ok) {
                 toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
                 setReviewDialog(false);
+                
+                // If review had an image, open gallery to show it
+                if (reviewForm.image) {
+                    setTimeout(() => {
+                        setGalleryOpen(true);
+                    }, 1000);
+                }
+                
                 setReviewForm({ rating: 5, comment: "", name: "", image: null });
-                window.location.reload();
+                // Refresh page to show new review
+                setTimeout(() => {
+                    window.location.reload();
+                }, 2000);
             } else {
                 const errData = await res.json();
                 console.log('DEBUG: Error response:', errData);
@@ -724,7 +745,7 @@ const HostelDetail = () => {
                                 className="space-y-6"
                             >
                                 <div className="flex flex-col gap-4">
-                                    <h1 className="text-4xl md:text-5xl font-heading font-black text-slate-900 tracking-tight leading-none">
+                                    <h1 className="text-4xl md:text-5xl font-heading font-black text-slate-900 tracking-tight">
                                         {property.name}
                                     </h1>
                                     <div className="flex flex-wrap items-center gap-6">
@@ -883,7 +904,7 @@ const HostelDetail = () => {
                             >
                                 <div className="flex items-center justify-between">
                                     <h2 className="text-3xl font-heading font-black text-slate-900 tracking-tight">Location & <span className="text-primary italic">Surroundings</span></h2>
-                                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-100 shadow-sm font-bold text-slate-600 text-sm">
+                                    <div className="flex items-center gap-2 px-4 py-2 rounded-full bg-white border border-slate-100 shadow-sm font-bold text-slate-600">
                                         <MapPin className="w-4 h-4 text-primary" /> {property.city}, {property.location}
                                     </div>
                                 </div>
@@ -915,6 +936,13 @@ const HostelDetail = () => {
                                 <div className="flex items-center justify-between mb-8">
                                     <h2 className="text-3xl font-heading font-black text-slate-900 tracking-tight">Verified <span className="text-primary italic">Reviews</span></h2>
                                     <div className="flex items-center gap-3">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setGalleryOpen(true)}
+                                            className="px-6 rounded-full border-slate-200 text-slate-600 hover:text-primary hover:border-primary/30 font-bold transition-all shadow-sm"
+                                        >
+                                            <Download className="w-4 h-4 mr-2" /> Explore Gallery
+                                        </Button>
                                         <Button
                                             variant="outline"
                                             onClick={() => setReviewDialog(true)}
@@ -1080,6 +1108,9 @@ const HostelDetail = () => {
                                     ))}
                                 </div>
                             </motion.section>
+
+                            {/* Image Gallery Modal */}
+                            <ImageGallery isOpen={galleryOpen} onClose={() => setGalleryOpen(false)} />
                         </div>
 
                         {/* RIGHT COLUMN: Glassmorphism Booking Sidebar */}

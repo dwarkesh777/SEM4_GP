@@ -44,31 +44,71 @@ const SimilarProperties = ({ propertyId, currentPropertyType, currentPropertyGen
 
         try {
             setLoading(true);
+            setError(null);
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
 
-            const response = await fetch(`${API_URL}/api/properties/${propertyId}/similar/`, {
-                signal: controller.signal
-            });
+            // Try multiple possible endpoints
+            let response;
+            const endpoints = [
+                `${API_URL}/api/properties/${propertyId}/similar/`,
+                `${API_URL}/api/properties/similar/`,
+                `${API_URL}/api/properties/?similar_to=${propertyId}`,
+                `${API_URL}/api/properties/` // Fallback to all properties
+            ];
+
+            for (const endpoint of endpoints) {
+                try {
+                    console.log('Trying endpoint:', endpoint);
+                    response = await fetch(endpoint, {
+                        signal: controller.signal,
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        console.log('Success with endpoint:', endpoint);
+                        break;
+                    }
+                } catch (err) {
+                    console.log('Endpoint failed:', endpoint, err.message);
+                    continue;
+                }
+            }
             
             clearTimeout(timeoutId);
             
-            if (response.ok) {
+            if (response && response.ok) {
                 const data = await response.json();
+                console.log('Similar properties data:', data);
+                
+                // Filter out current property and limit results
+                let filteredData = Array.isArray(data) ? data : [];
+                filteredData = filteredData
+                    .filter(p => p.id != propertyId)
+                    .slice(0, 6); // Limit to 6 properties
                 
                 // Cache the result
                 similarPropertiesCache.set(cacheKey, {
-                    data,
+                    data: filteredData,
                     timestamp: Date.now()
                 });
                 
-                setSimilarProperties(data);
+                setSimilarProperties(filteredData);
+                
+                if (filteredData.length === 0) {
+                    setError('No similar properties found');
+                }
             } else {
-                throw new Error('Failed to load similar properties');
+                throw new Error(`Failed with status: ${response?.status}`);
             }
         } catch (err) {
             console.error('Error fetching similar properties:', err);
-            setError(err.name === 'AbortError' ? 'Request timeout' : 'Failed to load similar properties');
+            const errorMessage = err.name === 'AbortError' ? 'Request timeout' : 
+                              err.message.includes('Failed to fetch') ? 'Network error - please check your connection' :
+                              'Failed to load similar properties';
+            setError(errorMessage);
         } finally {
             setLoading(false);
         }
@@ -102,14 +142,23 @@ const SimilarProperties = ({ propertyId, currentPropertyType, currentPropertyGen
             <div className="mt-16">
                 <h2 className="text-2xl font-bold text-slate-900 mb-6">Similar Properties</h2>
                 <div className="text-center py-12">
-                    <p className="text-slate-500">{error}</p>
-                    <Button 
-                        onClick={fetchSimilarProperties} 
-                        className="mt-4"
-                        variant="outline"
-                    >
-                        Try Again
-                    </Button>
+                    <div className="max-w-md mx-auto">
+                        <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Home className="w-8 h-8 text-red-500" />
+                        </div>
+                        <p className="text-slate-700 font-medium mb-2">Unable to load similar properties</p>
+                        <p className="text-slate-500 text-sm mb-4">{error}</p>
+                        <Button 
+                            onClick={() => {
+                                setError(null);
+                                fetchSimilarProperties();
+                            }} 
+                            className="mt-2"
+                            variant="outline"
+                        >
+                            Try Again
+                        </Button>
+                    </div>
                 </div>
             </div>
         );
@@ -120,7 +169,19 @@ const SimilarProperties = ({ propertyId, currentPropertyType, currentPropertyGen
             <div className="mt-16">
                 <h2 className="text-2xl font-bold text-slate-900 mb-6">Similar Properties</h2>
                 <div className="text-center py-12">
-                    <p className="text-slate-500">No similar properties found at the moment.</p>
+                    <div className="max-w-md mx-auto">
+                        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <Home className="w-8 h-8 text-blue-500" />
+                        </div>
+                        <p className="text-slate-700 font-medium mb-2">No similar properties found</p>
+                        <p className="text-slate-500 text-sm mb-4">We couldn't find properties matching your criteria. Try browsing all properties.</p>
+                        <Button 
+                            onClick={() => window.location.href = '/'}
+                            className="mt-2"
+                        >
+                            Browse All Properties
+                        </Button>
+                    </div>
                 </div>
             </div>
         );

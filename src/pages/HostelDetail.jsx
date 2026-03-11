@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
     ArrowLeft, ArrowRight, MapPin, Star, Phone, Mail, Wifi, Sofa, Droplets, Shield,
     Car, Tv, Wind, ChevronLeft, ChevronRight, Users, Check, X as XIcon,
-    Shirt, Sparkles, BedDouble, Heart, Share2, Calendar, ShieldCheck,
+    Shirt, Sparkles, BedDouble, Share2, Calendar, ShieldCheck,
     Coffee, Utensils, Zap, Lock, Info, Clock, ExternalLink, LayoutDashboard, User,
     CreditCard, IndianRupee, CheckCircle2, AlertCircle, Loader2, Hash, Download, FileText
 } from "lucide-react";
@@ -641,13 +641,6 @@ const HostelDetail = () => {
                         </motion.div>
 
                         <div className="flex items-center gap-3">
-                            <motion.button
-                                initial={{ opacity: 0, scale: 0.8 }}
-                                animate={{ opacity: 1, scale: 1 }}
-                                className="p-3 rounded-full bg-white border border-slate-200 text-slate-400 hover:text-red-500 transition-colors shadow-sm active:scale-95"
-                            >
-                                <Heart className="w-5 h-5" />
-                            </motion.button>
                             <motion.button
                                 initial={{ opacity: 0, scale: 0.8 }}
                                 animate={{ opacity: 1, scale: 1 }}

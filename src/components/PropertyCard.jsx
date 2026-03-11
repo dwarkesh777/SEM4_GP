@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { MapPin, Star, Wifi, Sofa, Droplets, Shield, Heart } from "lucide-react";
+import { MapPin, Star, Wifi, Sofa, Droplets, Shield } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Link } from "react-router-dom";
 
@@ -16,7 +16,6 @@ const PropertyCard = ({
 }) => {
     const [isHovered, setIsHovered] = useState(false);
     const [currentImgIndex, setCurrentImgIndex] = useState(0);
-    const [isWishlisted, setIsWishlisted] = useState(false);
 
     const slideshowImages = [
         main_image,
@@ -80,20 +79,6 @@ const PropertyCard = ({
                             <span className="text-xs opacity-70">{gender === 'Boys' ? '♂' : '♀'}</span>
                             {gender}
                         </Badge>
-                    </div>
-
-                    <div className="absolute bottom-5 right-5 z-20">
-                        <motion.button
-                            whileHover={{ scale: 1.1, rotate: 5 }}
-                            whileTap={{ scale: 0.9 }}
-                            onClick={(e) => {
-                                e.preventDefault();
-                                setIsWishlisted(!isWishlisted);
-                            }}
-                            className={`flex items-center justify-center aspect-square w-14 rounded-full backdrop-blur-xl border-2 border-white/40 transition-all shadow-2xl ${isWishlisted ? 'bg-red-500 text-white border-red-400' : 'bg-white/80 text-slate-900 hover:bg-white'}`}
-                        >
-                            <Heart className={`w-7 h-7 ${isWishlisted ? 'fill-current' : ''}`} />
-                        </motion.button>
                     </div>
 
                     <div className="absolute bottom-4 left-4 right-4 flex justify-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity duration-300">

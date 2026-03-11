@@ -382,30 +382,35 @@ class BookingViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
     
     def get_queryset(self):
-        print(f"DEBUG: BookingViewSet.get_queryset called for user: {self.request.user}")
-        print(f"DEBUG: User authenticated: {self.request.user.is_authenticated}")
-        print(f"DEBUG: User is_owner: {getattr(self.request.user, 'is_owner', False)}")
-        print(f"DEBUG: User email: {self.request.user.email if self.request.user.is_authenticated else 'None'}")
-        
         if self.request.user.is_owner:
             bookings = Booking.objects.filter(property__owner=self.request.user).order_by('-created_at')
-            print(f"DEBUG: Owner bookings count: {bookings.count()}")
+            # Filter out bookings with broken property references
+            valid_bookings = []
             for booking in bookings:
-                print(f"DEBUG: Owner Booking - ID: {booking.id}, Property: {booking.property.name if booking.property else 'None'}, User: {booking.user}")
-            return bookings
+                try:
+                    # Test if property exists
+                    if booking.property:
+                        property_name = booking.property.name
+                        valid_bookings.append(booking)
+                except Exception:
+                    # Skip bookings with broken property references
+                    continue
+            return valid_bookings
         
         bookings = Booking.objects.filter(user=self.request.user).order_by('-created_at')
-        print(f"DEBUG: User bookings count: {bookings.count()}")
+        # Filter out bookings with broken property references
+        valid_bookings = []
         for booking in bookings:
-            print(f"DEBUG: User Booking - ID: {booking.id}, Property: {booking.property.name if booking.property else 'None'}, User: {booking.user}")
+            try:
+                # Test if property exists
+                if booking.property:
+                    property_name = booking.property.name
+                    valid_bookings.append(booking)
+            except Exception:
+                # Skip bookings with broken property references
+                continue
         
-        # Also check all bookings for debugging
-        all_bookings = Booking.objects.all()
-        print(f"DEBUG: Total bookings in database: {all_bookings.count()}")
-        for booking in all_bookings:
-            print(f"DEBUG: All Booking - ID: {booking.id}, User: {booking.user}, Property: {booking.property.name if booking.property else 'None'}")
-        
-        return bookings
+        return valid_bookings
 
 
 def send_enquiry_notification_email(enquiry):

@@ -43,8 +43,7 @@ const UserDashboard = () => {
         phone_number: user?.phone_number || "",
     });
 
-    // Mock/Fetch Data States
-    const [bookings, setBookings] = useState([]);
+    // Mock/Fetch Data States - keeping for enquiries and wishlist
     const [enquiries, setEnquiries] = useState([]);
     const [wishlist, setWishlist] = useState([]);
     const [properties, setProperties] = useState([]);
@@ -62,11 +61,12 @@ const UserDashboard = () => {
                 email: user.email,
                 phone_number: user.phone_number || "",
             });
-            fetchDashboardData();
+            // Only fetch enquiries, wishlist, and properties - bookings handled by React Query
+            fetchOtherData();
         }
     }, [user]);
 
-    const fetchDashboardData = async () => {
+    const fetchOtherData = async () => {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
@@ -74,29 +74,25 @@ const UserDashboard = () => {
                 const headers = { 'Authorization': `Bearer ${token}` };
 
                 if (user?.is_owner) {
-                    const [propertiesRes, bookingsRes, enquiriesRes] = await Promise.all([
+                    const [propertiesRes, enquiriesRes] = await Promise.all([
                         fetch(`${API_URL}/api/properties/?owner_id=${user.id}`, { headers }),
-                        fetch(`${API_URL}/api/bookings/`, { headers }),
                         fetch(`${API_URL}/api/enquiries/`, { headers })
                     ]);
 
                     if (propertiesRes.ok) setProperties(await propertiesRes.json());
-                    if (bookingsRes.ok) setBookings(await bookingsRes.json());
                     if (enquiriesRes.ok) setEnquiries(await enquiriesRes.json());
                 } else {
-                    const [bookingsRes, enquiriesRes, wishlistRes] = await Promise.all([
-                        fetch(`${API_URL}/api/bookings/`, { headers }),
+                    const [enquiriesRes, wishlistRes] = await Promise.all([
                         fetch(`${API_URL}/api/enquiries/`, { headers }),
                         fetch(`${API_URL}/api/wishlist/`, { headers })
                     ]);
 
-                    if (bookingsRes.ok) setBookings(await bookingsRes.json());
                     if (enquiriesRes.ok) setEnquiries(await enquiriesRes.json());
                     if (wishlistRes.ok) setWishlist(await wishlistRes.json());
                 }
             }
         } catch (error) {
-            console.error("Error fetching dashboard data:", error);
+            console.error("Error fetching other data:", error);
         } finally {
             setIsLoading(false);
         }
@@ -135,34 +131,50 @@ const UserDashboard = () => {
     // Booking History State
     const [showBookingHistory, setShowBookingHistory] = useState(false);
 
-    // Fetch booking data
-    const { data: bookingData = [], isLoading: bookingsLoading, error: bookingsError } = useQuery({
+    // Fetch booking data - consolidated method
+    const { data: bookingData = [], isLoading: bookingsLoading, error: bookingsError, refetch: refetchBookings } = useQuery({
         queryKey: ['user-bookings'],
         queryFn: async () => {
             const token = localStorage.getItem('token');
-            if (!token) return [];
             
-            console.log('DEBUG: Fetching bookings from:', `${API_URL}/api/bookings/`);
-            
-            const response = await fetch(`${API_URL}/api/bookings/`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json',
-                },
-            });
-            
-            console.log('DEBUG: Bookings response status:', response.status);
-            
-            if (!response.ok) {
-                throw new Error('Failed to fetch bookings');
+            if (!token) {
+                return [];
             }
             
-            const data = await response.json();
-            console.log('DEBUG: Raw bookings data:', data);
-            console.log('DEBUG: Processed bookings array:', data.results || data);
-            
-            return data.results || data;
+            try {
+                const response = await fetch(`${API_URL}/api/bookings/`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (response.status === 401) {
+                    throw new Error('Authentication failed. Please log in again.');
+                }
+                
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`Failed to fetch bookings: ${response.status} - ${errorText}`);
+                }
+                
+                const data = await response.json();
+                const bookings = data.results || data;
+                
+                return bookings;
+            } catch (error) {
+                throw error;
+            }
         },
+        enabled: !!user && !!localStorage.getItem('token'),
+        retry: (failureCount, error) => {
+            // Don't retry on authentication errors
+            if (error.message?.includes('Authentication failed')) {
+                return false;
+            }
+            return failureCount < 2;
+        },
+        retryDelay: 1000,
     });
 
     return (
@@ -177,8 +189,9 @@ const UserDashboard = () => {
                         isLoading={isLoading}
                         logout={logout}
                         properties={properties}
-                        bookings={bookings}
+                        bookings={bookingData}
                         enquiries={enquiries}
+                        refetchBookings={refetchBookings}
                     />
                 ) : (
                     <div className="flex flex-col lg:flex-row gap-10">
@@ -331,7 +344,7 @@ const UserDashboard = () => {
                                                         View Full History
                                                     </Button>
                                                     <Button
-                                                        onClick={() => window.location.reload()}
+                                                        onClick={() => refetchBookings()}
                                                         variant="outline"
                                                         size="sm"
                                                         className="h-12 px-4"
@@ -351,9 +364,29 @@ const UserDashboard = () => {
                                                         <Calendar className="w-10 h-10 text-red-300" />
                                                     </div>
                                                     <p className="text-xl font-bold text-red-900 mb-2">Error Loading Bookings</p>
-                                                    <p className="text-red-600 font-medium max-w-sm mx-auto">
-                                                        Failed to load your booking data. Please try again later.
+                                                    <p className="text-red-600 font-medium max-w-sm mx-auto mb-4">
+                                                        {bookingsError.message || 'Failed to load your booking data. Please try again later.'}
                                                     </p>
+                                                    <div className="flex gap-3 justify-center">
+                                                        <Button
+                                                            onClick={() => refetchBookings()}
+                                                            className="bg-red-600 hover:bg-red-700 text-white"
+                                                        >
+                                                            Try Again
+                                                        </Button>
+                                                        {bookingsError.message?.includes('Authentication failed') && (
+                                                            <Button
+                                                                onClick={() => {
+                                                                    localStorage.removeItem('token');
+                                                                    window.location.href = '/login';
+                                                                }}
+                                                                variant="outline"
+                                                                className="border-red-200 text-red-600 hover:bg-red-50"
+                                                            >
+                                                                Login Again
+                                                            </Button>
+                                                        )}
+                                                    </div>
                                                 </Card>
                                             ) : bookingData.length > 0 ? (
                                                 <div className="grid gap-4">

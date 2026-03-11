@@ -185,17 +185,18 @@ class BookingSerializer(serializers.ModelSerializer):
     property_image = serializers.SerializerMethodField()
     property_location = serializers.CharField(source='property.location', read_only=True)
     property_city = serializers.CharField(source='property.city', read_only=True)
+    customer_email = serializers.EmailField(read_only=True)
 
     class Meta:
         model = Booking
         fields = [
-            'id', 'user', 'property', 'property_name', 'property_image', 
-            'room', 'room_name', 'status', 'created_at',
+            'id', 'property_name', 'property_image', 
+            'room_name', 'status', 'created_at',
             'payment_id', 'razorpay_order_id', 'amount',
             'customer_name', 'customer_phone', 'customer_email', 'customer_age',
             'property_location', 'property_city'
         ]
-        read_only_fields = ['user', 'status', 'created_at']
+        read_only_fields = ['status', 'created_at']
 
     def get_property_image(self, obj):
         if obj.property.main_image:

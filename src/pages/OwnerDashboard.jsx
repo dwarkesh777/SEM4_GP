@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
     User,
@@ -26,9 +26,16 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 
-const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properties = [], bookings = [], enquiries = [] }) => {
+const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properties = [], bookings = [], enquiries = [], refetchBookings }) => {
     const navigate = useNavigate();
     const [view, setView] = useState("home"); // home, profile, verify
+
+    // Auto-refresh bookings when accessing bookings view
+    useEffect(() => {
+        if (view === "bookings" && refetchBookings) {
+            refetchBookings();
+        }
+    }, [view, refetchBookings]);
 
     const stats = [
         { label: "Total Properties", value: properties.length.toString(), icon: Building2, color: "text-blue-600", bg: "bg-blue-50" },
@@ -292,10 +299,22 @@ const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properti
                         <h1 className="text-3xl font-black text-slate-900 font-heading">Recent Bookings</h1>
                         <p className="text-slate-500">Manage and view all guest bookings for your properties</p>
                     </div>
-                    <Button variant="outline" onClick={() => setView("home")} className="rounded-xl gap-2 border-blue-200 text-blue-600 hover:bg-blue-50">
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to Dashboard
-                    </Button>
+                    <div className="flex gap-2">
+                        {refetchBookings && (
+                            <Button
+                                onClick={refetchBookings}
+                                variant="outline"
+                                size="sm"
+                                className="rounded-xl gap-2 border-blue-200 text-blue-600 hover:bg-blue-50"
+                            >
+                                Refresh
+                            </Button>
+                        )}
+                        <Button variant="outline" onClick={() => setView("home")} className="rounded-xl gap-2 border-blue-200 text-blue-600 hover:bg-blue-50">
+                            <ArrowLeft className="w-4 h-4" />
+                            Back to Dashboard
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid gap-6">

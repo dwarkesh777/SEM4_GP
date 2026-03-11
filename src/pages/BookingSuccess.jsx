@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { API_URL } from '@/lib/api';
 import Navbar from '@/components/Navbar';
+import { useQueryClient } from '@tanstack/react-query';
 import {
     CheckCircle2,
     Building2,
@@ -26,6 +27,7 @@ import { Separator } from '@/components/ui/separator';
 const BookingSuccess = () => {
     const location = useLocation();
     const navigate = useNavigate();
+    const queryClient = useQueryClient();
     const [bookingDetails, setBookingDetails] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
@@ -34,6 +36,10 @@ const BookingSuccess = () => {
     const bookingData = location.state?.bookingData || location.state?.booking;
 
     useEffect(() => {
+        // Refresh booking data in all queries when arriving at success page
+        queryClient.invalidateQueries(['user-bookings']);
+        queryClient.invalidateQueries(['booking-history']);
+        
         if (bookingData) {
             // If booking data is passed from payment page
             setBookingDetails(bookingData);
@@ -42,7 +48,7 @@ const BookingSuccess = () => {
             // Try to get the latest booking from API
             fetchLatestBooking();
         }
-    }, []);
+    }, [bookingData, queryClient]);
 
     const fetchLatestBooking = async () => {
         try {
@@ -441,7 +447,11 @@ const BookingSuccess = () => {
                                         Share Booking
                                     </Button>
                                     <Button
-                                        onClick={() => navigate('/dashboard')}
+                                        onClick={() => {
+                                            queryClient.invalidateQueries(['user-bookings']);
+                                            queryClient.invalidateQueries(['booking-history']);
+                                            navigate('/dashboard');
+                                        }}
                                         variant="outline"
                                         className="flex items-center gap-2 h-12 px-6"
                                     >

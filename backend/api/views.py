@@ -5,7 +5,7 @@ from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
 from .models import Property, Booking, Room, Enquiry, Wishlist, User, Review
 from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer, ReviewSerializer
-from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer
+from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer, UserSignupSerializer, OwnerSignupSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.core.mail import send_mail
 from django.conf import settings
@@ -194,6 +194,14 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
 class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
+    permission_classes = [permissions.AllowAny]
+
+class UserSignupView(generics.CreateAPIView):
+    serializer_class = UserSignupSerializer
+    permission_classes = [permissions.AllowAny]
+
+class OwnerSignupView(generics.CreateAPIView):
+    serializer_class = OwnerSignupSerializer
     permission_classes = [permissions.AllowAny]
 
 

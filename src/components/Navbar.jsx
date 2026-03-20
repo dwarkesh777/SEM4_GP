@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-    Menu, X, Headphones, User, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, MapPin, LogOut 
+import {
+    Menu, X, Headphones, User, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, MapPin, LogOut
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import SupportButton from '@/components/SupportButton';
@@ -124,8 +124,12 @@ const Navbar = () => {
                                     size="sm"
                                     className={`relative h-10 w-10 rounded-full border-2 transition-all p-0 overflow-hidden ${effectiveScrolled ? "border-slate-100 shadow-sm" : "border-white/20"}`}
                                 >
-                                    <div className="w-full h-full bg-primary/10 flex items-center justify-center">
-                                        <User className={`w-5 h-5 ${effectiveScrolled ? "text-primary" : "text-white"}`} />
+                                    <div className="w-full h-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                                        {user?.face_photo ? (
+                                            <img src={user.face_photo} alt={user.full_name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className={`w-5 h-5 ${effectiveScrolled ? "text-primary" : "text-white"}`} />
+                                        )}
                                     </div>
                                 </Button>
                             </DropdownMenuTrigger>
@@ -192,8 +196,8 @@ const Navbar = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         transition={{ delay: 0.5 }}
                     >
-                        <SupportButton 
-                            variant="primary" 
+                        <SupportButton
+                            variant="primary"
                             size="sm"
                             onClick={() => navigate('/support')}
                         >
@@ -243,8 +247,12 @@ const Navbar = () => {
                                         className="w-full h-16 rounded-2xl bg-slate-100 text-slate-900 font-bold justify-start px-6 gap-4"
                                         variant="ghost"
                                     >
-                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                                            <User className="w-4 h-4 text-primary" />
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                                            {user?.face_photo ? (
+                                                <img src={user.face_photo} alt={user.full_name} className="w-full h-full object-cover" />
+                                            ) : (
+                                                <User className="w-4 h-4 text-primary" />
+                                            )}
                                         </div>
                                         {user.is_owner ? "Owner Dashboard" : "User Dashboard"}
                                     </Button>

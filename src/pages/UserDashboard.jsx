@@ -40,6 +40,8 @@ const UserDashboard = () => {
         full_name: user?.full_name || "",
         email: user?.email || "",
         phone_number: user?.phone_number || "",
+        business_name: user?.business_name || "",
+        face_photo: user?.face_photo || "",
     });
 
     // Mock/Fetch Data States - keeping for enquiries
@@ -58,6 +60,8 @@ const UserDashboard = () => {
                 full_name: user.full_name,
                 email: user.email,
                 phone_number: user.phone_number || "",
+                business_name: user.business_name || "",
+                face_photo: user.face_photo || "",
             });
             // Only fetch enquiries and properties - bookings handled by React Query
             fetchOtherData();
@@ -128,11 +132,11 @@ const UserDashboard = () => {
         queryKey: ['user-bookings'],
         queryFn: async () => {
             const token = localStorage.getItem('token');
-            
+
             if (!token) {
                 return [];
             }
-            
+
             try {
                 const response = await fetch(`${API_URL}/api/bookings/`, {
                     headers: {
@@ -140,19 +144,19 @@ const UserDashboard = () => {
                         'Content-Type': 'application/json',
                     },
                 });
-                
+
                 if (response.status === 401) {
                     throw new Error('Authentication failed. Please log in again.');
                 }
-                
+
                 if (!response.ok) {
                     const errorText = await response.text();
                     throw new Error(`Failed to fetch bookings: ${response.status} - ${errorText}`);
                 }
-                
+
                 const data = await response.json();
                 const bookings = data.results || data;
-                
+
                 return bookings;
             } catch (error) {
                 throw error;
@@ -177,6 +181,8 @@ const UserDashboard = () => {
                 {user?.is_owner ? (
                     <OwnerDashboard
                         user={user}
+                        profileData={profileData}
+                        setProfileData={setProfileData}
                         handleProfileUpdate={handleProfileUpdate}
                         isLoading={isLoading}
                         logout={logout}
@@ -193,8 +199,12 @@ const UserDashboard = () => {
                                 <CardContent className="p-8">
                                     <div className="flex flex-col items-center text-center space-y-4">
                                         <div className="relative group">
-                                            <div className="w-24 h-24 rounded-[32px] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-blue-200 group-hover:scale-105 transition-transform duration-500">
-                                                <User className="w-12 h-12" />
+                                            <div className="w-24 h-24 rounded-[32px] bg-gradient-to-br from-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-lg shadow-blue-200 group-hover:scale-105 transition-transform duration-500 overflow-hidden">
+                                                {user?.face_photo ? (
+                                                    <img src={user.face_photo} alt={user.full_name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    <User className="w-12 h-12" />
+                                                )}
                                             </div>
                                             <button className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border-4 border-slate-50 flex items-center justify-center text-slate-400 hover:text-blue-600 shadow-lg transition-colors">
                                                 <Camera className="w-5 h-5" />
@@ -345,7 +355,7 @@ const UserDashboard = () => {
                                                     </Button>
                                                 </div>
                                             </div>
-                                            
+
                                             {bookingsLoading ? (
                                                 <div className="flex items-center justify-center h-64">
                                                     <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin" />
@@ -392,7 +402,7 @@ const UserDashboard = () => {
                                                                     <div>
                                                                         <h3 className="font-bold text-slate-900">{booking.property_name}</h3>
                                                                         <p className="text-xs text-slate-500">
-                                                                            {booking.room_name} • 
+                                                                            {booking.room_name} •
                                                                             {new Date(booking.created_at).toLocaleDateString('en-IN')}
                                                                         </p>
                                                                         {booking.property_location && (
@@ -410,12 +420,12 @@ const UserDashboard = () => {
                                                                         </div>
                                                                         <div className="text-xs text-slate-500">per month</div>
                                                                     </div>
-                                                                    <Badge 
-                                                                        className={booking.status === 'Confirmed' 
-                                                                            ? 'bg-green-100 text-green-800' 
-                                                                            : booking.status === 'Pending' 
-                                                                            ? 'bg-yellow-100 text-yellow-800'
-                                                                            : 'bg-red-100 text-red-800'
+                                                                    <Badge
+                                                                        className={booking.status === 'Confirmed'
+                                                                            ? 'bg-green-100 text-green-800'
+                                                                            : booking.status === 'Pending'
+                                                                                ? 'bg-yellow-100 text-yellow-800'
+                                                                                : 'bg-red-100 text-red-800'
                                                                         }
                                                                     >
                                                                         {booking.status}
@@ -485,9 +495,9 @@ const UserDashboard = () => {
             </div>
 
             {/* Booking History Modal */}
-            <BookingHistory 
-                isOpen={showBookingHistory} 
-                onClose={() => setShowBookingHistory(false)} 
+            <BookingHistory
+                isOpen={showBookingHistory}
+                onClose={() => setShowBookingHistory(false)}
             />
         </div>
     );

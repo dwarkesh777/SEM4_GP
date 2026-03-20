@@ -25,7 +25,8 @@ import NotFound from "./pages/NotFound";
 import AddProperty from "./pages/AddProperty";
 import EditProperty from "./pages/EditProperty";
 import CollegeSearch from "./pages/CollegeSearch";
-
+import UserSignupPage from "./pages/UserSignupPage";
+import OwnerSignupPage from "./pages/OwnerSignupPage";
 
 const queryClient = new QueryClient();
 
@@ -41,10 +42,11 @@ const App = () => (
                         <Route path="/hostel/:id" element={<HostelDetail />} />
                         <Route path="/college-search" element={<CollegeSearch />} />
 
-
                         {/* Auth Routes */}
                         <Route path="/login" element={<Login />} />
                         <Route path="/signup" element={<Signup />} />
+                        <Route path="/signup/user" element={<UserSignupPage />} />
+                        <Route path="/signup/owner" element={<OwnerSignupPage />} />
                         <Route path="/student/login" element={<StudentLogin />} />
                         <Route path="/student/signup" element={<StudentSignup />} />
                         <Route path="/owner/login" element={<OwnerLogin />} />

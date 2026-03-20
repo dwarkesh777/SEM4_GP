@@ -26,7 +26,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 
-const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properties = [], bookings = [], enquiries = [], refetchBookings }) => {
+const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate, isLoading, logout, properties = [], bookings = [], enquiries = [], refetchBookings }) => {
     const navigate = useNavigate();
     const [view, setView] = useState("home"); // home, profile, verify
 
@@ -175,23 +175,48 @@ const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properti
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-8">
+                            <div className="flex flex-col md:flex-row items-center gap-8 mb-10 pb-10 border-b border-slate-100">
+                                <div className="relative group">
+                                    <div className="w-32 h-32 rounded-[40px] bg-slate-100 border-4 border-white shadow-xl overflow-hidden flex items-center justify-center text-slate-300">
+                                        {user?.face_photo ? (
+                                            <img src={user.face_photo} alt={user.full_name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User className="w-16 h-16" />
+                                        )}
+                                    </div>
+                                    <button className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border-4 border-slate-50 flex items-center justify-center text-slate-400 hover:text-blue-600 shadow-lg transition-colors">
+                                        <Camera className="w-5 h-5" />
+                                    </button>
+                                </div>
+                                <div className="text-center md:text-left">
+                                    <h3 className="text-2xl font-black text-slate-900 mb-1">{user?.full_name}</h3>
+                                    <p className="text-slate-500 font-bold mb-3">{user?.is_owner ? 'Property Owner' : 'Student'}</p>
+                                    <Badge className="bg-blue-50 text-blue-600 border-blue-100 font-bold px-4 py-1.5 rounded-full">
+                                        {user?.email}
+                                    </Badge>
+                                </div>
+                            </div>
                             <form onSubmit={handleProfileUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                 <div className="space-y-2">
-                                    <Label className="font-bold text-slate-700">First Name</Label>
-                                    <Input defaultValue={user?.full_name?.split(' ')[0]} className="h-12 rounded-xl border-slate-200 focus:ring-blue-500" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="font-bold text-slate-700">Last Name</Label>
-                                    <Input defaultValue={user?.full_name?.split(' ').slice(1).join(' ')} className="h-12 rounded-xl border-slate-200 focus:ring-blue-500" />
-                                </div>
-                                <div className="space-y-2">
-                                    <Label className="font-bold text-slate-700">Email</Label>
-                                    <Input value={user?.email} disabled className="h-12 rounded-xl bg-slate-50 border-slate-200 text-slate-500" />
-                                    <p className="text-[10px] text-slate-400 font-medium ml-1">Email cannot be changed</p>
+                                    <Label className="font-bold text-slate-700">Full Name</Label>
+                                    <Input
+                                        value={profileData.full_name}
+                                        onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                                        className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <Label className="font-bold text-slate-700">Phone Number</Label>
-                                    <Input defaultValue={user?.phone_number} className="h-12 rounded-xl border-slate-200 focus:ring-blue-500" />
+                                    <Input
+                                        value={profileData.phone_number}
+                                        onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
+                                        className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
+                                    />
+                                </div>
+                                <div className="space-y-2 col-span-full">
+                                    <Label className="font-bold text-slate-700">Email</Label>
+                                    <Input value={user?.email} disabled className="h-12 rounded-xl bg-slate-50 border-slate-200 text-slate-500" />
+                                    <p className="text-[10px] text-slate-400 font-medium ml-1">Email cannot be changed</p>
                                 </div>
 
                                 <div className="col-span-full border-t border-slate-100 my-4" />
@@ -204,7 +229,12 @@ const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properti
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                         <div className="space-y-2">
                                             <Label className="font-bold text-slate-700">Business Name</Label>
-                                            <Input placeholder="Enter business name" className="h-12 rounded-xl border-slate-200 focus:ring-blue-500" />
+                                            <Input
+                                                value={profileData.business_name}
+                                                onChange={(e) => setProfileData({ ...profileData, business_name: e.target.value })}
+                                                placeholder="Enter business name"
+                                                className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
+                                            />
                                         </div>
                                         <div className="space-y-2">
                                             <Label className="font-bold text-slate-700">Business Type</Label>
@@ -556,13 +586,22 @@ const OwnerDashboard = ({ user, handleProfileUpdate, isLoading, logout, properti
                 <div className="absolute bottom-0 left-0 w-32 h-32 bg-blue-400/20 rounded-full -ml-10 -mb-10 blur-2xl" />
 
                 <div className="relative z-10 flex items-center justify-between">
-                    <div className="space-y-2">
-                        <h1 className="text-4xl font-black text-white font-heading tracking-tight">
-                            Welcome back, {user?.full_name?.split(' ')[0]}! 👋
-                        </h1>
-                        <p className="text-blue-100 text-lg font-medium opacity-90">
-                            Manage your properties and track your performance
-                        </p>
+                    <div className="flex items-center gap-6">
+                        <div className="w-20 h-20 rounded-3xl bg-white/20 backdrop-blur-md border-2 border-white/30 overflow-hidden flex items-center justify-center shadow-inner">
+                            {user?.face_photo ? (
+                                <img src={user.face_photo} alt={user.full_name} className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="w-10 h-10 text-white" />
+                            )}
+                        </div>
+                        <div className="space-y-1">
+                            <h1 className="text-4xl font-black text-white font-heading tracking-tight">
+                                Welcome back, {user?.full_name?.split(' ')[0]}! 👋
+                            </h1>
+                            <p className="text-blue-100 text-lg font-medium opacity-90">
+                                {user?.business_name || "Manage your properties and track performance"}
+                            </p>
+                        </div>
                     </div>
                     <Badge className="bg-emerald-500/20 text-emerald-300 border-none px-4 py-2 rounded-xl backdrop-blur-md font-bold flex gap-2">
                         <CheckCircle2 className="w-4 h-4" />

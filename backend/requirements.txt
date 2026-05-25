@@ -12,3 +12,4 @@ pymongo[srv]
 dnspython
 razorpay
 resend
+Pillow

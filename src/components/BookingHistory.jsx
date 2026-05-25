@@ -1,14 +1,14 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuery } from '@tanstack/react-query';
-import { 
-    Calendar, 
-    Clock, 
-    MapPin, 
-    Home, 
-    CreditCard, 
-    User, 
-    Phone, 
+import {
+    Calendar,
+    Clock,
+    MapPin,
+    Home,
+    CreditCard,
+    User,
+    Phone,
     Mail,
     CheckCircle2,
     XCircle,
@@ -28,25 +28,25 @@ const fetchBookingHistory = async () => {
     if (!token) {
         throw new Error('Authentication required');
     }
-    
+
     const response = await fetch(`${API_URL}/api/bookings/`, {
         headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json',
         },
     });
-    
+
     if (!response.ok) {
         throw new Error('Failed to fetch booking history');
     }
-    
+
     const data = await response.json();
     return data.results || data; // Handle both paginated and non-paginated responses
 };
 
 const BookingHistory = ({ isOpen, onClose }) => {
     const [selectedBooking, setSelectedBooking] = useState(null);
-    
+
     const { data: bookings = [], isLoading, error } = useQuery({
         queryKey: ['booking-history'],
         queryFn: fetchBookingHistory,
@@ -59,10 +59,10 @@ const BookingHistory = ({ isOpen, onClose }) => {
             'Pending': { color: 'bg-yellow-100 text-yellow-800', icon: AlertCircle },
             'Cancelled': { color: 'bg-red-100 text-red-800', icon: XCircle },
         };
-        
+
         const config = statusConfig[status] || statusConfig['Pending'];
         const Icon = config.icon;
-        
+
         return (
             <Badge className={`${config.color} flex items-center gap-1`}>
                 <Icon className="w-3 h-3" />

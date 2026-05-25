@@ -18,6 +18,9 @@ export default defineConfig(({ mode }) => ({
         mode === "development" && componentTagger(),
         VitePWA({
             registerType: 'autoUpdate',
+            workbox: {
+                maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
+            },
             includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'bedbuddy-logo-blue.svg', 'bedbuddy-logo-white.svg', 'bedbuddy-favicon.svg'],
             manifest: {
                 name: 'BedBuddy - Find Your Perfect Stay',

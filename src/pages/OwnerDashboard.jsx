@@ -1,5 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import Plot from "react-plotly.js";
 import {
     User,
     Building2,
@@ -28,7 +29,83 @@ import { useNavigate } from "react-router-dom";
 
 const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate, isLoading, logout, properties = [], bookings = [], enquiries = [], refetchBookings }) => {
     const navigate = useNavigate();
-    const [view, setView] = useState("home"); // home, profile, verify
+    const [view, setView] = useState("home"); // home, profile, verify, analytics
+
+    const analytics = useMemo(() => {
+        const monthLabels = [];
+        const monthKeys = [];
+
+        for (let index = 5; index >= 0; index -= 1) {
+            const date = new Date();
+            date.setMonth(date.getMonth() - index);
+            const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}`;
+            monthKeys.push(monthKey);
+            monthLabels.push(date.toLocaleString("default", { month: "short" }));
+        }
+
+        const countByMonth = (items, dateField) => {
+            const counts = Object.fromEntries(monthKeys.map((key) => [key, 0]));
+            items.forEach((item) => {
+                const rawDate = item?.[dateField];
+                if (!rawDate) return;
+                const parsed = new Date(rawDate);
+                if (Number.isNaN(parsed.getTime())) return;
+                const key = `${parsed.getFullYear()}-${String(parsed.getMonth() + 1).padStart(2, "0")}`;
+                if (key in counts) counts[key] += 1;
+            });
+            return monthKeys.map((key) => counts[key]);
+        };
+
+        const propertyByCity = properties.reduce((acc, property) => {
+            const city = property?.city || "Unknown";
+            acc[city] = (acc[city] || 0) + 1;
+            return acc;
+        }, {});
+
+        const propertyTypes = properties.reduce((acc, property) => {
+            const type = property?.type || "Unknown";
+            acc[type] = (acc[type] || 0) + 1;
+            return acc;
+        }, {});
+
+        const bookingStatus = bookings.reduce((acc, booking) => {
+            const status = booking?.status || "Pending";
+            acc[status] = (acc[status] || 0) + 1;
+            return acc;
+        }, {});
+
+        const propertyVerification = properties.reduce((acc, property) => {
+            if (property?.is_verified === true) acc.approved += 1;
+            else if (property?.is_verified === false) acc.rejected += 1;
+            else acc.pending += 1;
+            return acc;
+        }, { approved: 0, pending: 0, rejected: 0 });
+
+        const topCities = Object.entries(propertyByCity)
+            .sort((a, b) => b[1] - a[1])
+            .slice(0, 6);
+
+        const totalRevenue = bookings.reduce((sum, booking) => sum + Number(booking?.amount || 0), 0);
+        const averageRating = properties.length
+            ? (properties.reduce((sum, property) => sum + Number(property?.rating || 0), 0) / properties.length).toFixed(1)
+            : "0.0";
+        const conversionRate = properties.length
+            ? ((bookings.length / Math.max(properties.length, 1)) * 100).toFixed(1)
+            : "0.0";
+
+        return {
+            monthLabels,
+            bookingSeries: countByMonth(bookings, "created_at"),
+            enquirySeries: countByMonth(enquiries, "created_at"),
+            topCities,
+            propertyTypes,
+            bookingStatus,
+            propertyVerification,
+            totalRevenue,
+            averageRating,
+            conversionRate,
+        };
+    }, [bookings, enquiries, properties]);
 
     // Auto-refresh bookings when accessing bookings view
     useEffect(() => {
@@ -49,9 +126,200 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
         { id: "queries", label: `Recent Query (${enquiries.length})`, icon: Mail, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("queries") },
         { id: "profile", label: "Complete Profile", icon: FileText, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("profile") },
         { id: "verify", label: "Get Verified", icon: ShieldCheck, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("verify") },
-        { id: "analytics", label: "View Analytics", icon: BarChart3, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => { } },
+        { id: "analytics", label: "View Analytics", icon: BarChart3, color: "bg-white", textColor: "text-blue-600", border: "border-blue-200", action: () => setView("analytics") },
         { id: "logout", label: "Sign Out", icon: LogOut, color: "bg-orange-50", textColor: "text-orange-600", border: "border-orange-100", action: logout },
     ];
+
+    if (view === "analytics") {
+        return (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                <div className="flex items-center justify-between gap-4 flex-wrap">
+                    <div>
+                        <h1 className="text-3xl font-black text-slate-900 font-heading">Analytics Overview</h1>
+                        <p className="text-slate-500">Track property performance, demand, and booking activity in one place</p>
+                    </div>
+                    <Button variant="outline" onClick={() => setView("home")} className="rounded-xl gap-2 border-blue-200 text-blue-600 hover:bg-blue-50">
+                        <ArrowLeft className="w-4 h-4" />
+                        Back to Dashboard
+                    </Button>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
+                    <Card className="rounded-[32px] border-slate-100 shadow-lg shadow-slate-100/50">
+                        <CardContent className="p-8">
+                            <p className="text-sm font-bold text-slate-500 mb-2">Total Revenue</p>
+                            <p className="text-3xl font-black text-slate-900">₹{analytics.totalRevenue.toLocaleString("en-IN")}</p>
+                            <p className="text-xs text-slate-400 mt-2">From all confirmed bookings</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="rounded-[32px] border-slate-100 shadow-lg shadow-slate-100/50">
+                        <CardContent className="p-8">
+                            <p className="text-sm font-bold text-slate-500 mb-2">Average Rating</p>
+                            <p className="text-3xl font-black text-slate-900">{analytics.averageRating}/5</p>
+                            <p className="text-xs text-slate-400 mt-2">Across all listed properties</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="rounded-[32px] border-slate-100 shadow-lg shadow-slate-100/50">
+                        <CardContent className="p-8">
+                            <p className="text-sm font-bold text-slate-500 mb-2">Booking Conversion</p>
+                            <p className="text-3xl font-black text-slate-900">{analytics.conversionRate}%</p>
+                            <p className="text-xs text-slate-400 mt-2">Bookings per listed property</p>
+                        </CardContent>
+                    </Card>
+                    <Card className="rounded-[32px] border-slate-100 shadow-lg shadow-slate-100/50">
+                        <CardContent className="p-8">
+                            <p className="text-sm font-bold text-slate-500 mb-2">Verification Status</p>
+                            <p className="text-lg font-black text-slate-900">{analytics.propertyVerification.approved} approved</p>
+                            <p className="text-xs text-slate-400 mt-2">{analytics.propertyVerification.pending} pending, {analytics.propertyVerification.rejected} rejected</p>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                    <Card className="rounded-[32px] border-slate-100 shadow-xl shadow-slate-100/50 overflow-hidden">
+                        <CardHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
+                            <CardTitle className="text-xl font-bold">Monthly Activity</CardTitle>
+                            <CardDescription>Bookings versus enquiries over the last 6 months</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-2 sm:p-4">
+                            <Plot
+                                data={[
+                                    {
+                                        x: analytics.monthLabels,
+                                        y: analytics.bookingSeries,
+                                        type: "scatter",
+                                        mode: "lines+markers",
+                                        name: "Bookings",
+                                        line: { color: "#2563eb", width: 3 },
+                                        marker: { size: 8 },
+                                    },
+                                    {
+                                        x: analytics.monthLabels,
+                                        y: analytics.enquirySeries,
+                                        type: "scatter",
+                                        mode: "lines+markers",
+                                        name: "Enquiries",
+                                        line: { color: "#7c3aed", width: 3 },
+                                        marker: { size: 8 },
+                                    },
+                                ]}
+                                layout={{
+                                    autosize: true,
+                                    height: 360,
+                                    margin: { l: 40, r: 20, t: 20, b: 40 },
+                                    paper_bgcolor: "transparent",
+                                    plot_bgcolor: "transparent",
+                                    font: { family: "Inter, sans-serif", color: "#475569" },
+                                    xaxis: { gridcolor: "#e2e8f0" },
+                                    yaxis: { gridcolor: "#e2e8f0", rangemode: "tozero" },
+                                    legend: { orientation: "h", y: -0.2 },
+                                }}
+                                config={{ displayModeBar: false, responsive: true }}
+                                style={{ width: "100%" }}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[32px] border-slate-100 shadow-xl shadow-slate-100/50 overflow-hidden">
+                        <CardHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
+                            <CardTitle className="text-xl font-bold">Properties by City</CardTitle>
+                            <CardDescription>Where your listings are concentrated</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-2 sm:p-4">
+                            <Plot
+                                data={[
+                                    {
+                                        x: analytics.topCities.map(([city]) => city),
+                                        y: analytics.topCities.map(([, count]) => count),
+                                        type: "bar",
+                                        marker: { color: "#2563eb", line: { color: "#1d4ed8", width: 1 } },
+                                    },
+                                ]}
+                                layout={{
+                                    autosize: true,
+                                    height: 360,
+                                    margin: { l: 50, r: 20, t: 20, b: 60 },
+                                    paper_bgcolor: "transparent",
+                                    plot_bgcolor: "transparent",
+                                    font: { family: "Inter, sans-serif", color: "#475569" },
+                                    xaxis: { tickangle: -20, gridcolor: "#e2e8f0" },
+                                    yaxis: { gridcolor: "#e2e8f0", rangemode: "tozero" },
+                                }}
+                                config={{ displayModeBar: false, responsive: true }}
+                                style={{ width: "100%" }}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[32px] border-slate-100 shadow-xl shadow-slate-100/50 overflow-hidden">
+                        <CardHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
+                            <CardTitle className="text-xl font-bold">Property Types</CardTitle>
+                            <CardDescription>Distribution of hostel and PG listings</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-2 sm:p-4">
+                            <Plot
+                                data={[
+                                    {
+                                        values: Object.values(analytics.propertyTypes),
+                                        labels: Object.keys(analytics.propertyTypes),
+                                        type: "pie",
+                                        hole: 0.55,
+                                        marker: { colors: ["#2563eb", "#7c3aed", "#14b8a6"] },
+                                        textinfo: "label+percent",
+                                    },
+                                ]}
+                                layout={{
+                                    autosize: true,
+                                    height: 360,
+                                    margin: { l: 20, r: 20, t: 20, b: 20 },
+                                    paper_bgcolor: "transparent",
+                                    plot_bgcolor: "transparent",
+                                    font: { family: "Inter, sans-serif", color: "#475569" },
+                                    showlegend: true,
+                                    legend: { orientation: "h" },
+                                }}
+                                config={{ displayModeBar: false, responsive: true }}
+                                style={{ width: "100%" }}
+                            />
+                        </CardContent>
+                    </Card>
+
+                    <Card className="rounded-[32px] border-slate-100 shadow-xl shadow-slate-100/50 overflow-hidden">
+                        <CardHeader className="p-6 border-b border-slate-100 bg-slate-50/50">
+                            <CardTitle className="text-xl font-bold">Booking Status</CardTitle>
+                            <CardDescription>Confirmed and pending bookings</CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-2 sm:p-4">
+                            <Plot
+                                data={[
+                                    {
+                                        values: Object.values(analytics.bookingStatus),
+                                        labels: Object.keys(analytics.bookingStatus),
+                                        type: "pie",
+                                        hole: 0.55,
+                                        marker: { colors: ["#16a34a", "#f59e0b", "#ef4444", "#0f766e"] },
+                                        textinfo: "label+percent",
+                                    },
+                                ]}
+                                layout={{
+                                    autosize: true,
+                                    height: 360,
+                                    margin: { l: 20, r: 20, t: 20, b: 20 },
+                                    paper_bgcolor: "transparent",
+                                    plot_bgcolor: "transparent",
+                                    font: { family: "Inter, sans-serif", color: "#475569" },
+                                    showlegend: true,
+                                    legend: { orientation: "h" },
+                                }}
+                                config={{ displayModeBar: false, responsive: true }}
+                                style={{ width: "100%" }}
+                            />
+                        </CardContent>
+                    </Card>
+                </div>
+            </div>
+        );
+    }
 
     if (view === "queries") {
         return (

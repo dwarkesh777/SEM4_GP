@@ -24,6 +24,10 @@ EMAIL_HOST_USER = 'bed.buddy777@gmail.com'
 EMAIL_HOST_PASSWORD = 'mowcwbcjslpbtsov'  # Use App Password, not Gmail password
 DEFAULT_FROM_EMAIL = 'bed.buddy777@gmail.com'
 
+# External email service (Express SMTP) - optional
+EMAIL_SERVICE_URL = os.getenv('EMAIL_SERVICE_URL')
+EMAIL_SERVICE_API_KEY = os.getenv('EMAIL_SERVICE_API_KEY')
+
 INSTALLED_APPS = [
     'django.contrib.auth',
     'django.contrib.contenttypes',

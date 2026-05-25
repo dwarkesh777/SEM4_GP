@@ -8,10 +8,11 @@ from .serializers import PropertySerializer, BookingSerializer, EnquirySerialize
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer, UserSignupSerializer, OwnerSignupSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.core.mail import send_mail
+import requests
 from django.conf import settings
 import random
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, datetime
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 
@@ -433,7 +434,38 @@ def send_enquiry_notification_email(enquiry):
         message = enquiry.message
 
         subject = f'🏠 New Enquiry for {property_name} - BedBuddy'
-        
+
+        # Build payload for external email service
+        email_payload = {
+            'to': owner_email,
+            'subject': subject,
+            'text': f'You have a new enquiry from {student_name}: {message}',
+            'template': 'enquiry',
+            'property_name': property_name,
+            'student_name': student_name,
+            'student_phone': student_phone,
+            'enquiry_message': message,
+            'app_name': 'BedBuddy'
+        }
+
+        service_url = getattr(settings, 'EMAIL_SERVICE_URL', None)
+        service_key = getattr(settings, 'EMAIL_SERVICE_API_KEY', None)
+
+        if service_url:
+            try:
+                headers = {'Content-Type': 'application/json'}
+                if service_key:
+                    headers['x-api-key'] = service_key
+                resp = requests.post(f"{service_url.rstrip('/')}/send-email", json=email_payload, headers=headers, timeout=10)
+                if resp.status_code == 200:
+                    logger.info(f"Enquiry notification sent to {owner_email} via external service")
+                    return
+                else:
+                    logger.error(f"External email service failed: {resp.status_code} {resp.text}")
+            except Exception as ext_e:
+                logger.error(f"Error calling external email service for enquiry: {ext_e}")
+
+        # Fallback to Django SMTP if external service not configured or failed
         html_content = f"""
         <!DOCTYPE html>
         <html>
@@ -475,23 +507,25 @@ def send_enquiry_notification_email(enquiry):
                         </div>
                     </div>
                     <div class="footer">
-                        © 2024 BedBuddy • Premium Student Living Platforms
+                        © {datetime.now().year} BedBuddy • Premium Student Living Platforms
                     </div>
                 </div>
             </div>
         </body>
         </html>
         """
-        
-        send_mail(
-            subject,
-            f"You have a new enquiry for {property_name} from {student_name}.",
-            settings.EMAIL_HOST_USER,
-            [owner_email],
-            fail_silently=False,
-            html_message=html_content
-        )
-        logger.info(f"Enquiry notification sent to {owner_email}")
+        try:
+            send_mail(
+                subject,
+                f"You have a new enquiry for {property_name} from {student_name}.",
+                settings.EMAIL_HOST_USER,
+                [owner_email],
+                fail_silently=False,
+                html_message=html_content
+            )
+            logger.info(f"Enquiry notification sent to {owner_email} via SMTP fallback")
+        except Exception as e:
+            logger.error(f"Failed to send enquiry email via SMTP fallback: {e}")
     except Exception as e:
         logger.error(f"Failed to send enquiry email: {e}")
 
@@ -650,15 +684,43 @@ def send_otp(request):
         user.otp_expiry = timezone.now() + timedelta(minutes=5)
         user.save()
 
-        # Send email
+        # Send email via external Express SMTP service if configured
         subject = 'Your BedBuddy Login OTP'
         message = f'Your OTP for logging into BedBuddy is: {otp_code}\n\nThis code will expire in 5 minutes.'
+        email_payload = {
+            'to': email,
+            'subject': subject,
+            'text': message,
+            'html': f'<p>Your OTP for logging into BedBuddy is: <strong>{otp_code}</strong></p><p>This code will expire in 5 minutes.</p>',
+            'otp': otp_code,
+            'expiry_minutes': 5,
+            'app_name': 'BedBuddy'
+        }
+
+        service_url = getattr(settings, 'EMAIL_SERVICE_URL', None)
+        service_key = getattr(settings, 'EMAIL_SERVICE_API_KEY', None)
+
+        if service_url:
+            try:
+                headers = {'Content-Type': 'application/json'}
+                if service_key:
+                    headers['x-api-key'] = service_key
+                resp = requests.post(f"{service_url.rstrip('/')}/send-email", json=email_payload, headers=headers, timeout=10)
+                if resp.status_code == 200:
+                    logger.info(f"OTP sent to {email} via external service")
+                    return Response({"message": "OTP sent successfully to your email."})
+                else:
+                    logger.error(f"External email service failed: {resp.status_code} {resp.text}")
+                    return Response({"error": "Failed to send email via external service."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            except Exception as ext_e:
+                logger.error(f"Error calling external email service: {ext_e}")
+                # Fall back to Django SMTP if configured
         try:
             send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
-            logger.info(f"OTP sent to {email}")
+            logger.info(f"OTP sent to {email} via Django SMTP")
             return Response({"message": "OTP sent successfully to your email."})
         except Exception as mail_e:
-            logger.error(f"Failed to send OTP email: {mail_e}")
+            logger.error(f"Failed to send OTP email via SMTP: {mail_e}")
             return Response({"error": f"Failed to send email: {str(mail_e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             
     except Exception as e:

@@ -13,3 +13,4 @@ dnspython
 razorpay
 resend
 Pillow
+scikit-learn

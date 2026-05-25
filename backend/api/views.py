@@ -1,5 +1,6 @@
 import logging
 import math
+import re
 from django.db.models import Q
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
@@ -16,23 +17,28 @@ from datetime import timedelta, datetime
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.decorators import api_view, permission_classes, authentication_classes
 
+try:
+    from sklearn.neighbors import NearestNeighbors
+except Exception:  # pragma: no cover - fallback when sklearn is unavailable
+    NearestNeighbors = None
+
 logger = logging.getLogger(__name__)
 
 
 class PropertyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Property.objects.all()
-        
+
         # IMPORTANT: Only show verified properties on the public website
         # Admin can see all properties (including pending/rejected)
         if not (self.request.user and self.request.user.is_staff):
             queryset = queryset.filter(is_verified=True)
-        
+
         # 1. Base Filters
         owner_id = self.request.query_params.get('owner_id')
         if owner_id:
             queryset = queryset.filter(owner_id=owner_id)
-            
+
         search_query = self.request.query_params.get('search')
         if search_query:
             queryset = queryset.filter(
@@ -79,38 +85,35 @@ class PropertyViewSet(viewsets.ModelViewSet):
         # 4. Distance calculation (if lat/lng provided)
         college_lat = self.request.query_params.get('lat')
         college_lng = self.request.query_params.get('lng')
-        
+
         results = list(queryset)
         if college_lat and college_lng:
             try:
                 c_lat = float(college_lat)
                 c_lng = float(college_lng)
-                
+
                 filtered_results = []
                 for prop in results:
                     if prop.latitude is not None and prop.longitude is not None:
-                        # Haversine formula
                         R = 6371.0
                         lat1, lon1 = math.radians(c_lat), math.radians(c_lng)
                         lat2, lon2 = math.radians(prop.latitude), math.radians(prop.longitude)
-                        
+
                         dlat = lat2 - lat1
                         dlon = lon2 - lon1
-                        
+
                         a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
                         c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
                         distance = R * c
-                        
+
                         if distance <= 30:
                             prop.distance = round(distance, 2)
                             filtered_results.append(prop)
                 results = filtered_results
-                # Default sorting for distance search
                 results.sort(key=lambda x: x.distance)
             except (ValueError, TypeError) as e:
                 logger.error(f"Error calculating distance: {e}")
 
-        # 4. Sorting (only if not distance-sorted or if explicit sort provided)
         ordering = self.request.query_params.get('ordering')
         if ordering:
             if ordering == 'price_asc':
@@ -121,30 +124,27 @@ class PropertyViewSet(viewsets.ModelViewSet):
                 results.sort(key=lambda x: x.rating, reverse=True)
             elif ordering == 'distance_asc' and hasattr(results[0] if results else None, 'distance'):
                 results.sort(key=lambda x: x.distance)
-        
+
         return results
+
     serializer_class = PropertySerializer
     parser_classes = [parsers.MultiPartParser, parsers.FormParser, parsers.JSONParser]
 
     def get_permissions(self):
-        # GET requests (list/retrieve) are public; POST/PUT/DELETE require auth
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
 
     def create(self, request, *args, **kwargs):
-        # Log all incoming data keys for debugging
         logger.info(f"POST /api/properties/ - data keys: {list(request.data.keys())}")
         logger.info(f"POST /api/properties/ - files: {list(request.FILES.keys())}")
         logger.info(f"POST /api/properties/ - user: {request.user} authenticated: {request.user.is_authenticated}")
 
-        # Set is_verified to None (pending) for new properties
         mutable_data = request.data.copy()
-        mutable_data['is_verified'] = None  # New properties start as pending
-        
+        mutable_data['is_verified'] = None
+
         serializer = self.get_serializer(data=mutable_data)
         if not serializer.is_valid():
-            # Log and return the exact validation errors so frontend can show them
             logger.error(f"Validation errors: {serializer.errors}")
             return Response(
                 {"error": self._flatten_errors(serializer.errors), "details": serializer.errors},
@@ -157,13 +157,9 @@ class PropertyViewSet(viewsets.ModelViewSet):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
             logger.error(f"Error during property creation: {e}", exc_info=True)
-            return Response(
-                {"error": str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     def _flatten_errors(self, errors):
-        """Convert DRF nested error dict into a readable string."""
         messages = []
         for field, errs in errors.items():
             if isinstance(errs, list):
@@ -177,8 +173,7 @@ class PropertyViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         if self.request.user.is_authenticated:
             property_instance = serializer.save(owner=self.request.user)
-            
-            # Send grateful email to owner
+
             try:
                 subject = 'Property Listed Successfully - BedBuddy'
                 message = f'Dear {self.request.user.full_name},\n\nThank you for choosing BedBuddy! Your property "{property_instance.name}" has been successfully listed on our platform.\n\nWe are grateful to have you as a partner. Our team will review the listing and it will be visible to students shortly.\n\nBest regards,\nTeam BedBuddy'
@@ -188,7 +183,6 @@ class PropertyViewSet(viewsets.ModelViewSet):
             except Exception as e:
                 logger.error(f"Failed to send notification email: {e}")
         else:
-            # owner is required by the model — raise a clear error
             from rest_framework.exceptions import AuthenticationFailed
             raise AuthenticationFailed("You must be logged in as an owner to list a property.")
 
@@ -197,9 +191,11 @@ class RegisterView(generics.CreateAPIView):
     serializer_class = RegisterSerializer
     permission_classes = [permissions.AllowAny]
 
+
 class UserSignupView(generics.CreateAPIView):
     serializer_class = UserSignupSerializer
     permission_classes = [permissions.AllowAny]
+
 
 class OwnerSignupView(generics.CreateAPIView):
     serializer_class = OwnerSignupSerializer
@@ -220,6 +216,17 @@ class UserLoginView(TokenObtainPairView):
 
 class OwnerLoginView(TokenObtainPairView):
     serializer_class = OwnerTokenObtainPairSerializer
+
+
+# ─── RAZORPAY PAYMENT VIEWS ───────────────────────────────────────────────────
+
+import razorpay
+import hmac
+import hashlib
+from django.conf import settings
+from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.permissions import AllowAny
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
 
 # ─── RAZORPAY PAYMENT VIEWS ───────────────────────────────────────────────────
@@ -783,58 +790,125 @@ def verify_otp(request):
 @permission_classes([permissions.AllowAny])
 def get_similar_properties(request, property_id):
     """
-    Get similar properties based on price range and other criteria - OPTIMIZED
+    Get similar properties using a KNN-based similarity score.
     """
     try:
-        # Use select_related and prefetch_related for faster queries
         current_property = Property.objects.select_related('owner').get(id=property_id)
-        
-        # Define price range (±20% of current property price)
-        min_price = current_property.price * 0.8
-        max_price = current_property.price * 1.2
-        
-        # Optimized query with select_related and only() to reduce data transfer
-        similar_properties = Property.objects.filter(
-            is_verified=True,
-            price__gte=min_price,
-            price__lte=max_price
-        ).exclude(id=property_id).select_related('owner').only(
-            'id', 'name', 'price', 'main_image', 'location', 'city', 'type', 'gender', 
-            'rating', 'reviews_count', 'amenities', 'occupancy', 'beds', 'owner_id'
+
+        def normalize_text(value):
+            return re.sub(r'[^a-z0-9]+', ' ', (value or '').lower()).strip()
+
+        def token_set(property_obj):
+            tokens = set()
+            for raw_value in [
+                property_obj.name,
+                property_obj.city,
+                property_obj.location,
+                property_obj.type,
+                property_obj.gender,
+                property_obj.description,
+                property_obj.address,
+            ]:
+                tokens.update(normalize_text(raw_value).split())
+
+            try:
+                tokens.update(normalize_text(' '.join(property_obj.amenities.values_list('name', flat=True))).split())
+            except Exception:
+                pass
+
+            try:
+                tokens.update(normalize_text(' '.join(property_obj.appliances.values_list('name', flat=True))).split())
+            except Exception:
+                pass
+
+            return tokens
+
+        def jaccard_score(left_tokens, right_tokens):
+            union = left_tokens | right_tokens
+            if not union:
+                return 0.0
+            return len(left_tokens & right_tokens) / len(union)
+
+        candidates = list(
+            Property.objects.filter(is_verified=True)
+            .exclude(id=property_id)
+            .select_related('owner')
         )
-        
-        # Filter by same type and gender if possible
-        similar_properties = similar_properties.filter(
-            type=current_property.type,
-            gender=current_property.gender
-        )
-        
-        # If not enough similar properties, relax the criteria
-        if similar_properties.count() < 3:
-            similar_properties = Property.objects.filter(
-                is_verified=True,
-                price__gte=min_price,
-                price__lte=max_price,
-                type=current_property.type
-            ).exclude(id=property_id).select_related('owner').only(
-                'id', 'name', 'price', 'main_image', 'location', 'city', 'type', 'gender', 
-                'rating', 'reviews_count', 'amenities', 'occupancy', 'beds', 'owner_id'
+
+        if not candidates:
+            return Response([])
+
+        current_tokens = token_set(current_property)
+        feature_rows = []
+
+        for candidate in candidates:
+            feature_rows.append([
+                float(candidate.price or 0),
+                float(candidate.rating or 0),
+                float(candidate.reviews_count or 0),
+                float(candidate.amenities.count()),
+                float(candidate.appliances.count()),
+                float(candidate.rooms.count()),
+                1.0 if candidate.type == current_property.type else 0.0,
+                1.0 if candidate.gender == current_property.gender else 0.0,
+                1.0 if normalize_text(candidate.city) == normalize_text(current_property.city) else 0.0,
+            ])
+
+        ranked_candidates = []
+
+        if NearestNeighbors is not None:
+            try:
+                knn = NearestNeighbors(n_neighbors=min(6, len(feature_rows)), metric='euclidean')
+                knn.fit(feature_rows)
+
+                current_vector = [[
+                    float(current_property.price or 0),
+                    float(current_property.rating or 0),
+                    float(current_property.reviews_count or 0),
+                    float(current_property.amenities.count()),
+                    float(current_property.appliances.count()),
+                    float(current_property.rooms.count()),
+                    1.0,
+                    1.0,
+                    1.0,
+                ]]
+
+                distances, indices = knn.kneighbors(current_vector)
+                for distance, index in zip(distances[0], indices[0]):
+                    candidate = candidates[index]
+                    feature_similarity = 1 / (1 + float(distance))
+                    text_similarity = jaccard_score(current_tokens, token_set(candidate))
+                    combined_score = round((feature_similarity * 0.8) + (text_similarity * 0.2), 4)
+                    ranked_candidates.append((combined_score, candidate))
+            except Exception as e:
+                logger.error(f"KNN ranking failed, falling back to heuristic: {e}")
+
+        if not ranked_candidates:
+            def fallback_score(candidate):
+                price_gap = abs((candidate.price or 0) - (current_property.price or 0))
+                rating_gap = abs((candidate.rating or 0) - (current_property.rating or 0))
+                city_bonus = 1.0 if normalize_text(candidate.city) == normalize_text(current_property.city) else 0.0
+                type_bonus = 1.0 if candidate.type == current_property.type else 0.0
+                gender_bonus = 1.0 if candidate.gender == current_property.gender else 0.0
+                text_bonus = jaccard_score(current_tokens, token_set(candidate))
+                return (
+                    (1 / (1 + price_gap)) * 0.40 +
+                    (1 / (1 + rating_gap)) * 0.15 +
+                    city_bonus * 0.20 +
+                    type_bonus * 0.15 +
+                    gender_bonus * 0.05 +
+                    text_bonus * 0.05
+                )
+
+            ranked_candidates = sorted(
+                [(fallback_score(candidate), candidate) for candidate in candidates],
+                key=lambda item: item[0],
+                reverse=True,
             )
-        
-        # If still not enough, relax more criteria
-        if similar_properties.count() < 3:
-            similar_properties = Property.objects.filter(
-                is_verified=True,
-                price__gte=min_price,
-                price__lte=max_price
-            ).exclude(id=property_id).select_related('owner').only(
-                'id', 'name', 'price', 'main_image', 'location', 'city', 'type', 'gender', 
-                'rating', 'reviews_count', 'amenities', 'occupancy', 'beds', 'owner_id'
-            )
-        
-        # Limit to 6 properties and order by rating and price - use slicing for efficiency
-        similar_properties = similar_properties.order_by('-rating', 'price')[:6]
-        
+
+        ranked_candidates.sort(key=lambda item: item[0], reverse=True)
+        similar_properties = [candidate for _, candidate in ranked_candidates[:6]]
+
         serializer = PropertySerializer(similar_properties, many=True)
         return Response(serializer.data)
         

@@ -175,8 +175,8 @@ class PropertyViewSet(viewsets.ModelViewSet):
             property_instance = serializer.save(owner=self.request.user)
 
             try:
-                subject = 'Property Listed Successfully - BedBuddy'
-                message = f'Dear {self.request.user.full_name},\n\nThank you for choosing BedBuddy! Your property "{property_instance.name}" has been successfully listed on our platform.\n\nWe are grateful to have you as a partner. Our team will review the listing and it will be visible to students shortly.\n\nBest regards,\nTeam BedBuddy'
+                subject = 'Property Listed Successfully - NestNode'
+                message = f'Dear {self.request.user.full_name},\n\nThank you for choosing NestNode! Your property "{property_instance.name}" has been successfully listed on our platform.\n\nWe are grateful to have you as a partner. Our team will review the listing and it will be visible to students shortly.\n\nBest regards,\nTeam NestNode'
                 recipient_list = [self.request.user.email]
                 send_mail(subject, message, settings.EMAIL_HOST_USER, recipient_list)
                 logger.info(f"Notification email sent to {self.request.user.email} for property {property_instance.name}")
@@ -440,7 +440,7 @@ def send_enquiry_notification_email(enquiry):
         student_phone = enquiry.phone or "Not provided"
         message = enquiry.message
 
-        subject = f'🏠 New Enquiry for {property_name} - BedBuddy'
+        subject = f'🏠 New Enquiry for {property_name} - NestNode'
 
         # Build payload for external email service
         email_payload = {
@@ -452,7 +452,7 @@ def send_enquiry_notification_email(enquiry):
             'student_name': student_name,
             'student_phone': student_phone,
             'enquiry_message': message,
-            'app_name': 'BedBuddy'
+            'app_name': 'NestNode'
         }
 
         service_url = getattr(settings, 'EMAIL_SERVICE_URL', None)
@@ -510,11 +510,11 @@ def send_enquiry_notification_email(enquiry):
                         <div class="message-box">"{message}"</div>
                         
                         <div style="text-align: center;">
-                            <a href="https://bedbuddy.com/dashboard" class="btn">View in Dashboard</a>
+                            <a href="https://nestnode.com/dashboard" class="btn">View in Dashboard</a>
                         </div>
                     </div>
                     <div class="footer">
-                        © {datetime.now().year} BedBuddy • Premium Student Living Platforms
+                        © {datetime.now().year} NestNode • Premium Student Living Platforms
                     </div>
                 </div>
             </div>
@@ -692,16 +692,16 @@ def send_otp(request):
         user.save()
 
         # Send email via external Express SMTP service if configured
-        subject = 'Your BedBuddy Login OTP'
-        message = f'Your OTP for logging into BedBuddy is: {otp_code}\n\nThis code will expire in 5 minutes.'
+        subject = 'Your NestNode Login OTP'
+        message = f'Your OTP for logging into NestNode is: {otp_code}\n\nThis code will expire in 5 minutes.'
         email_payload = {
             'to': email,
             'subject': subject,
             'text': message,
-            'html': f'<p>Your OTP for logging into BedBuddy is: <strong>{otp_code}</strong></p><p>This code will expire in 5 minutes.</p>',
+            'html': f'<p>Your OTP for logging into NestNode is: <strong>{otp_code}</strong></p><p>This code will expire in 5 minutes.</p>',
             'otp': otp_code,
             'expiry_minutes': 5,
-            'app_name': 'BedBuddy'
+            'app_name': 'NestNode'
         }
 
         service_url = getattr(settings, 'EMAIL_SERVICE_URL', None)

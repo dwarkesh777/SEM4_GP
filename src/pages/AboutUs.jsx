@@ -54,7 +54,7 @@ const AboutUs = () => {
                                 Our Mission
                             </h2>
                             <p className="text-lg text-muted-foreground leading-relaxed mb-6">
-                                At BedBuddy, we believe that your living space is the canvas for your dreams.
+                                At NestNode, we believe that your living space is the canvas for your dreams.
                                 Our mission is to simplify the hunt for perfect accommodation by bringing
                                 transparency, safety, and modern convenience to the traditional hostel industry.
                             </p>
@@ -96,7 +96,7 @@ const AboutUs = () => {
                 <section className="py-24 bg-secondary/30">
                     <div className="container">
                         <div className="text-center mb-16">
-                            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">The BedBuddy Promise</h2>
+                            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">The NestNode Promise</h2>
                             <p className="text-muted-foreground max-w-2xl mx-auto">
                                 We built our platform on three core pillars that prioritize your comfort and peace of mind.
                             </p>

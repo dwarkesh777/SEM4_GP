@@ -83,7 +83,7 @@ const HelpCenter = () => {
                             },
                             {
                                 q: "Is there a service fee for students?",
-                                a: "No, BedBuddy is completely free for students and tenants to use. We do not charge any commission or service fee from seekers."
+                                a: "No, NestNode is completely free for students and tenants to use. We do not charge any commission or service fee from seekers."
                             },
                             {
                                 q: "How are the properties verified?",

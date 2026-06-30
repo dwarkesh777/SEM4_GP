@@ -37,8 +37,8 @@ const Footer = () => {
                                 <MapPin className="w-5 h-5 text-white" />
                             </div>
                             <span className="text-2xl tracking-tight font-heading">
-                                <span className="font-medium text-white">Bed</span>
-                                <span className="font-black text-gradient">Buddy</span>
+                                <span className="font-medium text-white">Nest</span>
+                                <span className="font-black text-gradient">Node</span>
                             </span>
                         </div>
                         <p className="text-sm text-slate-400 leading-relaxed font-medium">
@@ -93,7 +93,7 @@ const Footer = () => {
                                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-slate-900 to-slate-800 flex items-center justify-center shrink-0 border border-slate-700">
                                     <Mail className="w-4 h-4 text-primary" />
                                 </div>
-                                <span>hello@bedbuddy.in</span>
+                                <span>hello@nestnode.in</span>
                             </li>
                         </ul>
                     </div>
@@ -101,7 +101,7 @@ const Footer = () => {
 
                 <div className="border-t border-white/10 mt-16 pt-8 text-center flex flex-col md:flex-row justify-between items-center gap-4">
                     <div className="text-sm text-slate-400 font-medium">
-                        © {new Date().getFullYear()} BedBuddy. All rights reserved.
+                        © {new Date().getFullYear()} NestNode. All rights reserved.
                     </div>
                     <div className="flex gap-4">
                         <div className="w-10 h-10 rounded-full bg-gradient-to-br from-slate-900 to-slate-800 border border-slate-700 flex items-center justify-center hover:from-primary hover:to-indigo-600 transition-all duration-300 cursor-pointer text-slate-400 hover:text-white group">

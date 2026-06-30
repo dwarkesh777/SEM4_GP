@@ -21,7 +21,7 @@ const TermsOfService = () => {
                             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Terms of Service</h1>
                         </motion.div>
                         <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
-                            Last Updated: February 2026. These terms govern your use of the BedBuddy
+                            Last Updated: February 2026. These terms govern your use of the NestNode
                             platform and services.
                         </p>
                     </div>
@@ -33,14 +33,14 @@ const TermsOfService = () => {
                             <article className="prose prose-slate max-w-none">
                                 <h2 className="text-2xl font-bold mb-4">1. Acceptance of Terms</h2>
                                 <p className="text-muted-foreground leading-relaxed">
-                                    By accessing or using BedBuddy, you agree to be bound by these Terms of Service.
+                                    By accessing or using NestNode, you agree to be bound by these Terms of Service.
                                     If you do not agree, please do not use our services.
                                 </p>
 
                                 <h2 className="text-2xl font-bold mt-12 mb-4">2. User Accounts</h2>
                                 <p className="text-muted-foreground leading-relaxed">
                                     You are responsible for maintaining the confidentiality of your account credentials.
-                                    BedBuddy reserves the right to suspend accounts that violate our community guidelines.
+                                    NestNode reserves the right to suspend accounts that violate our community guidelines.
                                 </p>
 
                                 <h2 className="text-2xl font-bold mt-12 mb-4">3. Property Listings</h2>
@@ -65,7 +65,7 @@ const TermsOfService = () => {
 
                                 <h2 className="text-2xl font-bold mt-12 mb-4">4. Limitation of Liability</h2>
                                 <p className="text-muted-foreground leading-relaxed">
-                                    BedBuddy is a marketplace platform. While we verify listings, users should
+                                    NestNode is a marketplace platform. While we verify listings, users should
                                     perform their own due diligence before making payments directly to owners.
                                 </p>
                             </article>
@@ -85,7 +85,7 @@ const TermsOfService = () => {
                                 </nav>
                                 <hr className="my-6 border-slate-200" />
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    Have questions about our terms? Reach out to our legal team at legal@bedbuddy.in
+                                    Have questions about our terms? Reach out to our legal team at legal@nestnode.in
                                 </p>
                             </div>
                         </div>

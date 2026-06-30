@@ -44,8 +44,8 @@ const Signup = () => {
                         <MapPin className="w-5 h-5 text-white" />
                     </div>
                     <span className="text-2xl tracking-tight font-heading text-white">
-                        <span className="font-medium">Bed</span>
-                        <span className="font-black text-primary">Buddy</span>
+                        <span className="font-medium">Nest</span>
+                        <span className="font-black text-primary">Node</span>
                     </span>
                 </Link>
 
@@ -77,8 +77,8 @@ const Signup = () => {
                             <MapPin className="w-5 h-5 text-white" />
                         </div>
                         <span className="text-2xl tracking-tight font-heading text-slate-900">
-                            <span className="font-medium">Bed</span>
-                            <span className="font-black text-primary">Buddy</span>
+                            <span className="font-medium">Nest</span>
+                            <span className="font-black text-primary">Node</span>
                         </span>
                     </Link>
 

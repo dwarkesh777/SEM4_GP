@@ -89,7 +89,7 @@ const OwnerSignupPage = () => {
             if (response.ok) {
                 toast({
                     title: "Registration Successful",
-                    description: "Welcome to BedBuddy! Your owner account has been created.",
+                    description: "Welcome to NestNode! Your owner account has been created.",
                 });
                 navigate('/owner/login');
             } else {

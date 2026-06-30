@@ -87,7 +87,7 @@ const BookingSuccess = () => {
         const receiptContent = `
             <html>
                 <head>
-                    <title>Booking Receipt - BedBuddy</title>
+                    <title>Booking Receipt - NestNode</title>
                     <style>
                         body { font-family: Arial, sans-serif; margin: 40px; color: #333; }
                         .header { text-align: center; border-bottom: 2px solid #3b82f6; padding-bottom: 20px; margin-bottom: 30px; }
@@ -105,9 +105,9 @@ const BookingSuccess = () => {
                 </head>
                 <body>
                     <div class="header">
-                        <div class="logo">🏠 BedBuddy</div>
+                        <div class="logo">🏠 NestNode</div>
                         <h2>Booking Receipt</h2>
-                        <p>Thank you for choosing BedBuddy for your accommodation needs!</p>
+                        <p>Thank you for choosing NestNode for your accommodation needs!</p>
                     </div>
                     
                     <div class="status-badge">✓ Booking Confirmed</div>
@@ -189,9 +189,9 @@ const BookingSuccess = () => {
                     </div>
                     
                     <div class="footer">
-                        <p><strong>BedBuddy - Premium Student Living</strong></p>
-                        <p>📞 Support: +91 9876543210 | 📧 support@bedbuddy.com</p>
-                        <p>🌐 www.bedbuddy.com | 📍 Multiple Cities Across India</p>
+                        <p><strong>NestNode - Premium Student Living</strong></p>
+                        <p>📞 Support: +91 9876543210 | 📧 support@nestnode.com</p>
+                        <p>🌐 www.nestnode.com | 📍 Multiple Cities Across India</p>
                         <p style="margin-top: 10px; font-size: 12px;">*This is a computer-generated receipt and does not require a signature.</p>
                     </div>
                 </body>
@@ -207,11 +207,11 @@ const BookingSuccess = () => {
     const shareBooking = () => {
         if (!bookingDetails) return;
 
-        const shareText = `🏠 I just booked ${bookingDetails.property_name} in ${bookingDetails.property_location} through BedBuddy! 🎉\n\n📅 Booked on: ${new Date(bookingDetails.created_at).toLocaleDateString('en-IN')}\n💰 Monthly Rent: ₹${bookingDetails.amount?.toLocaleString('en-IN')}\n🏢 Room: ${bookingDetails.room_name}\n\nCheck out BedBuddy for amazing student accommodations! 📚✨`;
+        const shareText = `🏠 I just booked ${bookingDetails.property_name} in ${bookingDetails.property_location} through NestNode! 🎉\n\n📅 Booked on: ${new Date(bookingDetails.created_at).toLocaleDateString('en-IN')}\n💰 Monthly Rent: ₹${bookingDetails.amount?.toLocaleString('en-IN')}\n🏢 Room: ${bookingDetails.room_name}\n\nCheck out NestNode for amazing student accommodations! 📚✨`;
 
         if (navigator.share) {
             navigator.share({
-                title: 'Booking Confirmation - BedBuddy',
+                title: 'Booking Confirmation - NestNode',
                 text: shareText,
             });
         } else {

@@ -63,7 +63,7 @@ const CancellationPolicy = () => {
                                 <h3 className="text-xl font-bold mb-6">Security Deposits</h3>
                                 <p className="text-muted-foreground leading-relaxed mb-6">
                                     Security deposits are handled directly between the tenant and the owner.
-                                    BedBuddy does not hold or process security deposits.
+                                    NestNode does not hold or process security deposits.
                                 </p>
                                 <div className="flex items-start gap-4 p-4 bg-orange-50 rounded-2xl border border-orange-100">
                                     <AlertCircle className="w-6 h-6 text-orange-500 mt-1 shrink-0" />

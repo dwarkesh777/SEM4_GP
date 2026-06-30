@@ -130,9 +130,9 @@ const BookingHistory = ({ isOpen, onClose }) => {
     <div class="page">
         <div class="header">
             <div class="brand">
-                <div class="brand-icon">B</div>
+                <div class="brand-icon">N</div>
                 <div>
-                    <div class="brand-name">BedBuddy</div>
+                    <div class="brand-name">NestNode</div>
                     <div class="brand-sub">Booking Confirmation Receipt</div>
                 </div>
             </div>
@@ -230,8 +230,8 @@ const BookingHistory = ({ isOpen, onClose }) => {
 
         <div class="footer">
             <div class="footer-left">
-                BedBuddy — Find Your Perfect Stay<br/>
-                For support: support@bedbuddy.com<br/>
+                NestNode — Find Your Perfect Stay<br/>
+                For support: support@nestnode.com<br/>
                 This is a computer-generated receipt. No signature required.
             </div>
             <div class="footer-right">

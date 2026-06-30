@@ -123,7 +123,7 @@ const UserSignupPage = () => {
                     Student Signup
                 </h2>
                 <p className="mt-2 text-center text-sm text-zinc-600 dark:text-zinc-400">
-                    Join BedBuddy to find your perfect student accommodation
+                    Join NestNode to find your perfect student accommodation
                 </p>
             </div>
 

@@ -23,8 +23,8 @@ export default defineConfig(({ mode }) => ({
             },
             includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg', 'bedbuddy-logo-blue.svg', 'bedbuddy-logo-white.svg', 'bedbuddy-favicon.svg'],
             manifest: {
-                name: 'BedBuddy - Find Your Perfect Stay',
-                short_name: 'BedBuddy',
+                name: 'NestNode - Find Your Perfect Stay',
+                short_name: 'NestNode',
                 description: 'The easiest way to find and book hostels, PGs, and co-living spaces.',
                 theme_color: '#3b82f6',
                 background_color: '#ffffff',

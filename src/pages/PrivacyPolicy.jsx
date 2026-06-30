@@ -22,7 +22,7 @@ const PrivacyPolicy = () => {
                         </motion.div>
                         <p className="text-muted-foreground text-lg max-w-2xl leading-relaxed">
                             Your privacy is paramount. This policy outlines how we collect, use,
-                            and protect your personal information at BedBuddy.
+                            and protect your personal information at NestNode.
                         </p>
                     </div>
                 </section>
@@ -92,7 +92,7 @@ const PrivacyPolicy = () => {
                                 </ul>
                                 <hr className="my-6 border-emerald-200" />
                                 <p className="text-xs text-muted-foreground leading-relaxed">
-                                    Questions? Contact our Data Privacy Officer at privacy@bedbuddy.in
+                                    Questions? Contact our Data Privacy Officer at privacy@nestnode.in
                                 </p>
                             </div>
                         </div>

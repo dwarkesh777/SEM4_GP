@@ -117,9 +117,9 @@ const generateReceiptPDF = ({ paymentId, bookingForm, selectedRoom, property, or
   <!-- Header -->
   <div class="header">
     <div class="brand">
-      <div class="brand-icon">B</div>
+      <div class="brand-icon">N</div>
       <div>
-        <div class="brand-name">BedBuddy</div>
+        <div class="brand-name">NestNode</div>
         <div class="brand-sub">Official Payment Receipt</div>
       </div>
     </div>
@@ -219,8 +219,8 @@ const generateReceiptPDF = ({ paymentId, bookingForm, selectedRoom, property, or
   <!-- Footer -->
   <div class="footer">
     <div class="footer-left">
-      BedBuddy — Find Your Perfect Stay<br/>
-      For support: support@bedbuddy.com<br/>
+      NestNode — Find Your Perfect Stay<br/>
+      For support: support@nestnode.com<br/>
       This is a computer-generated receipt. No signature required.
     </div>
     <div class="footer-right">
@@ -419,7 +419,7 @@ const HostelDetail = () => {
                 amount: orderData.amount,
                 currency: orderData.currency,
                 order_id: orderData.order_id,
-                name: "BedBuddy",
+                name: "NestNode",
                 description: `Booking: ${selectedRoom?.name || "Room"} at ${property?.name}`,
                 image: "/bedbuddy-logo-blue.svg",
                 prefill: {
@@ -1189,7 +1189,7 @@ const HostelDetail = () => {
                                             </div>
                                             <div>
                                                 <p className="text-xs font-black tracking-tight tracking-tight uppercase tracking-tighter leading-none">Safe & Secure Booking</p>
-                                                <p className="text-[10px] text-slate-400 font-bold">Payment via BedBuddy Direct</p>
+                                                <p className="text-[10px] text-slate-400 font-bold">Payment via NestNode Direct</p>
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-3 text-slate-600">

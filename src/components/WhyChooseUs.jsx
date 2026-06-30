@@ -51,7 +51,7 @@ const WhyChooseUs = () => {
                     className="text-center mb-20"
                 >
                     <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary/10 to-indigo-600/10 border border-primary/20 text-primary text-[10px] font-bold uppercase tracking-[0.2em] mb-4">
-                        The BedBuddy Advantage
+                        The NestNode Advantage
                     </div>
                     <h2 className="text-4xl md:text-5xl lg:text-6xl font-heading font-bold text-slate-900 mb-6">
                         Why Thousands of <span className="text-gradient">Students</span> Trust Us

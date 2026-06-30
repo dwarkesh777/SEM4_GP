@@ -491,7 +491,7 @@ const UserDashboard = () => {
             </main>
 
             <div className="py-10 text-center text-slate-400 text-xs font-medium uppercase tracking-[0.2em]">
-                &copy; 2024 BedBuddy • Premium Student Living
+                &copy; 2024 NestNode • Premium Student Living
             </div>
 
             {/* Booking History Modal */}

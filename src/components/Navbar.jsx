@@ -49,19 +49,19 @@ const Navbar = () => {
             animate={{ y: 0 }}
             transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
             className={`fixed top-0 left-0 right-0 z-50 transition-all duration-500 ${effectiveScrolled
-                ? "py-3 bg-white/70 backdrop-blur-xl border-b border-white/20 shadow-lg shadow-black/5"
+                ? "py-3 bg-white/80 backdrop-blur-2xl border-b border-slate-200/50 shadow-xl shadow-slate-900/5"
                 : "py-5 bg-transparent"
                 }`}
         >
             <div className="container flex items-center justify-between">
                 <Link to="/" className="flex items-center gap-2.5 group transition-transform duration-300 hover:scale-105 active:scale-95">
-                    <div className={`flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-500 ${effectiveScrolled ? "bg-primary shadow-lg shadow-primary/20" : "bg-white/20 backdrop-blur-md border border-white/30"
+                    <div className={`flex items-center justify-center w-11 h-11 rounded-2xl transition-all duration-500 ${effectiveScrolled ? "bg-gradient-to-br from-primary to-indigo-600 shadow-xl shadow-primary/30" : "bg-white/20 backdrop-blur-xl border border-white/30"
                         }`}>
                         <MapPin className="w-6 h-6 text-white" />
                     </div>
                     <span className={`text-2xl tracking-tight transition-colors duration-500 font-heading ${effectiveScrolled ? "text-slate-900" : "text-white"}`}>
                         <span className="font-medium">Bed</span>
-                        <span className="font-black text-primary">Buddy</span>
+                        <span className="font-black text-gradient">Buddy</span>
                     </span>
                 </Link>
 
@@ -79,7 +79,7 @@ const Navbar = () => {
                                     } hover:text-primary`}
                             >
                                 {link.label}
-                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full" />
+                                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-primary to-indigo-600 transition-all duration-300 group-hover:w-full rounded-full" />
                             </Link>
 
                         </motion.div>
@@ -101,7 +101,7 @@ const Navbar = () => {
                                     <ChevronDown className="w-4 h-4 transition-transform duration-300 group-data-[state=open]:rotate-180" />
                                 </button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56 p-2 rounded-2xl mt-2 shadow-2xl border-slate-100" align="start">
+                            <DropdownMenuContent className="w-56 p-2 rounded-2xl mt-2 shadow-2xl shadow-slate-900/10 border-slate-100" align="start">
                                 <DropdownMenuItem
                                     onClick={() => navigate('/add-property')}
                                     className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3"
@@ -133,7 +133,7 @@ const Navbar = () => {
                                     </div>
                                 </Button>
                             </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-64 p-3 rounded-3xl mt-2 mr-0 shadow-2xl shadow-black/10 border-slate-100" align="end">
+                            <DropdownMenuContent className="w-64 p-3 rounded-3xl mt-2 mr-0 shadow-2xl shadow-slate-900/10 border-slate-100" align="end">
                                 <DropdownMenuLabel className="font-heading p-2">
                                     <div className="flex flex-col">
                                         <div className="flex items-center gap-2">
@@ -181,9 +181,9 @@ const Navbar = () => {
                         </DropdownMenu>
                     ) : (
                         <Button
-                            className={`rounded-full px-6 font-bold shadow-lg transition-all active:scale-95 ${effectiveScrolled
-                                ? "bg-primary text-white shadow-primary/20 hover:bg-primary/90"
-                                : "bg-white text-primary shadow-white/10 hover:bg-white/90"
+                            className={`rounded-full px-6 font-bold shadow-xl transition-all active:scale-p-95 hover:shadow-2xl ${effectiveScrolled
+                                ? "bg-gradient-to-r from-primary to-indigo-600 text-white shadow-primary/30 hover:shadow-primary/40"
+                                : "bg-white text-primary shadow-white/20 hover:bg-white/90"
                                 }`}
                             onClick={() => navigate("/login")}
                         >
@@ -222,7 +222,7 @@ const Navbar = () => {
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
-                        className="md:hidden glass border-t border-slate-200/50 bg-white/95 backdrop-blur-3xl overflow-hidden"
+                        className="md:hidden glass border-t border-slate-200/50 bg-white/90 backdrop-blur-3xl overflow-hidden"
                     >
                         <div className="container py-8 flex flex-col gap-6">
                             <div className="flex flex-col gap-2">

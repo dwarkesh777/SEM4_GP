@@ -43,10 +43,10 @@ const PropertyCard = ({
                 transition={{ duration: 0.6, delay: index * 0.1, ease: [0.23, 1, 0.32, 1] }}
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
-                className="group relative bg-white rounded-[2.5rem] overflow-hidden border border-slate-200 card-elevated flex flex-col h-full transform-gpu ring-1 ring-black/5 shadow-xl shadow-slate-200/50"
+                className="group relative bg-white rounded-[2.5rem] overflow-hidden border border-slate-100 card-elevated flex flex-col h-full transform-gpu ring-1 ring-slate-900/5 shadow-xl shadow-slate-200/50"
             >
                 {/* Image Section */}
-                <div className="relative h-64 overflow-hidden m-3.5 rounded-[2rem] flex-shrink-0 z-10 transition-transform duration-500 group-hover:scale-[0.98]">
+                <div className="relative h-72 overflow-hidden m-3.5 rounded-[2rem] flex-shrink-0 z-10 transition-transform duration-500 group-hover:scale-[0.98]">
                     <AnimatePresence mode="wait">
                         <motion.img
                             key={currentImgIndex}
@@ -60,22 +60,23 @@ const PropertyCard = ({
                             loading="lazy"
                         />
                     </AnimatePresence>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
 
                     {/* High Contrast Overlays */}
                     <div className="absolute top-4 left-4 flex flex-col gap-2">
                         {distance !== undefined && distance !== null && (
-                            <Badge className="bg-[#00BFA5] hover:bg-[#00BFA5] text-white border-none font-black text-[10px] uppercase tracking-wide py-1.5 px-3 rounded-full shadow-lg flex items-center gap-1 w-fit">
+                            <Badge className="bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-600 hover:to-teal-600 text-white border-none font-black text-[10px] uppercase tracking-wide py-1.5 px-3 rounded-full shadow-lg shadow-emerald-500/30 flex items-center gap-1 w-fit">
                                 <MapPin className="w-3 h-3" />
                                 {distance} km
                             </Badge>
                         )}
-                        <Badge className="bg-[#FF0080] hover:bg-[#FF0080] text-white border-none font-black text-[10px] uppercase tracking-[0.1em] py-1.5 px-4 rounded-full shadow-lg w-fit">
+                        <Badge className="bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white border-none font-black text-[10px] uppercase tracking-[0.1em] py-1.5 px-4 rounded-full shadow-lg shadow-pink-500/30 w-fit">
                             {type}
                         </Badge>
                     </div>
 
                     <div className="absolute top-4 right-4 flex flex-col gap-2">
-                        <Badge className="bg-[#1A1A1A] hover:bg-[#1A1A1A] text-white border-none font-bold text-[10px] py-1.5 px-3.5 rounded-full shadow-lg flex items-center gap-1">
+                        <Badge className="bg-slate-900/80 backdrop-blur-sm hover:bg-slate-900 text-white border-none font-bold text-[10px] py-1.5 px-3.5 rounded-full shadow-lg flex items-center gap-1">
                             <span className="text-xs opacity-70">{gender === 'Boys' ? '♂' : '♀'}</span>
                             {gender}
                         </Badge>
@@ -100,15 +101,15 @@ const PropertyCard = ({
                     </div>
 
                     <div className="flex items-center gap-2 text-slate-500 mb-5">
-                        <div className="p-1.5 rounded-full bg-slate-100 text-primary">
+                        <div className="p-1.5 rounded-full bg-gradient-to-br from-slate-100 to-slate-50 text-primary">
                             <MapPin className="w-3.5 h-3.5" />
                         </div>
                         <span className="text-xs font-bold tracking-tight">{location}</span>
                     </div>
 
-                    <div className="flex items-center gap-4 mb-7 bg-slate-50 border border-slate-100 p-2.5 rounded-2xl w-fit">
+                    <div className="flex items-center gap-4 mb-7 bg-gradient-to-br from-slate-50 to-slate-100/50 border border-slate-200 p-2.5 rounded-2xl w-fit">
                         <div className="flex items-center gap-1.5">
-                            <Star className="w-4 h-4 fill-[#FFB800] text-[#FFB800]" />
+                            <Star className="w-4 h-4 fill-amber-400 text-amber-400" />
                             <span className="text-sm font-black text-slate-900">
                                 {typeof rating === 'number' ? rating.toFixed(1) : '4.5'}
                             </span>
@@ -124,7 +125,7 @@ const PropertyCard = ({
                         {amenities?.slice(0, 3).map((amenity) => (
                             <div
                                 key={amenity}
-                                className="group/pill flex items-center gap-2.5 px-4 py-2 rounded-xl bg-slate-50 border border-slate-200 hover:border-primary/40 hover:bg-white hover:shadow-md transition-all duration-300"
+                                className="group/pill flex items-center gap-2.5 px-4 py-2 rounded-xl bg-gradient-to-br from-slate-50 to-white border border-slate-200 hover:border-primary/40 hover:bg-white hover:shadow-lg hover:shadow-primary/10 transition-all duration-300"
                             >
                                 <span className="text-primary group-hover/pill:scale-110 transition-transform">
                                     {amenityIcons[amenity.toUpperCase()] || <Wifi className="w-3.5 h-3.5" />}
@@ -135,7 +136,7 @@ const PropertyCard = ({
                             </div>
                         ))}
                         {amenities?.length > 3 && (
-                            <span className="text-[11px] font-black text-primary/80 bg-primary/5 px-2.5 py-1.5 rounded-lg border border-primary/10 ml-1">+{amenities.length - 3}</span>
+                            <span className="text-[11px] font-black text-primary/80 bg-gradient-to-br from-primary/5 to-indigo-500/5 px-2.5 py-1.5 rounded-lg border border-primary/10 ml-1">+{amenities.length - 3}</span>
                         )}
                     </div>
 
@@ -144,7 +145,7 @@ const PropertyCard = ({
                         <div className="flex flex-col">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 leading-none">Monthly Rent</span>
                             <div className="flex items-baseline gap-2">
-                                <span className="text-3xl font-black text-[#0070E0] tracking-tighter">₹{price.toLocaleString()}</span>
+                                <span className="text-3xl font-black text-gradient tracking-tighter">₹{price.toLocaleString()}</span>
                                 <span className="text-xs font-black text-slate-400 uppercase">/mo</span>
                             </div>
                             {originalPrice && (
@@ -153,9 +154,9 @@ const PropertyCard = ({
                         </div>
 
                         <motion.button
-                            whileHover={{ scale: 1.05, boxShadow: "0 20px 25px -5px rgb(0 112 224 / 0.3)" }}
+                            whileHover={{ scale: 1.05, boxShadow: "0 20px 25px -5px rgb(102, 126, 234 / 0.4)" }}
                             whileTap={{ scale: 0.95 }}
-                            className="bg-[#0070E0] hover:bg-[#005bb5] text-white text-xs font-black uppercase tracking-[0.2em] py-4 px-8 rounded-2xl shadow-xl shadow-primary/30 transition-all duration-300 flex items-center gap-2.5 group/btn"
+                            className="bg-gradient-to-r from-primary to-indigo-600 hover:from-indigo-600 hover:to-purple-600 text-white text-xs font-black uppercase tracking-[0.2em] py-4 px-8 rounded-2xl shadow-xl shadow-primary/30 transition-all duration-300 flex items-center gap-2.5 group/btn"
                         >
                             Explore
                             <motion.span

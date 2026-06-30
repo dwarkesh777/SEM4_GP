@@ -86,8 +86,8 @@ const FilterResults = ({ onFilterChange, onClearAll }) => {
             <button
                 onClick={() => setOpenDropdown(openDropdown === id ? null : id)}
                 className={`flex items-center gap-2 px-6 py-3 rounded-2xl border transition-all duration-300 font-semibold text-sm ${isActive
-                    ? "bg-indigo-50 border-indigo-200 text-indigo-600 shadow-sm"
-                    : "bg-white border-slate-200 text-slate-600 hover:border-indigo-200 hover:bg-slate-50"
+                    ? "bg-gradient-to-r from-primary/10 to-indigo-600/10 border-primary/30 text-primary shadow-lg shadow-primary/20"
+                    : "bg-white border-slate-200 text-slate-600 hover:border-primary/30 hover:bg-gradient-to-r hover:from-slate-50 hover:to-white"
                     }`}
             >
                 <Icon className="w-4 h-4" />
@@ -100,7 +100,7 @@ const FilterResults = ({ onFilterChange, onClearAll }) => {
                         initial={{ opacity: 0, y: 10, scale: 0.95 }}
                         animate={{ opacity: 1, y: 0, scale: 1 }}
                         exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute top-full left-0 mt-2 w-64 bg-white rounded-2xl shadow-2xl border border-slate-100 p-4 z-50 overflow-hidden"
+                        className="absolute top-full left-0 mt-2 w-64 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-slate-900/10 border border-slate-200/50 p-4 z-50 overflow-hidden"
                     >
                         {children}
                     </motion.div>
@@ -111,10 +111,10 @@ const FilterResults = ({ onFilterChange, onClearAll }) => {
 
     return (
         <div className="w-full max-w-7xl mx-auto px-4 mb-12" ref={dropdownRef}>
-            <div className="bg-white rounded-[2rem] border border-slate-200 p-8 shadow-xl shadow-slate-100/50">
+            <div className="bg-white/80 backdrop-blur-xl rounded-[2rem] border border-slate-200/50 p-8 shadow-xl shadow-slate-200/30">
                 <div className="flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex items-center gap-3 self-start md:self-center">
-                        <div className="p-2 rounded-xl bg-slate-100 text-slate-600">
+                        <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/10 to-indigo-600/10 text-primary">
                             <Filter className="w-5 h-5" />
                         </div>
                         <h3 className="text-xl font-bold text-slate-900 tracking-tight">Filter Results</h3>
@@ -224,7 +224,7 @@ const FilterResults = ({ onFilterChange, onClearAll }) => {
                     <div className="ml-auto w-full md:w-auto">
                         <Button
                             onClick={handleApply}
-                            className="w-full md:w-auto h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-2xl px-10 font-bold shadow-lg shadow-indigo-200 flex items-center gap-2 group"
+                            className="w-full md:w-auto h-12 bg-gradient-to-r from-primary to-indigo-600 hover:from-indigo-600 hover:to-purple-600 text-white rounded-2xl px-10 font-bold shadow-xl shadow-primary/30 flex items-center gap-2 group transition-all hover:shadow-2xl hover:shadow-primary/40"
                         >
                             <Filter className="w-4 h-4 transition-transform group-hover:rotate-12" />
                             Apply Filters

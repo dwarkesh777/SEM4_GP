@@ -155,19 +155,7 @@ GOOGLE_MAPS_API_KEY=
 
 ---
 
-# 📱 Screenshots
 
-> Add your application screenshots here.
-
-| Home | Property |
-|------|----------|
-| Screenshot | Screenshot |
-
-| Dashboard | Booking |
-|-----------|----------|
-| Screenshot | Screenshot |
-
----
 
 # 🎯 Future Enhancements
 

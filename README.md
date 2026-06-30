@@ -6,7 +6,7 @@
   <b>Find, Compare & Book the Perfect Hostel or PG with Ease.</b>
 </p>
 
----
+---  
 
 ## 📖 Overview
 
@@ -40,7 +40,7 @@ The platform allows users to search properties, view detailed information, book 
 ## Frontend
 
 - React.js
-- TypeScript
+- JavaScript
 - Vite
 - Tailwind CSS
 - shadcn/ui

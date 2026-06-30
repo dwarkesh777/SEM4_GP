@@ -1,8 +1,6 @@
 # 🏠 NestNode – Hostel & PG Booking Platform
 
-<p align="center">
-  <img src="./bedbuddy-logo-blue.svg" alt="BedBuddy Logo" width="180"/>
-</p>
+
 
 <p align="center">
   <b>Find, Compare & Book the Perfect Hostel or PG with Ease.</b>

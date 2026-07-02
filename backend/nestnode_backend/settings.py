@@ -15,17 +15,17 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-kh0u0i5zn@(^@8#1lxb
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = [host.strip() for host in os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if host.strip()]
-ALLOWED_HOSTS += ['hastiest-lorretta-strengtheningly.ngrok-free.dev', 'localhost', '127.0.0.1', '[::1]']
+ALLOWED_HOSTS += ['hastiest-lorretta-strengtheningly.ngrok-free.dev', 'localhost', '127.0.0.1', '[::1]', '*.pythonanywhere.com']
 
-RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
-if RENDER_EXTERNAL_HOSTNAME:
-    ALLOWED_HOSTS.append(RENDER_EXTERNAL_HOSTNAME)
+PYTHONANYWHERE_HOST = os.getenv('PYTHONANYWHERE_HOST')
+if PYTHONANYWHERE_HOST:
+    ALLOWED_HOSTS.append(PYTHONANYWHERE_HOST)
 
 CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv('CSRF_TRUSTED_ORIGINS', '').split(',') if origin.strip()]
-if RENDER_EXTERNAL_HOSTNAME:
-    CSRF_TRUSTED_ORIGINS.append(f'https://{RENDER_EXTERNAL_HOSTNAME}')
+if PYTHONANYWHERE_HOST:
+    CSRF_TRUSTED_ORIGINS.append(f'https://{PYTHONANYWHERE_HOST}')
 
-if os.getenv('RENDER') == 'true':
+if os.getenv('PYTHONANYWHERE') == 'true' or os.getenv('PYTHONANYWHERE_HOST'):
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
     USE_X_FORWARDED_HOST = True
     SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'true').lower() == 'true'

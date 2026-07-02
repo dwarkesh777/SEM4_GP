@@ -24,6 +24,7 @@ const navLinks = [
 const Navbar = () => {
     const [mobileOpen, setMobileOpen] = useState(false);
     const [isScrolled, setIsScrolled] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     const navigate = useNavigate();
     const location = useLocation();
     const { user, logout } = useAuth();
@@ -45,70 +46,90 @@ const Navbar = () => {
         return () => { document.body.style.overflow = ""; };
     }, [mobileOpen]);
 
-    const linkClass = (href) => {
-        const active = isLinkActive(href);
-        return active
-            ? "bg-white text-slate-900 shadow-sm border border-slate-200"
-            : "text-slate-600 hover:text-slate-900 hover:bg-white/80";
-    };
+    useEffect(() => {
+        // Expand the navbar after a short delay on mount
+        const timer = setTimeout(() => setIsExpanded(true), 400);
+        return () => clearTimeout(timer);
+    }, []);
 
     const UserMenu = () => (
         <DropdownMenu>
             <DropdownMenuTrigger asChild>
-                <Button
-                    variant="ghost"
-                    size="sm"
-                    className="relative rounded-full border-2 border-slate-200 transition-all p-0 overflow-hidden h-10 w-10 shadow-sm"
+                <motion.button
+                    whileHover={{ scale: 1.08 }}
+                    whileTap={{ scale: 0.95 }}
+                    className="relative rounded-full border-[2.5px] border-white/80 transition-all p-0 overflow-hidden h-9 w-9 shadow-lg shadow-slate-900/20 ring-2 ring-primary/20 focus:outline-none"
                 >
-                    <div className="w-full h-full bg-primary/10 flex items-center justify-center overflow-hidden">
+                    <div className="w-full h-full bg-gradient-to-br from-primary/20 to-violet-400/20 flex items-center justify-center overflow-hidden">
                         {user?.face_photo ? (
                             <img src={user.face_photo} alt={user.full_name} className="w-full h-full object-cover" />
                         ) : (
-                            <User className="w-5 h-5 text-primary" />
+                            <User className="w-4 h-4 text-primary" />
                         )}
                     </div>
-                </Button>
+                    {/* Online dot */}
+                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white shadow-sm" />
+                </motion.button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-64 p-3 rounded-3xl mt-2 shadow-2xl shadow-slate-900/10 border-slate-100" align="end">
+            <DropdownMenuContent className="w-64 p-3 rounded-3xl mt-3 shadow-2xl shadow-slate-900/15 border border-white/60 bg-white/95 backdrop-blur-xl" align="end">
                 <DropdownMenuLabel className="font-heading p-2">
-                    <div className="flex flex-col">
-                        <div className="flex items-center gap-2">
-                            <span className="text-base font-black text-slate-900">{user.full_name}</span>
-                            {user.is_owner && (
-                                <Badge className="bg-primary/10 text-primary border-none text-[10px] py-0.5 px-2 hover:bg-primary/20">Owner</Badge>
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center border-2 border-primary/20 shrink-0">
+                            {user?.face_photo ? (
+                                <img src={user.face_photo} alt={user.full_name} className="w-full h-full object-cover" />
+                            ) : (
+                                <User className="w-5 h-5 text-primary" />
                             )}
                         </div>
-                        <span className="text-xs font-medium text-slate-500 truncate">{user.email}</span>
+                        <div className="flex flex-col min-w-0">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-sm font-black text-slate-900 truncate">{user.full_name}</span>
+                                {user.is_owner && (
+                                    <Badge className="bg-primary/10 text-primary border-none text-[9px] py-0 px-1.5 hover:bg-primary/20 shrink-0">Owner</Badge>
+                                )}
+                            </div>
+                            <span className="text-xs font-medium text-slate-400 truncate">{user.email}</span>
+                        </div>
                     </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="my-2 bg-slate-100" />
 
                 {user.is_owner ? (
                     <>
-                        <DropdownMenuItem onClick={() => navigate("/dashboard")} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
-                            <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                            <span className="font-bold text-slate-600">Owner Dashboard</span>
+                        <DropdownMenuItem onClick={() => navigate("/dashboard")} className="p-3 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                            <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                                <LayoutDashboard className="w-4 h-4 text-blue-500" />
+                            </div>
+                            <span className="font-bold text-slate-700">Owner Dashboard</span>
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => navigate("/add-property")} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
-                            <Building2 className="w-4 h-4 text-slate-400" />
-                            <span className="font-bold text-slate-600">Owner System</span>
+                        <DropdownMenuItem onClick={() => navigate("/add-property")} className="p-3 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                            <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                <Building2 className="w-4 h-4 text-primary" />
+                            </div>
+                            <span className="font-bold text-slate-700">Owner System</span>
                         </DropdownMenuItem>
                     </>
                 ) : (
-                    <DropdownMenuItem onClick={() => navigate("/dashboard")} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
-                        <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                        <span className="font-bold text-slate-600">User Dashboard</span>
+                    <DropdownMenuItem onClick={() => navigate("/dashboard")} className="p-3 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                            <LayoutDashboard className="w-4 h-4 text-blue-500" />
+                        </div>
+                        <span className="font-bold text-slate-700">User Dashboard</span>
                     </DropdownMenuItem>
                 )}
 
-                <DropdownMenuItem onClick={() => navigate("/dashboard", { state: { activeTab: "profile" } })} className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
-                    <Settings className="w-4 h-4 text-slate-400" />
-                    <span className="font-bold text-slate-600">Settings</span>
+                <DropdownMenuItem onClick={() => navigate("/dashboard", { state: { activeTab: "profile" } })} className="p-3 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                        <Settings className="w-4 h-4 text-slate-500" />
+                    </div>
+                    <span className="font-bold text-slate-700">Settings</span>
                 </DropdownMenuItem>
 
                 <DropdownMenuSeparator className="my-2 bg-slate-100" />
-                <DropdownMenuItem onClick={logout} className="p-3 rounded-xl cursor-pointer hover:bg-orange-50 transition-colors gap-3 text-orange-600 group">
-                    <LogOut className="w-4 h-4 text-orange-400 transition-colors" />
+                <DropdownMenuItem onClick={logout} className="p-3 rounded-2xl cursor-pointer hover:bg-orange-50 transition-colors gap-3 text-orange-600 group">
+                    <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+                        <LogOut className="w-4 h-4 text-orange-400" />
+                    </div>
                     <span className="font-black">Sign Out</span>
                 </DropdownMenuItem>
             </DropdownMenuContent>
@@ -117,109 +138,184 @@ const Navbar = () => {
 
     return (
         <>
-            <motion.header
-                initial={{ y: -100 }}
-                animate={{ y: 0 }}
-                transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-                className={`fixed top-0 left-0 right-0 z-50 bg-white border-b transition-shadow duration-300 ${
-                    isScrolled ? "border-slate-200 shadow-md shadow-slate-900/5" : "border-slate-100"
-                }`}
-            >
-                <nav className="container flex items-center justify-between gap-4 h-16 md:h-[4.25rem]">
+            {/* Floating Navbar */}
+            <div className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+                <motion.div
+                    initial={{ width: "52px", opacity: 0, y: -40 }}
+                    animate={{ 
+                        width: isExpanded ? "100%" : "52px",
+                        opacity: 1, 
+                        y: 0 
+                    }}
+                    transition={{
+                        width: { type: "spring", stiffness: 120, damping: 20 },
+                        opacity: { duration: 0.4 },
+                        y: { type: "spring", stiffness: 100, damping: 20 }
+                    }}
+                    className={`pointer-events-auto flex items-center px-2 py-2 rounded-full transition-colors duration-300 overflow-hidden ${
+                        isScrolled
+                            ? "bg-white/90 backdrop-blur-xl shadow-xl shadow-slate-900/12 border border-white/80"
+                            : "bg-white/80 backdrop-blur-lg shadow-lg shadow-slate-900/8 border border-white/60"
+                    }`}
+                    style={{ maxWidth: "860px", height: "52px" }}
+                >
+                    {/* Logo (always visible, dictates the 52px height/width) */}
                     <Link
                         to="/"
-                        className="flex items-center gap-3 group min-w-0"
+                        className="flex items-center shrink-0"
                         onClick={() => setMobileOpen(false)}
                     >
-                        <div className="relative flex items-center justify-center w-10 h-10 sm:w-11 sm:h-11 rounded-2xl shrink-0 bg-gradient-to-br from-primary via-indigo-600 to-violet-600 shadow-lg shadow-primary/20">
-                            <Home className="w-5 h-5 text-white" />
-                            <span className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white" />
-                        </div>
-                        <div className="min-w-0">
-                            <span className="block text-xl sm:text-2xl tracking-tight font-heading leading-none text-slate-900">
+                        <motion.div
+                            whileHover={{ scale: 1.08, rotate: 5 }}
+                            whileTap={{ scale: 0.95 }}
+                            className="relative flex items-center justify-center w-9 h-9 rounded-full bg-gradient-to-br from-primary via-indigo-600 to-violet-600 shadow-lg shadow-primary/30"
+                        >
+                            <Home className="w-4 h-4 text-white" />
+                        </motion.div>
+                    </Link>
+
+                    {/* Rest of the navbar content (fades in) */}
+                    <motion.div 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: isExpanded ? 1 : 0 }}
+                        transition={{ duration: 0.3, delay: isExpanded ? 0.2 : 0 }}
+                        className="flex items-center flex-1 min-w-[280px] md:min-w-[700px] pl-2 gap-2"
+                        style={{ pointerEvents: isExpanded ? "auto" : "none" }}
+                    >
+                        {/* Title */}
+                        <Link to="/" className="min-w-0 hidden sm:block mr-1">
+                            <span className="block text-lg tracking-tight font-heading leading-none text-slate-900">
                                 <span className="font-medium">Nest</span>
                                 <span className="font-black text-gradient">Node</span>
                             </span>
-                            <span className="hidden sm:block text-[11px] font-semibold tracking-wide mt-0.5 text-slate-500">
-                                Find your perfect stay
-                            </span>
+                        </Link>
+
+                        {/* Divider */}
+                        <div className="hidden lg:block w-px h-5 bg-slate-200 mx-1" />
+
+                        {/* Desktop Nav Links — pill group */}
+                        <div className="hidden lg:flex items-center gap-0.5 flex-1">
+                            {navLinks.map((link) => {
+                                const active = isLinkActive(link.href);
+                                return (
+                                    <Link
+                                        key={link.label}
+                                        to={link.href}
+                                        className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                                            active
+                                                ? "text-slate-900"
+                                                : "text-slate-500 hover:text-slate-800"
+                                        }`}
+                                    >
+                                        {active && (
+                                            <motion.span
+                                                layoutId="nav-pill"
+                                                className="absolute inset-0 bg-slate-100 rounded-full border border-slate-200"
+                                                transition={{ type: "spring", bounce: 0.2, duration: 0.5 }}
+                                            />
+                                        )}
+                                        <span className="relative">{link.label}</span>
+                                    </Link>
+                                );
+                            })}
+
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors">
+                                        For Owners
+                                        <ChevronDown className="w-3.5 h-3.5 opacity-60" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-56 p-2 rounded-2xl mt-3 shadow-2xl shadow-slate-900/10 border border-white/80 bg-white/95 backdrop-blur-xl" align="center">
+                                    <DropdownMenuItem
+                                        onClick={() => navigate("/add-property")}
+                                        className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3"
+                                    >
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                                            <Building2 className="w-4 h-4 text-primary" />
+                                        </div>
+                                        <span className="font-bold text-slate-700">List Your Property</span>
+                                    </DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
-                    </Link>
 
-                    <div className="hidden lg:flex items-center gap-1 p-1 rounded-full border bg-slate-100/90 border-slate-200/80">
-                        {navLinks.map((link) => (
-                            <Link
-                                key={link.label}
-                                to={link.href}
-                                className={`px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${linkClass(link.href)}`}
+                        {/* Right Actions */}
+                        <div className="hidden md:flex items-center gap-1.5 ml-auto">
+                            {/* Support circle button */}
+                            <motion.button
+                                whileHover={{ scale: 1.08 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate("/support")}
+                                className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-primary hover:bg-primary/8 transition-colors border border-slate-200/80"
+                                aria-label="Support"
                             >
-                                {link.label}
-                            </Link>
-                        ))}
+                                <Headphones className="w-4 h-4" />
+                            </motion.button>
 
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <button
-                                    className={`flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold transition-all duration-300 ${linkClass("")}`}
+                            {user ? (
+                                <UserMenu />
+                            ) : (
+                                <motion.button
+                                    whileHover={{ scale: 1.04 }}
+                                    whileTap={{ scale: 0.96 }}
+                                    onClick={() => navigate("/login")}
+                                    className="px-5 h-9 rounded-full font-bold text-sm bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/15 transition-colors"
                                 >
-                                    For Owners
-                                    <ChevronDown className="w-4 h-4 opacity-70" />
-                                </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent className="w-56 p-2 rounded-2xl mt-3 shadow-2xl shadow-slate-900/10 border-slate-100" align="center">
-                                <DropdownMenuItem
-                                    onClick={() => navigate("/add-property")}
-                                    className="p-3 rounded-xl cursor-pointer hover:bg-slate-50 transition-colors gap-3"
-                                >
-                                    <Building2 className="w-4 h-4 text-primary" />
-                                    <span className="font-bold text-slate-700">List Your Property</span>
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
+                                    Log in
+                                </motion.button>
+                            )}
+                        </div>
 
-                    <div className="hidden md:flex items-center gap-2 sm:gap-3">
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => navigate("/support")}
-                            className="rounded-full h-10 px-3 sm:px-4 font-semibold gap-2 text-slate-600 hover:text-primary hover:bg-primary/5"
-                        >
-                            <Headphones className="w-4 h-4" />
-                            <span className="hidden xl:inline">Support</span>
-                        </Button>
-
-                        {user ? (
-                            <UserMenu />
-                        ) : (
-                            <Button
-                                className="rounded-full px-5 h-10 font-bold bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/10 transition-all active:scale-95"
-                                onClick={() => navigate("/login")}
+                        {/* Mobile Right Actions */}
+                        <div className="flex md:hidden items-center gap-1.5 ml-auto">
+                            <motion.button
+                                whileHover={{ scale: 1.08 }}
+                                whileTap={{ scale: 0.95 }}
+                                onClick={() => navigate("/support")}
+                                className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors"
+                                aria-label="Support"
                             >
-                                Log in
-                            </Button>
-                        )}
-                    </div>
+                                <Headphones className="w-4 h-4" />
+                            </motion.button>
 
-                    <div className="flex md:hidden items-center gap-1">
-                        <button
-                            onClick={() => navigate("/support")}
-                            className="p-2.5 rounded-xl text-slate-600 hover:bg-slate-100 transition-colors"
-                            aria-label="Support"
-                        >
-                            <Headphones className="w-5 h-5" />
-                        </button>
-                        <button
-                            className="p-2.5 rounded-xl text-slate-800 hover:bg-slate-100 transition-colors"
-                            onClick={() => setMobileOpen(!mobileOpen)}
-                            aria-label={mobileOpen ? "Close menu" : "Open menu"}
-                        >
-                            {mobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                        </button>
-                    </div>
-                </nav>
-            </motion.header>
+                            <motion.button
+                                whileHover={{ scale: 1.08 }}
+                                whileTap={{ scale: 0.95 }}
+                                className="w-9 h-9 rounded-full flex items-center justify-center text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors"
+                                onClick={() => setMobileOpen(!mobileOpen)}
+                                aria-label={mobileOpen ? "Close menu" : "Open menu"}
+                            >
+                                <AnimatePresence mode="wait" initial={false}>
+                                    {mobileOpen ? (
+                                        <motion.span
+                                            key="close"
+                                            initial={{ rotate: -90, opacity: 0 }}
+                                            animate={{ rotate: 0, opacity: 1 }}
+                                            exit={{ rotate: 90, opacity: 0 }}
+                                            transition={{ duration: 0.15 }}
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </motion.span>
+                                    ) : (
+                                        <motion.span
+                                            key="open"
+                                            initial={{ rotate: 90, opacity: 0 }}
+                                            animate={{ rotate: 0, opacity: 1 }}
+                                            exit={{ rotate: -90, opacity: 0 }}
+                                            transition={{ duration: 0.15 }}
+                                        >
+                                            <Menu className="w-4 h-4" />
+                                        </motion.span>
+                                    )}
+                                </AnimatePresence>
+                            </motion.button>
+                        </div>
+                    </motion.div>
+                </motion.div>
+            </div>
 
+            {/* Mobile Menu */}
             <AnimatePresence>
                 {mobileOpen && (
                     <>
@@ -227,17 +323,17 @@ const Navbar = () => {
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
                             exit={{ opacity: 0 }}
-                            className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-sm md:hidden top-16"
+                            className="fixed inset-0 z-40 bg-slate-950/30 backdrop-blur-sm md:hidden"
                             onClick={() => setMobileOpen(false)}
                         />
                         <motion.div
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                            transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}
-                            className="fixed top-16 left-0 right-0 z-50 md:hidden bg-white border-b border-slate-200 shadow-lg overflow-hidden"
+                            initial={{ opacity: 0, y: -16, scale: 0.97 }}
+                            animate={{ opacity: 1, y: 0, scale: 1 }}
+                            exit={{ opacity: 0, y: -12, scale: 0.97 }}
+                            transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                            className="fixed top-20 left-4 right-4 z-50 md:hidden bg-white/95 backdrop-blur-xl border border-white/80 shadow-2xl shadow-slate-900/15 rounded-3xl overflow-hidden"
                         >
-                            <div className="container py-4 flex flex-col gap-3 max-h-[calc(100vh-4rem)] overflow-y-auto">
+                            <div className="p-4 flex flex-col gap-3 max-h-[calc(100vh-6rem)] overflow-y-auto">
                                 <div className="grid gap-1">
                                     {navLinks.map((link) => (
                                         <Link
@@ -262,10 +358,10 @@ const Navbar = () => {
                                     </p>
                                     <Button
                                         onClick={() => { navigate("/add-property"); setMobileOpen(false); }}
-                                        className="w-full h-12 rounded-xl bg-white border border-slate-200 text-slate-900 font-bold justify-start px-4 gap-3 shadow-sm hover:bg-slate-50"
+                                        className="w-full h-12 rounded-2xl bg-white border border-slate-200 text-slate-900 font-bold justify-start px-4 gap-3 shadow-sm hover:bg-slate-50"
                                         variant="ghost"
                                     >
-                                        <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
                                             <Building2 className="w-4 h-4 text-primary" />
                                         </div>
                                         List Your Property
@@ -275,64 +371,71 @@ const Navbar = () => {
                                 {user ? (
                                     <div className="flex flex-col gap-2 pt-1 border-t border-slate-100">
                                         <div className="flex items-center gap-3 px-2 py-2">
-                                            <div className="w-11 h-11 rounded-full border-2 border-slate-100 overflow-hidden bg-primary/10 flex items-center justify-center">
+                                            <div className="relative w-11 h-11 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center border-2 border-primary/20 shrink-0">
                                                 {user?.face_photo ? (
                                                     <img src={user.face_photo} alt={user.full_name} className="w-full h-full object-cover" />
                                                 ) : (
                                                     <User className="w-5 h-5 text-primary" />
                                                 )}
+                                                <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white" />
                                             </div>
                                             <div className="min-w-0">
                                                 <p className="font-bold text-slate-900 truncate">{user.full_name}</p>
                                                 <p className="text-xs text-slate-500 truncate">{user.email}</p>
                                             </div>
                                             {user.is_owner && (
-                                                <Badge className="ml-auto bg-primary/10 text-primary border-none text-[10px]">Owner</Badge>
+                                                <Badge className="ml-auto bg-primary/10 text-primary border-none text-[10px] shrink-0">Owner</Badge>
                                             )}
                                         </div>
 
-                                        <Button
-                                            onClick={() => { navigate("/dashboard"); setMobileOpen(false); }}
-                                            className="w-full h-12 rounded-xl justify-start px-4 gap-3 font-bold text-slate-700 hover:bg-slate-50"
-                                            variant="ghost"
-                                        >
-                                            <LayoutDashboard className="w-4 h-4 text-slate-400" />
-                                            {user.is_owner ? "Owner Dashboard" : "User Dashboard"}
-                                        </Button>
-
-                                        {user.is_owner && (
+                                        {[
+                                            {
+                                                label: user.is_owner ? "Owner Dashboard" : "User Dashboard",
+                                                icon: <LayoutDashboard className="w-4 h-4 text-blue-500" />,
+                                                iconBg: "bg-blue-50",
+                                                onClick: () => { navigate("/dashboard"); setMobileOpen(false); }
+                                            },
+                                            ...(user.is_owner ? [{
+                                                label: "Owner System",
+                                                icon: <Building2 className="w-4 h-4 text-primary" />,
+                                                iconBg: "bg-primary/10",
+                                                onClick: () => { navigate("/add-property"); setMobileOpen(false); }
+                                            }] : []),
+                                            {
+                                                label: "Settings",
+                                                icon: <Settings className="w-4 h-4 text-slate-500" />,
+                                                iconBg: "bg-slate-100",
+                                                onClick: () => { navigate("/dashboard", { state: { activeTab: "profile" } }); setMobileOpen(false); }
+                                            },
+                                        ].map((item) => (
                                             <Button
-                                                onClick={() => { navigate("/add-property"); setMobileOpen(false); }}
-                                                className="w-full h-12 rounded-xl justify-start px-4 gap-3 font-bold text-slate-700 hover:bg-slate-50"
+                                                key={item.label}
+                                                onClick={item.onClick}
+                                                className="w-full h-12 rounded-2xl justify-start px-4 gap-3 font-bold text-slate-700 hover:bg-slate-50"
                                                 variant="ghost"
                                             >
-                                                <Building2 className="w-4 h-4 text-slate-400" />
-                                                Owner System
+                                                <div className={`w-8 h-8 rounded-full ${item.iconBg} flex items-center justify-center shrink-0`}>
+                                                    {item.icon}
+                                                </div>
+                                                {item.label}
                                             </Button>
-                                        )}
-
-                                        <Button
-                                            onClick={() => { navigate("/dashboard", { state: { activeTab: "profile" } }); setMobileOpen(false); }}
-                                            className="w-full h-12 rounded-xl justify-start px-4 gap-3 font-bold text-slate-700 hover:bg-slate-50"
-                                            variant="ghost"
-                                        >
-                                            <Settings className="w-4 h-4 text-slate-400" />
-                                            Settings
-                                        </Button>
+                                        ))}
 
                                         <Button
                                             onClick={() => { logout(); setMobileOpen(false); }}
-                                            className="w-full h-12 rounded-xl justify-start px-4 gap-3 font-bold text-orange-600 hover:bg-orange-50"
+                                            className="w-full h-12 rounded-2xl justify-start px-4 gap-3 font-bold text-orange-600 hover:bg-orange-50"
                                             variant="ghost"
                                         >
-                                            <LogOut className="w-4 h-4" />
+                                            <div className="w-8 h-8 rounded-full bg-orange-50 flex items-center justify-center shrink-0">
+                                                <LogOut className="w-4 h-4 text-orange-400" />
+                                            </div>
                                             Sign Out
                                         </Button>
                                     </div>
                                 ) : (
                                     <Button
                                         onClick={() => { navigate("/login"); setMobileOpen(false); }}
-                                        className="w-full h-12 rounded-xl bg-slate-900 text-white font-bold shadow-lg shadow-slate-900/10 hover:bg-slate-800"
+                                        className="w-full h-12 rounded-full bg-slate-900 text-white font-bold shadow-lg shadow-slate-900/10 hover:bg-slate-800"
                                     >
                                         Log in / Sign up
                                     </Button>

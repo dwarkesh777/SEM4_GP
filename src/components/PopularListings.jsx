@@ -94,13 +94,13 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} 
     };
 
     return (
-        <section id="listings" className="relative py-24 bg-white overflow-hidden">
+        <section id="listings" className="relative py-8 bg-white overflow-hidden">
             {/* Background Decorations */}
             <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
             <div className="absolute top-40 right-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
 
             <div className="container relative z-10">
-                <div className="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-6">
+                <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
                         whileInView={{ opacity: 1, x: 0 }}

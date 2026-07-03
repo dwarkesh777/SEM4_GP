@@ -35,6 +35,13 @@ const UserDashboard = () => {
     const [activeTab, setActiveTab] = useState(location.state?.activeTab || "profile");
     const [isLoading, setIsLoading] = useState(false);
 
+    // Redirect developers to their own dashboard
+    useEffect(() => {
+        if (localStorage.getItem("userRole") === "developer") {
+            navigate("/developer/dashboard", { replace: true });
+        }
+    }, [navigate]);
+
     // Profile State
     const [profileData, setProfileData] = useState({
         full_name: user?.full_name || "",

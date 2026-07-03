@@ -42,8 +42,7 @@ const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters
     return res.json();
 };
 
-const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} }) => {
-    const [showAll, setShowAll] = useState(false);
+const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {}, showAll, setShowAll }) => {
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     
     const { data: properties, isLoading, error, refetch } = useQuery({
@@ -94,10 +93,7 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} 
     };
 
     return (
-        <section id="listings" className="relative py-8 bg-white overflow-hidden">
-            {/* Background Decorations */}
-            <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-primary/5 to-transparent pointer-events-none" />
-            <div className="absolute top-40 right-[-10%] w-[40%] h-[40%] bg-primary/5 blur-[120px] rounded-full pointer-events-none" />
+        <section id="listings" className="relative py-8 bg-transparent overflow-hidden">
 
             <div className="container relative z-10">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
@@ -164,7 +160,11 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} 
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true, margin: "-100px" }}
-                    className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8"
+                    className={`grid gap-8 ${
+                        showAll 
+                            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
+                            : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                    }`}
                 >
                     {properties?.map((property, index) => (
                         <motion.div key={property.id} variants={itemVariants}>
@@ -175,9 +175,9 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {} 
 
                 <ShowAllProperties 
                     showAll={showAll} 
-                    onShowAll={() => setShowAll(true)}
+                    onShowAll={setShowAll ? () => setShowAll(true) : undefined}
                     propertiesCount={properties?.length || 0}
-                    onBackToHome={() => setShowAll(false)}
+                    onBackToHome={setShowAll ? () => setShowAll(false) : undefined}
                 />
             </div>
             

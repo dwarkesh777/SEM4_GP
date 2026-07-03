@@ -551,7 +551,7 @@ const HostelDetail = () => {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center flex-col gap-4">
+            <div className="min-h-screen bg-transparent flex items-center justify-center flex-col gap-4">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 <p className="text-muted-foreground">Loading details...</p>
             </div>
@@ -560,7 +560,7 @@ const HostelDetail = () => {
 
     if (error || !property) {
         return (
-            <div className="min-h-screen bg-background flex items-center justify-center flex-col gap-4">
+            <div className="min-h-screen bg-transparent flex items-center justify-center flex-col gap-4">
                 <h1 className="text-2xl font-heading font-bold text-foreground">Property Not Found</h1>
                 <Link to="/">
                     <Button variant="default" className="gap-2">
@@ -619,7 +619,7 @@ const HostelDetail = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#F8FAFC]">
+        <div className="min-h-screen bg-transparent">
             <Navbar />
 
             {/* Premium Header / Progress Bar could go here */}

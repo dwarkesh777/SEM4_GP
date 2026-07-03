@@ -5,17 +5,17 @@ import { Lock, Eye, ShieldCheck, Database, FileText } from "lucide-react";
 
 const PrivacyPolicy = () => {
     return (
-        <div className="min-h-screen bg-[#FDFDFD]">
+        <div className="min-h-screen bg-transparent">
             <Navbar />
             <main>
-                <section className="bg-emerald-50/50 pt-24 pb-16 border-b border-emerald-100">
+                <section className="bg-transparent pt-24 pb-16 border-b border-slate-200">
                     <div className="container max-w-5xl">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                             className="flex items-center gap-4 mb-6"
                         >
-                            <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-emerald-200 flex items-center justify-center text-emerald-600">
+                            <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-emerald-600">
                                 <Lock className="w-6 h-6" />
                             </div>
                             <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Privacy Policy</h1>
@@ -55,7 +55,7 @@ const PrivacyPolicy = () => {
                                     </p>
                                 </section>
 
-                                <section className="mt-12 bg-emerald-50 p-8 rounded-3xl border border-emerald-100">
+                                <section className="mt-12 bg-white/40 backdrop-blur-sm p-8 rounded-3xl border border-slate-200">
                                     <h2 className="text-2xl font-bold mb-4 flex items-center gap-3">
                                         <ShieldCheck className="w-6 h-6 text-emerald-600" />
                                         3. Safety & Security
@@ -79,7 +79,7 @@ const PrivacyPolicy = () => {
                         </div>
 
                         <div className="space-y-8">
-                            <div className="sticky top-24 p-8 bg-emerald-50 rounded-[2rem] border border-emerald-200">
+                            <div className="sticky top-24 p-8 bg-white/40 backdrop-blur-sm rounded-[2rem] border border-slate-200">
                                 <h4 className="font-bold mb-4 flex items-center gap-2">
                                     <FileText className="w-5 h-5 text-emerald-600" />
                                     Privacy Summary

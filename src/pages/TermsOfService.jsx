@@ -5,10 +5,10 @@ import { Scale, FileText, CheckCircle2 } from "lucide-react";
 
 const TermsOfService = () => {
     return (
-        <div className="min-h-screen bg-[#FDFDFD]">
+        <div className="min-h-screen bg-transparent">
             <Navbar />
             <main>
-                <section className="bg-slate-50 pt-24 pb-16 border-b border-slate-200">
+                <section className="bg-transparent pt-24 pb-16 border-b border-slate-200">
                     <div className="container max-w-5xl">
                         <motion.div
                             initial={{ opacity: 0, y: 20 }}
@@ -44,7 +44,7 @@ const TermsOfService = () => {
                                 </p>
 
                                 <h2 className="text-2xl font-bold mt-12 mb-4">3. Property Listings</h2>
-                                <div className="bg-slate-50 p-8 rounded-3xl border border-slate-100 my-8">
+                                <div className="bg-white/40 backdrop-blur-sm p-8 rounded-3xl border border-slate-200 my-8">
                                     <p className="text-muted-foreground leading-relaxed mb-4">
                                         Owners must provide accurate information, pricing, and high-quality images.
                                         Any misleading listings will be removed immediately.
@@ -72,7 +72,7 @@ const TermsOfService = () => {
                         </div>
 
                         <div className="space-y-8">
-                            <div className="sticky top-24 p-8 bg-slate-50 rounded-[2rem] border border-slate-200">
+                            <div className="sticky top-24 p-8 bg-white/40 backdrop-blur-sm rounded-[2rem] border border-slate-200">
                                 <h4 className="font-bold mb-4 flex items-center gap-2">
                                     <FileText className="w-5 h-5 text-slate-500" />
                                     Sections

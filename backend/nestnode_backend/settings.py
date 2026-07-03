@@ -164,3 +164,8 @@ SILENCED_SYSTEM_CHECKS = ["mongodb.E001"]
 # Razorpay Payment Gateway
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', 'rzp_live_SKk9PuXXC5dsm6')
 RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', 'v7E2TU5WJt5Ws5a8xdzA9yTs')
+
+# Developer/public API access
+DEVELOPER_API_KEY = os.getenv('DEVELOPER_API_KEY', 'nestnode-dev-key-2026')
+DEVELOPER_READONLY_API_KEY = os.getenv('DEVELOPER_READONLY_API_KEY', 'nestnode-readonly-key-2026')
+DEVELOPER_BOOKING_API_KEY = os.getenv('DEVELOPER_BOOKING_API_KEY', 'nestnode-booking-key-2026')

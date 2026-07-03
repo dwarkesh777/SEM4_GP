@@ -19,7 +19,7 @@ const AboutUs = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-transparent">
             <Navbar />
             <main>
                 {/* Hero Section */}
@@ -93,7 +93,7 @@ const AboutUs = () => {
                 </section>
 
                 {/* Values Section */}
-                <section className="py-24 bg-secondary/30">
+                <section className="py-24 bg-transparent">
                     <div className="container">
                         <div className="text-center mb-16">
                             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-4">The NestNode Promise</h2>

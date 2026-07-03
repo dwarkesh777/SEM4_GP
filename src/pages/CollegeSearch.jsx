@@ -33,11 +33,11 @@ const CollegeSearch = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-transparent">
             <Navbar />
             <main className="pt-16">
                 <SearchByCollege onCollegeSearch={handleCollegeSearch} />
-                <div className="bg-white">
+                <div className="bg-transparent">
                     <div className="w-full px-0 py-2 lg:flex lg:gap-2 lg:items-start">
                         <div className="mb-4 lg:mb-0 lg:w-72 xl:w-80 lg:shrink-0 lg:sticky lg:top-24 lg:self-start">
                             <FilterResults
@@ -49,6 +49,7 @@ const CollegeSearch = () => {
                             <PopularListings
                                 collegeCoords={collegeCoords}
                                 filters={filters}
+                                showAll={true}
                             />
                         </div>
                     </div>

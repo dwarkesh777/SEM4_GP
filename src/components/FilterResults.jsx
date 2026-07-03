@@ -1,46 +1,211 @@
 import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Filter, ChevronDown, X, Users, Building, Sparkles, SortAsc } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
+import {
+    Filter, ChevronDown, X, Users, Building2, Sparkles,
+    ArrowUpDown, Check, SlidersHorizontal, RotateCcw
+} from "lucide-react";
 
+/* ─── Option Data ─────────────────────────────────────────────────────────── */
+const GENDER_OPTIONS = [
+    { value: "Boys", emoji: "🔵", color: "from-blue-500 to-cyan-500" },
+    { value: "Girls", emoji: "🩷", color: "from-pink-500 to-rose-500" },
+    { value: "Co-ed", emoji: "🟣", color: "from-violet-500 to-purple-500" },
+];
+
+const TYPE_OPTIONS = [
+    { value: "Hostel", emoji: "🏠" },
+    { value: "PG", emoji: "🛏️" },
+    { value: "Flat", emoji: "🏢" },
+    { value: "Dormitory", emoji: "🏨" },
+];
+
+const AMENITIES_CATEGORIES = [
+    {
+        label: "Food",
+        emoji: "🍽️",
+        options: ["Veg", "Non-veg"],
+    },
+    {
+        label: "Bathroom",
+        emoji: "🚿",
+        options: ["Common", "Attached"],
+    },
+    {
+        label: "Facilities",
+        emoji: "✨",
+        options: ["Hot Water", "Water Purifier", "Laundry", "Transport"],
+    },
+];
+
+const SORT_OPTIONS = [
+    { label: "Nearest First", value: "distance_asc", icon: "📍" },
+    { label: "Price: Low → High", value: "price_asc", icon: "💰" },
+    { label: "Price: High → Low", value: "price_desc", icon: "💎" },
+    { label: "Top Rated", value: "rating_desc", icon: "⭐" },
+];
+
+/* ─── Default Filters ─────────────────────────────────────────────────────── */
+const DEFAULT_FILTERS = {
+    gender: [],
+    type: [],
+    amenities: [],
+    ordering: "distance_asc",
+};
+
+/* ─── Pill chip for selected values shown in button ─────────────────────── */
+const ActiveBadge = ({ count }) =>
+    count > 0 ? (
+        <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-black text-white shadow-sm">
+            {count}
+        </span>
+    ) : null;
+
+/* ─── Single Checkbox Row ────────────────────────────────────────────────── */
+const CheckRow = ({ id, label, checked, onChange, emoji }) => (
+    <label
+        htmlFor={id}
+        className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 select-none
+            ${checked
+                ? "bg-indigo-50 text-indigo-700"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            }`}
+    >
+        <div
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-md border-2 transition-all duration-200
+                ${checked
+                    ? "border-indigo-600 bg-indigo-600"
+                    : "border-slate-300 bg-white"
+                }`}
+        >
+            <AnimatePresence>
+                {checked && (
+                    <motion.div
+                        key="check"
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0, opacity: 0 }}
+                        transition={{ duration: 0.15 }}
+                    >
+                        <Check className="h-3 w-3 text-white" strokeWidth={3} />
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+        <input id={id} type="checkbox" className="sr-only" checked={checked} onChange={onChange} />
+        {emoji && <span className="text-sm">{emoji}</span>}
+        <span className="text-sm font-semibold">{label}</span>
+    </label>
+);
+
+/* ─── Radio Row ──────────────────────────────────────────────────────────── */
+const RadioRow = ({ id, label, checked, onChange, icon }) => (
+    <label
+        htmlFor={id}
+        className={`flex cursor-pointer items-center gap-3 rounded-xl px-3 py-2.5 transition-all duration-200 select-none
+            ${checked
+                ? "bg-indigo-50 text-indigo-700"
+                : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+            }`}
+    >
+        <div
+            className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border-2 transition-all duration-200
+                ${checked ? "border-indigo-600" : "border-slate-300 bg-white"}`}
+        >
+            {checked && (
+                <div className="h-2.5 w-2.5 rounded-full bg-indigo-600" />
+            )}
+        </div>
+        <input id={id} type="radio" className="sr-only" checked={checked} onChange={onChange} />
+        <span className="text-sm">{icon}</span>
+        <span className="text-sm font-semibold">{label}</span>
+    </label>
+);
+
+/* ─── Dropdown Panel ─────────────────────────────────────────────────────── */
+const DropdownPanel = ({ id, label, icon: Icon, children, isActive, openDropdown, setOpenDropdown, badge }) => {
+    const isOpen = openDropdown === id;
+
+    return (
+        <div className="flex flex-col gap-0">
+            {/* Trigger Button */}
+            <button
+                type="button"
+                onClick={() => setOpenDropdown(isOpen ? null : id)}
+                className={`group flex w-full items-center gap-3 rounded-2xl border px-4 py-3 text-sm font-semibold transition-all duration-200
+                    ${isActive
+                        ? "border-indigo-200 bg-indigo-50 text-indigo-700 shadow-sm"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-indigo-200 hover:bg-indigo-50/50 hover:text-indigo-600"
+                    }
+                    ${isOpen ? "rounded-b-none border-b-0 border-indigo-300 ring-2 ring-indigo-100" : ""}
+                `}
+            >
+                <span className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-xl transition-colors duration-200
+                    ${isActive || isOpen
+                        ? "bg-indigo-600 text-white"
+                        : "bg-slate-100 text-slate-500 group-hover:bg-indigo-100 group-hover:text-indigo-600"
+                    }`}>
+                    <Icon className="h-4 w-4" />
+                </span>
+
+                <span className="flex-1 text-left">{label}</span>
+
+                {badge}
+
+                <ChevronDown
+                    className={`h-4 w-4 shrink-0 text-slate-400 transition-transform duration-300
+                        ${isOpen ? "rotate-180 text-indigo-500" : ""}
+                    `}
+                />
+            </button>
+
+            {/* Inline Accordion Panel — expands in-flow, never clipped */}
+            <AnimatePresence initial={false}>
+                {isOpen && (
+                    <motion.div
+                        key="panel"
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: "auto", opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
+                        className="overflow-hidden rounded-b-2xl border border-t-0 border-indigo-300 bg-slate-50/70 ring-2 ring-indigo-100"
+                    >
+                        <div className="p-3">{children}</div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    );
+};
+
+/* ─── Main Component ─────────────────────────────────────────────────────── */
 const FilterResults = ({ onFilterChange, onClearAll }) => {
     const [openDropdown, setOpenDropdown] = useState(null);
-    const [filters, setFilters] = useState({
-        gender: [],
-        type: [],
-        amenities: [],
-        ordering: "distance_asc"
-    });
+    const [filters, setFilters] = useState(DEFAULT_FILTERS);
+    const wrapperRef = useRef(null);
 
-    const dropdownRef = useRef(null);
-
+    /* Close on outside click */
     useEffect(() => {
-        const handleClickOutside = (event) => {
-            if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        const handleClickOutside = (e) => {
+            if (wrapperRef.current && !wrapperRef.current.contains(e.target)) {
                 setOpenDropdown(null);
             }
         };
-
         document.addEventListener("mousedown", handleClickOutside);
         return () => document.removeEventListener("mousedown", handleClickOutside);
     }, []);
 
-    const toggleFilter = (category, value) => {
+    /* Helpers */
+    const toggleMulti = (category, value) => {
         setFilters((prev) => {
-            const current = prev[category];
-            const updated = current.includes(value)
-                ? current.filter((item) => item !== value)
-                : [...current, value];
-            return { ...prev, [category]: updated };
+            const cur = prev[category];
+            return {
+                ...prev,
+                [category]: cur.includes(value) ? cur.filter((v) => v !== value) : [...cur, value],
+            };
         });
     };
 
-    const setOrdering = (value) => {
-        setFilters((prev) => ({ ...prev, ordering: value }));
-    };
+    const setOrdering = (value) => setFilters((prev) => ({ ...prev, ordering: value }));
 
     const handleApply = () => {
         onFilterChange(filters);
@@ -48,170 +213,183 @@ const FilterResults = ({ onFilterChange, onClearAll }) => {
     };
 
     const handleClear = () => {
-        const resetFilters = {
-            gender: [],
-            type: [],
-            amenities: [],
-            ordering: "distance_asc"
-        };
-        setFilters(resetFilters);
-        onClearAll();
+        setFilters(DEFAULT_FILTERS);
+        onClearAll?.();
         setOpenDropdown(null);
     };
 
-    const GENDER_OPTIONS = ["Boys", "Girls", "Co-ed"];
-    const TYPE_OPTIONS = ["Hostel", "PG", "Flat", "Dormitory"];
-    const AMENITIES_CATEGORIES = [
-        { label: "FOOD", options: ["Veg", "Non-veg"] },
-        { label: "BATHROOM", options: ["Common", "Attached"] },
-        { label: "OTHERS", options: ["Hot Water", "Water Purifier", "Laundry", "Transport"] }
-    ];
-    const SORT_OPTIONS = [
-        { label: "Distance", value: "distance_asc" },
-        { label: "Price: Low to High", value: "price_asc" },
-        { label: "Price: High to Low", value: "price_desc" },
-        { label: "Highest Rated", value: "rating_desc" }
-    ];
+    /* Active filter count */
+    const activeCount =
+        filters.gender.length +
+        filters.type.length +
+        filters.amenities.length +
+        (filters.ordering !== "distance_asc" ? 1 : 0);
 
-    const DropdownWrapper = ({ id, label, icon: Icon, children, isActive }) => (
-        <div className="relative">
-            <button
-                type="button"
-                onClick={() => setOpenDropdown(openDropdown === id ? null : id)}
-                className={`flex w-full items-center justify-between gap-2 px-4 py-3.5 rounded-2xl border transition-all duration-300 font-semibold text-sm ${isActive
-                    ? "bg-gradient-to-r from-primary/10 to-indigo-600/10 border-primary/30 text-primary shadow-md shadow-primary/15"
-                    : "bg-slate-50/80 border-slate-200 text-slate-700 hover:border-primary/30 hover:bg-white hover:text-primary"
-                }`}
-            >
-                <span className="flex items-center gap-2">
-                    <Icon className="w-4 h-4" />
-                    {label}
-                </span>
-                <ChevronDown className={`w-4 h-4 transition-transform duration-300 ${openDropdown === id ? "rotate-180" : ""}`} />
-            </button>
-
-            <AnimatePresence>
-                {openDropdown === id && (
-                    <motion.div
-                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                        className="absolute top-full left-0 mt-2 w-72 bg-white/95 backdrop-blur-xl rounded-2xl shadow-2xl shadow-slate-900/10 border border-slate-200/50 p-4 z-50 overflow-hidden"
-                    >
-                        {children}
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
-    );
+    const sortLabel = SORT_OPTIONS.find((o) => o.value === filters.ordering)?.label;
 
     return (
-        <div className="w-full lg:sticky lg:top-24 lg:self-start" ref={dropdownRef}>
-            <div className="rounded-[2rem] border border-slate-200/70 bg-white/90 p-5 shadow-[0_20px_60px_-20px_rgba(15,23,42,0.25)] backdrop-blur-xl">
-                <div className="flex flex-col gap-4">
-                    <div className="flex items-center justify-between gap-3 border-b border-slate-100 pb-4">
-                        <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-indigo-600/15 text-primary shadow-sm">
-                                <Filter className="w-5 h-5" />
-                            </div>
-                            <div>
-                                <h3 className="text-lg font-bold text-slate-900 tracking-tight">Filter Results</h3>
-                                <p className="text-xs font-medium text-slate-500">Narrow down your perfect stay</p>
-                            </div>
-                        </div>
+        <div className="w-full lg:sticky lg:top-24 lg:self-start" ref={wrapperRef}>
+            {/* Card */}
+            <div className="rounded-3xl border border-slate-200/60 bg-white shadow-2xl shadow-slate-900/[0.08]">
 
-                        <button
+                {/* ── Header ── */}
+                <div className="flex items-center justify-between gap-3 border-b border-slate-100 px-5 py-4">
+                    <div className="flex items-center gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 shadow-md shadow-indigo-500/30">
+                            <SlidersHorizontal className="h-5 w-5 text-white" />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-black tracking-tight text-slate-900">
+                                Filter Results
+                            </h3>
+                            <p className="text-xs font-medium text-slate-400">
+                                {activeCount > 0
+                                    ? `${activeCount} filter${activeCount > 1 ? "s" : ""} applied`
+                                    : "Narrow down your perfect stay"}
+                            </p>
+                        </div>
+                    </div>
+
+                    {activeCount > 0 && (
+                        <motion.button
+                            initial={{ opacity: 0, scale: 0.8 }}
+                            animate={{ opacity: 1, scale: 1 }}
                             type="button"
                             onClick={handleClear}
-                            className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-sm font-semibold text-slate-500 transition-all hover:bg-red-50 hover:text-red-500"
+                            className="flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold text-slate-500 transition-all hover:bg-red-50 hover:text-red-500 active:scale-95"
                         >
-                            <X className="w-4 h-4" />
-                            Clear
-                        </button>
-                    </div>
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            Reset
+                        </motion.button>
+                    )}
+                </div>
 
-                    <div className="flex flex-col gap-3">
-                        <DropdownWrapper id="gender" label="Gender" icon={Users} isActive={filters.gender.length > 0}>
-                            <div className="flex flex-col gap-3">
-                                {GENDER_OPTIONS.map((opt) => (
-                                    <div key={opt} className="flex items-center space-x-3 group cursor-pointer" onClick={() => toggleFilter("gender", opt)}>
-                                        <Checkbox
-                                            id={`gender-${opt}`}
-                                            checked={filters.gender.includes(opt)}
-                                            className="rounded-md border-slate-300 data-[state=checked]:bg-indigo-600"
-                                        />
-                                        <Label className="text-sm font-semibold text-slate-700 cursor-pointer group-hover:text-indigo-600 transition-colors">
-                                            {opt}
-                                        </Label>
-                                    </div>
-                                ))}
-                            </div>
-                        </DropdownWrapper>
+                {/* ── Filters ── */}
+                <div className="flex flex-col gap-2 p-4">
 
-                        <DropdownWrapper id="type" label="Accommodation Type" icon={Building} isActive={filters.type.length > 0}>
-                            <div className="flex flex-col gap-3">
-                                {TYPE_OPTIONS.map((opt) => (
-                                    <div key={opt} className="flex items-center space-x-3 group cursor-pointer" onClick={() => toggleFilter("type", opt)}>
-                                        <Checkbox
-                                            id={`type-${opt}`}
-                                            checked={filters.type.includes(opt)}
-                                            className="rounded-md border-slate-300 data-[state=checked]:bg-indigo-600"
-                                        />
-                                        <Label className="text-sm font-semibold text-slate-700 cursor-pointer group-hover:text-indigo-600 transition-colors">
-                                            {opt}
-                                        </Label>
-                                    </div>
-                                ))}
-                            </div>
-                        </DropdownWrapper>
-
-                        <DropdownWrapper id="amenities" label="Amenities" icon={Sparkles} isActive={filters.amenities.length > 0}>
-                            <div className="flex flex-col gap-6 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-                                {AMENITIES_CATEGORIES.map((cat) => (
-                                    <div key={cat.label} className="flex flex-col gap-3">
-                                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{cat.label}</p>
-                                        <div className="flex flex-col gap-3">
-                                            {cat.options.map((opt) => (
-                                                <div key={opt} className="flex items-center space-x-3 group cursor-pointer" onClick={() => toggleFilter("amenities", opt)}>
-                                                    <Checkbox
-                                                        id={`amenity-${opt}`}
-                                                        checked={filters.amenities.includes(opt)}
-                                                        className="rounded-md border-slate-300 data-[state=checked]:bg-indigo-600"
-                                                    />
-                                                    <Label className="text-sm font-semibold text-slate-700 cursor-pointer group-hover:text-indigo-600 transition-colors">
-                                                        {opt}
-                                                    </Label>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </DropdownWrapper>
-
-                        <DropdownWrapper id="sort" label="Sort" icon={SortAsc} isActive={filters.ordering !== "distance_asc"}>
-                            <RadioGroup value={filters.ordering} onValueChange={setOrdering} className="flex flex-col gap-3">
-                                {SORT_OPTIONS.map((opt) => (
-                                    <div key={opt.value} className="flex items-center space-x-3 group cursor-pointer">
-                                        <RadioGroupItem value={opt.value} id={`sort-${opt.value}`} className="border-slate-300 text-indigo-600" />
-                                        <Label htmlFor={`sort-${opt.value}`} className="text-sm font-semibold text-slate-700 cursor-pointer group-hover:text-indigo-600 transition-colors">
-                                            {opt.label}
-                                        </Label>
-                                    </div>
-                                ))}
-                            </RadioGroup>
-                        </DropdownWrapper>
-
-                        <div className="w-full">
-                            <Button
-                                onClick={handleApply}
-                                className="w-full h-12 bg-gradient-to-r from-primary to-indigo-600 hover:from-indigo-600 hover:to-purple-600 text-white rounded-2xl px-10 font-bold shadow-lg shadow-primary/25 flex items-center justify-center gap-2 group transition-all hover:shadow-xl hover:shadow-primary/35"
-                            >
-                                <Filter className="w-4 h-4 transition-transform group-hover:rotate-12" />
-                                Apply Filters
-                            </Button>
+                    {/* Gender */}
+                    <DropdownPanel
+                        id="gender"
+                        label="Gender"
+                        icon={Users}
+                        isActive={filters.gender.length > 0}
+                        openDropdown={openDropdown}
+                        setOpenDropdown={setOpenDropdown}
+                        badge={<ActiveBadge count={filters.gender.length} />}
+                    >
+                        <div className="flex flex-col gap-0.5">
+                            {GENDER_OPTIONS.map((opt) => (
+                                <CheckRow
+                                    key={opt.value}
+                                    id={`gender-${opt.value}`}
+                                    label={opt.value}
+                                    emoji={opt.emoji}
+                                    checked={filters.gender.includes(opt.value)}
+                                    onChange={() => toggleMulti("gender", opt.value)}
+                                />
+                            ))}
                         </div>
-                    </div>
+                    </DropdownPanel>
+
+                    {/* Accommodation Type */}
+                    <DropdownPanel
+                        id="type"
+                        label="Accommodation Type"
+                        icon={Building2}
+                        isActive={filters.type.length > 0}
+                        openDropdown={openDropdown}
+                        setOpenDropdown={setOpenDropdown}
+                        badge={<ActiveBadge count={filters.type.length} />}
+                    >
+                        <div className="flex flex-col gap-0.5">
+                            {TYPE_OPTIONS.map((opt) => (
+                                <CheckRow
+                                    key={opt.value}
+                                    id={`type-${opt.value}`}
+                                    label={opt.value}
+                                    emoji={opt.emoji}
+                                    checked={filters.type.includes(opt.value)}
+                                    onChange={() => toggleMulti("type", opt.value)}
+                                />
+                            ))}
+                        </div>
+                    </DropdownPanel>
+
+                    {/* Amenities */}
+                    <DropdownPanel
+                        id="amenities"
+                        label="Amenities"
+                        icon={Sparkles}
+                        isActive={filters.amenities.length > 0}
+                        openDropdown={openDropdown}
+                        setOpenDropdown={setOpenDropdown}
+                        badge={<ActiveBadge count={filters.amenities.length} />}
+                    >
+                        <div className="flex max-h-64 flex-col gap-3 overflow-y-auto pr-1">
+                            {AMENITIES_CATEGORIES.map((cat) => (
+                                <div key={cat.label}>
+                                    <div className="mb-1.5 flex items-center gap-1.5 px-3">
+                                        <span className="text-xs">{cat.emoji}</span>
+                                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+                                            {cat.label}
+                                        </span>
+                                    </div>
+                                    <div className="flex flex-col gap-0.5">
+                                        {cat.options.map((opt) => (
+                                            <CheckRow
+                                                key={opt}
+                                                id={`amenity-${opt}`}
+                                                label={opt}
+                                                checked={filters.amenities.includes(opt)}
+                                                onChange={() => toggleMulti("amenities", opt)}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </DropdownPanel>
+
+                    {/* Sort */}
+                    <DropdownPanel
+                        id="sort"
+                        label={filters.ordering !== "distance_asc" ? sortLabel : "Sort By"}
+                        icon={ArrowUpDown}
+                        isActive={filters.ordering !== "distance_asc"}
+                        openDropdown={openDropdown}
+                        setOpenDropdown={setOpenDropdown}
+                    >
+                        <div className="flex flex-col gap-0.5">
+                            {SORT_OPTIONS.map((opt) => (
+                                <RadioRow
+                                    key={opt.value}
+                                    id={`sort-${opt.value}`}
+                                    label={opt.label}
+                                    icon={opt.icon}
+                                    checked={filters.ordering === opt.value}
+                                    onChange={() => setOrdering(opt.value)}
+                                />
+                            ))}
+                        </div>
+                    </DropdownPanel>
+                </div>
+
+                {/* ── Apply Button ── */}
+                <div className="border-t border-slate-100 px-4 pb-4 pt-3">
+                    <motion.button
+                        whileTap={{ scale: 0.98 }}
+                        type="button"
+                        onClick={handleApply}
+                        className="flex w-full items-center justify-center gap-2.5 rounded-2xl bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-3.5 text-sm font-black text-white shadow-lg shadow-indigo-500/30 transition-all hover:from-indigo-500 hover:to-purple-500 hover:shadow-xl hover:shadow-indigo-500/40 active:scale-[0.99]"
+                    >
+                        <Filter className="h-4 w-4" />
+                        Apply Filters
+                        {activeCount > 0 && (
+                            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-white/25 text-[10px] font-black">
+                                {activeCount}
+                            </span>
+                        )}
+                    </motion.button>
                 </div>
             </div>
         </div>

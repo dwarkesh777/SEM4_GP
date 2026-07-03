@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-    Menu, X, User, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, Home, LogOut, Headphones
+    Menu, X, User, Settings, LayoutDashboard, Building2, ChevronDown, ChevronRight, Home, LogOut, Headphones, Code2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,6 +19,7 @@ import {
 const navLinks = [
     { label: "Hostels & PGs", href: "/#listings" },
     { label: "Search by College", href: "/college-search" },
+    { label: "Developer", href: "/developer/login" },
 ];
 
 const Navbar = () => {

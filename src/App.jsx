@@ -25,6 +25,10 @@ import NotFound from "./pages/NotFound";
 import AddProperty from "./pages/AddProperty";
 import EditProperty from "./pages/EditProperty";
 import CollegeSearch from "./pages/CollegeSearch";
+import DeveloperPage from "./pages/DeveloperPage";
+import DeveloperLogin from "./pages/DeveloperLogin";
+import DeveloperSignup from "./pages/DeveloperSignup";
+import DeveloperDashboard from "./pages/DeveloperDashboard";
 import UserSignupPage from "./pages/UserSignupPage";
 import OwnerSignupPage from "./pages/OwnerSignupPage";
 
@@ -41,6 +45,10 @@ const App = () => (
                         <Route path="/" element={<Index />} />
                         <Route path="/hostel/:id" element={<HostelDetail />} />
                         <Route path="/college-search" element={<CollegeSearch />} />
+                        <Route path="/developer" element={<DeveloperPage />} />
+                        <Route path="/developer/login" element={<DeveloperLogin />} />
+                        <Route path="/developer/signup" element={<DeveloperSignup />} />
+                        <Route path="/developer/dashboard" element={<DeveloperDashboard />} />
 
                         {/* Auth Routes */}
                         <Route path="/login" element={<Login />} />

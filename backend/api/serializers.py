@@ -185,7 +185,6 @@ class BookingSerializer(serializers.ModelSerializer):
     property_image = serializers.SerializerMethodField()
     property_location = serializers.CharField(source='property.location', read_only=True)
     property_city = serializers.CharField(source='property.city', read_only=True)
-    customer_email = serializers.EmailField(read_only=True)
 
     class Meta:
         model = Booking
@@ -196,7 +195,7 @@ class BookingSerializer(serializers.ModelSerializer):
             'customer_name', 'customer_phone', 'customer_email', 'customer_age',
             'property_location', 'property_city'
         ]
-        read_only_fields = ['status', 'created_at']
+        read_only_fields = ['id', 'property_name', 'room_name', 'property_image', 'property_location', 'property_city', 'created_at']
 
     def get_property_image(self, obj):
         if obj.property.main_image:

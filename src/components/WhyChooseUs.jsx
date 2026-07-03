@@ -37,10 +37,7 @@ const features = [
 
 const WhyChooseUs = () => {
     return (
-        <section className="relative py-32 bg-gradient-to-br from-slate-50 via-white to-indigo-50/30 overflow-hidden">
-            {/* Background Decorations */}
-            <div className="absolute top-0 right-0 w-[50%] h-[50%] bg-gradient-to-br from-primary/20 to-indigo-600/20 blur-[150px] rounded-full -translate-y-1/2 translate-x-1/2" />
-            <div className="absolute bottom-0 left-0 w-[40%] h-[40%] bg-gradient-to-br from-purple-500/15 to-pink-500/10 blur-[120px] rounded-full translate-y-1/3 -translate-x-1/4" />
+        <section className="relative py-32 bg-transparent overflow-hidden">
 
             <div className="container relative z-10">
                 <motion.div

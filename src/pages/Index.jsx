@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
 import FilterResults from "@/components/FilterResults";
@@ -9,6 +10,7 @@ import Footer from "@/components/Footer";
 const Index = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [filters, setFilters] = useState({});
+    const [showAll, setShowAll] = useState(false);
 
     const handleSearch = (query) => {
         setSearchQuery(query);
@@ -28,22 +30,32 @@ const Index = () => {
     };
 
     return (
-        <div className="min-h-screen bg-background">
+        <div className="min-h-screen bg-transparent">
             <Navbar />
             <main>
                 <HeroSection onSearch={handleSearch} />
-                <div className="w-full px-0 py-2 lg:flex lg:gap-2 lg:items-start">
-                    <div className="mb-4 lg:mb-0 lg:w-72 xl:w-80 lg:shrink-0 lg:sticky lg:top-24 lg:self-start">
-                        <FilterResults
-                            onFilterChange={handleFilterChange}
-                            onClearAll={handleClearAll}
-                        />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                        <PopularListings
-                            searchQuery={searchQuery}
-                            filters={filters}
-                        />
+                <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
+                    <div className="lg:flex lg:gap-8 lg:items-start">
+                        {showAll && (
+                            <motion.div 
+                                initial={{ opacity: 0, x: -20 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className="mb-8 lg:mb-0 lg:w-72 xl:w-80 lg:shrink-0 lg:sticky lg:top-24 lg:self-start"
+                            >
+                                <FilterResults
+                                    onFilterChange={handleFilterChange}
+                                    onClearAll={handleClearAll}
+                                />
+                            </motion.div>
+                        )}
+                        <div className="flex-1 min-w-0">
+                            <PopularListings
+                                searchQuery={searchQuery}
+                                filters={filters}
+                                showAll={showAll}
+                                setShowAll={setShowAll}
+                            />
+                        </div>
                     </div>
                 </div>
                 <WhyChooseUs />
@@ -52,6 +64,5 @@ const Index = () => {
         </div>
     );
 };
-
 
 export default Index;

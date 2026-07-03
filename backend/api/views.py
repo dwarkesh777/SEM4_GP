@@ -15,7 +15,7 @@ import random
 from django.utils import timezone
 from datetime import timedelta, datetime
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework.decorators import api_view, permission_classes, authentication_classes
+from rest_framework.decorators import api_view, permission_classes, authentication_classes, action
 
 try:
     from sklearn.neighbors import NearestNeighbors
@@ -23,6 +23,186 @@ except Exception:  # pragma: no cover - fallback when sklearn is unavailable
     NearestNeighbors = None
 
 logger = logging.getLogger(__name__)
+
+
+def validate_external_api_key(request, mode='read'):
+    provided_key = (
+        request.headers.get('X-API-Key')
+        or request.headers.get('HTTP_X_API_KEY')
+        or request.query_params.get('api_key')
+        or request.query_params.get('appid')
+    )
+
+    if not provided_key:
+        return False
+
+    if mode == 'booking':
+        booking_key = getattr(settings, 'DEVELOPER_BOOKING_API_KEY', None)
+        legacy_key = getattr(settings, 'DEVELOPER_API_KEY', None)
+        return provided_key in {booking_key, legacy_key} if None not in {booking_key, legacy_key} else provided_key == (booking_key or legacy_key)
+
+    readonly_key = getattr(settings, 'DEVELOPER_READONLY_API_KEY', None)
+    legacy_key = getattr(settings, 'DEVELOPER_API_KEY', None)
+    return provided_key in {readonly_key, legacy_key} if None not in {readonly_key, legacy_key} else provided_key == (readonly_key or legacy_key)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def public_properties(request):
+    """Public endpoint for external websites to fetch hostel and PG listings."""
+    if not validate_external_api_key(request, mode='read'):
+        return Response({'detail': 'Missing or invalid API key.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    queryset = Property.objects.filter(is_verified=True)
+
+    search_query = request.query_params.get('search')
+    if search_query:
+        queryset = queryset.filter(
+            Q(name__icontains=search_query) |
+            Q(city__icontains=search_query) |
+            Q(location__icontains=search_query)
+        )
+
+    city = request.query_params.get('city')
+    if city:
+        queryset = queryset.filter(city__icontains=city)
+
+    property_type = request.query_params.get('type')
+    if property_type:
+        queryset = queryset.filter(type__icontains=property_type)
+
+    gender = request.query_params.get('gender')
+    if gender:
+        queryset = queryset.filter(gender__icontains=gender)
+
+    min_price = request.query_params.get('min_price')
+    if min_price:
+        queryset = queryset.filter(price__gte=int(min_price))
+
+    max_price = request.query_params.get('max_price')
+    if max_price:
+        queryset = queryset.filter(price__lte=int(max_price))
+
+    limit = request.query_params.get('limit')
+    if limit:
+        try:
+            queryset = queryset[:int(limit)]
+        except (ValueError, TypeError):
+            pass
+
+    serializer = PropertySerializer(queryset, many=True, context={'request': request})
+    return Response({'count': queryset.count(), 'results': serializer.data})
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def create_external_booking(request):
+    """Public endpoint for external websites to push booking details into this database."""
+    if not validate_external_api_key(request, mode='booking'):
+        return Response({'detail': 'Missing or invalid API key.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    if not hasattr(request, 'data'):
+        return Response({'detail': 'Request body is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    property_id = request.data.get('property_id')
+    room_id = request.data.get('room_id')
+
+    if not property_id or not room_id:
+        return Response({'detail': 'property_id and room_id are required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    try:
+        property_obj = Property.objects.get(id=property_id)
+        room_obj = Room.objects.get(id=room_id, property=property_obj)
+    except (Property.DoesNotExist, Room.DoesNotExist):
+        return Response({'detail': 'Property or room not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    booking = Booking.objects.create(
+        property=property_obj,
+        room=room_obj,
+        user=None,
+        payment_id=request.data.get('payment_id') or None,
+        razorpay_order_id=request.data.get('razorpay_order_id') or None,
+        amount=request.data.get('amount') or None,
+        customer_name=request.data.get('customer_name') or None,
+        customer_phone=request.data.get('customer_phone') or None,
+        customer_email=request.data.get('customer_email') or None,
+        customer_age=request.data.get('customer_age') or None,
+        status=request.data.get('status', 'Confirmed')
+    )
+
+    room_obj.available = False
+    room_obj.save(update_fields=['available'])
+
+    return Response({
+        'success': True,
+        'booking_id': str(booking.id),
+        'status': booking.status,
+        'property_name': property_obj.name,
+        'room_name': room_obj.name,
+        'customer_name': booking.customer_name,
+        'customer_phone': booking.customer_phone,
+        'customer_email': booking.customer_email,
+        'customer_age': booking.customer_age,
+        'amount': booking.amount,
+        'payment_id': booking.payment_id,
+        'razorpay_order_id': booking.razorpay_order_id,
+    }, status=status.HTTP_201_CREATED)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def developer_api_info(request):
+    """Return the developer API key and usage examples for authenticated users."""
+    return Response({
+        'read_only_api_key': getattr(settings, 'DEVELOPER_READONLY_API_KEY', None) or getattr(settings, 'DEVELOPER_API_KEY', None),
+        'booking_api_key': getattr(settings, 'DEVELOPER_BOOKING_API_KEY', None) or getattr(settings, 'DEVELOPER_API_KEY', None),
+        'header_name': 'X-API-Key',
+        'endpoints': {
+            'list_properties': '/api/public/properties/list/',
+            'hostel_detail': '/api/public/properties/detail/<id>/',
+            'create_booking': '/api/public/bookings/create/',
+            'booking_detail': '/api/public/bookings/detail/<id>/',
+        },
+        'example_headers': {
+            'X-API-Key': getattr(settings, 'DEVELOPER_READONLY_API_KEY', None) or getattr(settings, 'DEVELOPER_API_KEY', None),
+        },
+        'example_curl': (
+            f"curl -X GET '{request.build_absolute_uri('/api/public/properties/')}' "
+            f"-H 'X-API-Key: {getattr(settings, 'DEVELOPER_READONLY_API_KEY', None) or getattr(settings, 'DEVELOPER_API_KEY', None)}'"
+        ),
+    })
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def public_property_detail(request, property_id):
+    """Public endpoint for external websites to fetch one hostel/PG listing."""
+    if not validate_external_api_key(request, mode='read'):
+        return Response({'detail': 'Missing or invalid API key.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        property_obj = Property.objects.get(id=property_id, is_verified=True)
+    except Property.DoesNotExist:
+        return Response({'detail': 'Property not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = PropertySerializer(property_obj, context={'request': request})
+    return Response(serializer.data)
+
+
+@api_view(['GET'])
+@permission_classes([permissions.AllowAny])
+def public_booking_detail(request, booking_id):
+    """Public endpoint for external websites to fetch one booking record."""
+    if not validate_external_api_key(request, mode='booking'):
+        return Response({'detail': 'Missing or invalid API key.'}, status=status.HTTP_401_UNAUTHORIZED)
+
+    try:
+        booking = Booking.objects.get(id=booking_id)
+    except Booking.DoesNotExist:
+        return Response({'detail': 'Booking not found.'}, status=status.HTTP_404_NOT_FOUND)
+
+    serializer = BookingSerializer(booking, context={'request': request})
+    return Response(serializer.data)
 
 
 class PropertyViewSet(viewsets.ModelViewSet):
@@ -665,6 +845,24 @@ class WishlistViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)
+
+    @action(detail=False, methods=['post'], url_path='toggle')
+    def toggle(self, request):
+        property_id = request.data.get('property_id')
+        if not property_id:
+            return Response({"error": "Property ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+        
+        try:
+            property_obj = Property.objects.get(id=property_id)
+        except Property.DoesNotExist:
+            return Response({"error": "Property not found"}, status=status.HTTP_404_NOT_FOUND)
+            
+        wishlist_item, created = Wishlist.objects.get_or_create(user=request.user, property=property_obj)
+        if not created:
+            wishlist_item.delete()
+            return Response({"wishlisted": False, "message": "Removed from wishlist"}, status=status.HTTP_200_OK)
+        
+        return Response({"wishlisted": True, "message": "Added to wishlist"}, status=status.HTTP_201_CREATED)
 
 
 # ─── OTP AUTHENTICATION VIEWS ───────────────────────────────────────────────

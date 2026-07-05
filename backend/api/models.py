@@ -98,10 +98,17 @@ class Room(models.Model):
     property = models.ForeignKey(Property, related_name='rooms', on_delete=models.CASCADE)
     name = models.CharField(max_length=100)
     beds = models.IntegerField(default=1)
+    total_beds = models.IntegerField(default=20)
     occupancy = models.CharField(max_length=100)
     price = models.IntegerField()
     is_ac = models.CharField(max_length=20, default='Non-AC')
     available = models.BooleanField(default=True)
+
+    def get_booked_beds(self):
+        return self.bookings.filter(status='Confirmed').count()
+
+    def get_available_beds(self):
+        return max(0, self.total_beds - self.get_booked_beds())
 
 class Review(models.Model):
     property = models.ForeignKey(Property, related_name='reviews_list', on_delete=models.CASCADE)

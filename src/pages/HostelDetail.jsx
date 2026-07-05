@@ -353,6 +353,14 @@ const HostelDetail = () => {
     };
 
     const openBookingModal = (room) => {
+        if (room.total_beds !== undefined && room.available_beds === 0) {
+            toast({
+                title: "Booking Unavailable",
+                description: "Room is full, not available.",
+                variant: "destructive"
+            });
+            return;
+        }
         setSelectedRoom(room);
         setBookingModal(true);
         setBookingStep("form");
@@ -839,13 +847,23 @@ const HostelDetail = () => {
                                                         <div className="flex items-center gap-3 mt-1">
                                                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
                                                                 <BedDouble className="w-3.5 h-3.5" />
-                                                                {room.beds} Beds
+                                                                {room.beds} Beds/Room
                                                             </div>
                                                             <div className="w-1 h-1 rounded-full bg-slate-200" />
                                                             <div className="flex items-center gap-1.5 text-xs font-bold text-slate-400">
                                                                 <LayoutDashboard className="w-3.5 h-3.5" />
                                                                 {room.occupancy}
                                                             </div>
+                                                            {(room.total_beds ?? 0) > 0 && (
+                                                                <>
+                                                                    <div className="w-1 h-1 rounded-full bg-slate-200" />
+                                                                    <div className="flex items-center gap-1 text-xs font-bold text-emerald-600">
+                                                                        <span>{room.available_beds ?? room.total_beds ?? 0} avail</span>
+                                                                        <span className="text-slate-300">/</span>
+                                                                        <span className="text-slate-400">{room.total_beds ?? 0} total beds</span>
+                                                                    </div>
+                                                                </>
+                                                            )}
                                                         </div>
                                                     </div>
                                                 </div>
@@ -860,7 +878,7 @@ const HostelDetail = () => {
                                                     </div>
 
                                                     <div className="flex flex-col sm:flex-row items-center gap-3 min-w-[120px]">
-                                                        {room.available ? (
+                                                        {room.available && room.available_beds !== 0 ? (
                                                             <>
                                                                 <div className="w-full sm:w-auto px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 font-black text-[10px] uppercase tracking-tighter flex items-center justify-center gap-2 border border-emerald-100 whitespace-nowrap">
                                                                     <Check className="w-3.5 h-3.5" /> Live Now
@@ -873,9 +891,17 @@ const HostelDetail = () => {
                                                                 </Button>
                                                             </>
                                                         ) : (
-                                                            <div className="w-full px-4 py-2 rounded-full bg-red-50 text-red-600 font-black text-[10px] uppercase tracking-tighter flex items-center justify-center gap-2 border border-red-100 whitespace-nowrap">
-                                                                <XIcon className="w-3.5 h-3.5" /> Sold Out
-                                                            </div>
+                                                            <>
+                                                                <div className="w-full px-4 py-2 rounded-full bg-red-50 text-red-600 font-black text-[10px] uppercase tracking-tighter flex items-center justify-center gap-2 border border-red-100 whitespace-nowrap">
+                                                                    <XIcon className="w-3.5 h-3.5" /> Sold Out
+                                                                </div>
+                                                                <Button
+                                                                    onClick={() => openBookingModal(room)}
+                                                                    className="w-full sm:w-auto h-10 px-6 rounded-xl bg-slate-200 text-slate-400 font-bold text-xs transition-all active:scale-95 shadow-lg shadow-slate-100"
+                                                                >
+                                                                    Book Now
+                                                                </Button>
+                                                            </>
                                                         )}
                                                     </div>
                                                 </div>

@@ -23,9 +23,18 @@ class PropertyImageSerializer(serializers.ModelSerializer):
 
 class RoomSerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
+    booked_beds = serializers.SerializerMethodField()
+    available_beds = serializers.SerializerMethodField()
+
+    def get_booked_beds(self, obj):
+        return obj.get_booked_beds()
+
+    def get_available_beds(self, obj):
+        return obj.get_available_beds()
+
     class Meta:
         model = Room
-        fields = ['id', 'name', 'beds', 'occupancy', 'price', 'is_ac', 'available']
+        fields = ['id', 'name', 'beds', 'total_beds', 'booked_beds', 'available_beds', 'occupancy', 'price', 'is_ac', 'available']
 
 
 class ReviewSerializer(serializers.ModelSerializer):
@@ -63,6 +72,11 @@ class EmptyStringIntField(serializers.IntegerField):
             if self.allow_null:
                 return None
             self.fail('null')
+        try:
+            # Safely convert float strings (like "5000.0" or "5000.00") to integer
+            return int(float(data))
+        except (ValueError, TypeError):
+            pass
         return super().to_internal_value(data)
 
 
@@ -167,7 +181,7 @@ class PropertySerializer(serializers.ModelSerializer):
                 try:
                     room_fields = {
                         k: v for k, v in room_data.items()
-                        if k in ['name', 'beds', 'occupancy', 'price', 'is_ac', 'available']
+                        if k in ['name', 'beds', 'total_beds', 'occupancy', 'price', 'is_ac', 'available']
                     }
                     Room.objects.create(property=property_obj, **room_fields)
                 except Exception as e:

@@ -80,7 +80,7 @@ const EditProperty = () => {
         description: "",
         amenities: [],
         appliances: [],
-        rooms: [{ name: "Standard Room", beds: 1, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
+        rooms: [{ name: "Standard Room", beds: 1, total_beds: 20, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
     });
 
     const [mainImage, setMainImage] = useState(null);
@@ -125,7 +125,7 @@ const EditProperty = () => {
                 description: data.description || "",
                 amenities: data.amenities || [],
                 appliances: data.appliances || [],
-                rooms: data.rooms || [{ name: "Standard Room", beds: 1, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
+                rooms: data.rooms || [{ name: "Standard Room", beds: 1, total_beds: 20, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
             });
             
             setMainImagePreview(data.main_image || null);
@@ -191,7 +191,7 @@ const EditProperty = () => {
     const addRoom = () => {
         setFormData(prev => ({
             ...prev,
-            rooms: [...prev.rooms, { name: "", beds: 1, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
+            rooms: [...prev.rooms, { name: "", beds: 1, total_beds: 20, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
         }));
     };
 
@@ -218,6 +218,38 @@ const EditProperty = () => {
     };
 
     const handleSubmit = async () => {
+        // Validate required fields
+        if (!formData.name?.trim()) {
+            toast.error("Property Name is required in Step 1.");
+            setCurrentStep(1);
+            return;
+        }
+        if (!formData.city?.trim()) {
+            toast.error("City is required in Step 1.");
+            setCurrentStep(1);
+            return;
+        }
+        if (!formData.location?.trim()) {
+            toast.error("Location/Area is required in Step 1.");
+            setCurrentStep(1);
+            return;
+        }
+        if (!formData.address?.trim()) {
+            toast.error("Full Address is required in Step 1.");
+            setCurrentStep(1);
+            return;
+        }
+        if (!formData.phone?.trim()) {
+            toast.error("Contact Phone is required in Step 1.");
+            setCurrentStep(1);
+            return;
+        }
+        if (!formData.price || isNaN(parseInt(formData.price))) {
+            toast.error("Starting Monthly Price is required in Step 2.");
+            setCurrentStep(2);
+            return;
+        }
+
         setLoading(true);
         try {
             const submitData = new FormData();
@@ -750,12 +782,23 @@ const EditProperty = () => {
                                                     />
                                                 </div>
                                                 <div className="space-y-2">
-                                                    <Label>Number of Beds</Label>
+                                                    <Label>Beds/Room</Label>
                                                     <Input
                                                         type="number"
                                                         value={room.beds}
                                                         onChange={(e) => updateRoom(index, 'beds', parseInt(e.target.value))}
-                                                        placeholder="Number of beds"
+                                                        placeholder="Beds per room unit"
+                                                        className="h-12"
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label>Total Beds</Label>
+                                                    <Input
+                                                        type="number"
+                                                        value={room.total_beds ?? 20}
+                                                        onChange={(e) => updateRoom(index, 'total_beds', parseInt(e.target.value) || 1)}
+                                                        placeholder="Total bed capacity"
+                                                        min={1}
                                                         className="h-12"
                                                     />
                                                 </div>

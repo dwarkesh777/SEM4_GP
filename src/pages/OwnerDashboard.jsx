@@ -18,7 +18,8 @@ import {
     Camera,
     LogOut,
     Calendar,
-    Edit
+    Edit,
+    Bed
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -692,27 +693,88 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                     </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                     {properties.length > 0 ? (
-                        properties.map((property) => (
-                            <Card key={property.id} className="rounded-3xl border-slate-100 overflow-hidden group">
-                                <div className="h-40 bg-slate-100 relative">
-                                    {property.main_image && (
+                        properties.map((property) => {
+                            // Compute bed summary across all room types
+                            const rooms = property.rooms || [];
+                            const totalBeds = rooms.reduce((s, r) => s + (r.total_beds ?? 0), 0);
+                            const bookedBeds = rooms.reduce((s, r) => s + (r.booked_beds ?? 0), 0);
+                            const availableBeds = rooms.reduce((s, r) => s + (r.available_beds ?? 0), 0);
+
+                            return (
+                            <Card key={property.id} className="rounded-3xl border-slate-100 overflow-hidden group shadow-sm hover:shadow-xl transition-all duration-300">
+                                <div className="h-44 bg-slate-100 relative">
+                                    {property.main_image ? (
                                         <img src={property.main_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                    ) : (
+                                        <div className="w-full h-full flex items-center justify-center">
+                                            <Building2 className="w-12 h-12 text-slate-300" />
+                                        </div>
                                     )}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                                     <div className="absolute top-4 right-4 flex gap-2">
                                         <Badge className="bg-white/90 backdrop-blur-md text-blue-600 border-none font-bold">
                                             {property.type}
                                         </Badge>
+                                        <Badge className={`backdrop-blur-md border-none font-bold ${
+                                            property.is_verified === true ? 'bg-emerald-500/90 text-white' :
+                                            property.is_verified === false ? 'bg-red-500/90 text-white' :
+                                            'bg-amber-500/90 text-white'
+                                        }`}>
+                                            {property.is_verified === true ? '✓ Verified' : property.is_verified === false ? 'Rejected' : 'Pending'}
+                                        </Badge>
+                                    </div>
+                                    <div className="absolute bottom-3 left-4">
+                                        <h3 className="font-bold text-white text-lg drop-shadow">{property.name}</h3>
+                                        <p className="text-xs text-white/80 flex items-center gap-1">
+                                            <MapPin className="w-3 h-3" /> {property.city}, {property.location}
+                                        </p>
                                     </div>
                                 </div>
-                                <div className="p-6">
-                                    <h3 className="font-bold text-slate-900 truncate text-lg mb-1">{property.name}</h3>
-                                    <p className="text-xs text-slate-500 flex items-center gap-1 mb-4">
-                                        <MapPin className="w-3 h-3" /> {property.city}, {property.location}
-                                    </p>
-                                    <div className="flex items-center justify-between pt-4 border-t border-slate-50">
-                                        <span className="font-black text-blue-600">₹{property.price}/mo</span>
+                                <div className="p-5">
+                                    {/* Bed Summary Stats */}
+                                    <div className="grid grid-cols-3 gap-3 mb-4">
+                                        <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total</p>
+                                            <p className="text-2xl font-black text-slate-800">{totalBeds}</p>
+                                            <p className="text-[10px] font-bold text-slate-400">Beds</p>
+                                        </div>
+                                        <div className="bg-emerald-50 rounded-2xl p-3 text-center border border-emerald-100">
+                                            <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1">Available</p>
+                                            <p className="text-2xl font-black text-emerald-700">{availableBeds}</p>
+                                            <p className="text-[10px] font-bold text-emerald-400">Beds</p>
+                                        </div>
+                                        <div className="bg-blue-50 rounded-2xl p-3 text-center border border-blue-100">
+                                            <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Booked</p>
+                                            <p className="text-2xl font-black text-blue-700">{bookedBeds}</p>
+                                            <p className="text-[10px] font-bold text-blue-400">Beds</p>
+                                        </div>
+                                    </div>
+
+                                    {/* Room Type Breakdown */}
+                                    {rooms.length > 0 && (
+                                        <div className="space-y-2 mb-4">
+                                            <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                <Bed className="w-3.5 h-3.5" /> Room Types
+                                            </p>
+                                            <div className="space-y-1.5">
+                                                {rooms.map((room, ri) => (
+                                                    <div key={ri} className="flex items-center justify-between text-xs bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                                                        <span className="font-bold text-slate-700 truncate max-w-[120px]">{room.name}</span>
+                                                        <div className="flex items-center gap-2 shrink-0">
+                                                            <span className="text-slate-400 font-medium">{room.total_beds ?? 0} total</span>
+                                                            <span className="text-emerald-600 font-bold">{room.available_beds ?? 0} avail</span>
+                                                            <span className="text-blue-600 font-bold">{room.booked_beds ?? 0} booked</span>
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                                        <span className="font-black text-blue-600 text-lg">₹{property.price}<span className="text-xs font-bold text-slate-400">/mo</span></span>
                                         <div className="flex gap-2">
                                             <Button variant="outline" size="sm" className="text-xs font-bold text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600" onClick={() => navigate(`/edit-property/${property.id}`)}>
                                                 <Edit className="w-3 h-3 mr-1" />
@@ -725,7 +787,8 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                     </div>
                                 </div>
                             </Card>
-                        ))
+                            );
+                        })
                     ) : (
                         <Card className="col-span-full rounded-[40px] border-slate-100 shadow-xl shadow-slate-200/50 p-12 text-center">
                             <div className="w-20 h-20 rounded-[32px] bg-slate-50 flex items-center justify-center mx-auto mb-6">

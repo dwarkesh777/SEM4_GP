@@ -78,7 +78,7 @@ const AddProperty = () => {
         description: "",
         amenities: [],
         appliances: [],
-        rooms: [{ name: "Standard Room", beds: 1, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
+        rooms: [{ name: "Standard Room", beds: 1, total_beds: 20, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
     });
 
     const [mainImage, setMainImage] = useState(null);
@@ -152,7 +152,7 @@ const AddProperty = () => {
     const addRoom = () => {
         setFormData(prev => ({
             ...prev,
-            rooms: [...prev.rooms, { name: "", beds: 1, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
+        rooms: [...prev.rooms, { name: "", beds: 1, total_beds: 20, occupancy: "Single", price: "", is_ac: "Non-AC", available: true }]
         }));
     };
 
@@ -174,6 +174,38 @@ const AddProperty = () => {
     };
 
     const handleSubmit = async () => {
+        // Validate required fields
+        if (!formData.name?.trim()) {
+            toast.error("Property Name is required in Step 1.");
+            setCurrentStep(1);
+            return;
+        }
+        if (!formData.city?.trim()) {
+            toast.error("City is required in Step 1.");
+            setCurrentStep(1);
+            return;
+        }
+        if (!formData.location?.trim()) {
+            toast.error("Location/Area is required in Step 1.");
+            setCurrentStep(1);
+            return;
+        }
+        if (!formData.address?.trim()) {
+            toast.error("Full Address is required in Step 1.");
+            setCurrentStep(1);
+            return;
+        }
+        if (!formData.phone?.trim()) {
+            toast.error("Contact Phone is required in Step 1.");
+            setCurrentStep(1);
+            return;
+        }
+        if (!formData.price || isNaN(parseInt(formData.price))) {
+            toast.error("Starting Monthly Price is required in Step 2.");
+            setCurrentStep(2);
+            return;
+        }
+
         setLoading(true);
         try {
             const submitData = new FormData();
@@ -719,7 +751,7 @@ const AddProperty = () => {
                                                         </button>
                                                     )}
 
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
                                                         <div className="space-y-3 lg:col-span-2">
                                                             <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Room Category Name</Label>
                                                             <Input
@@ -757,11 +789,21 @@ const AddProperty = () => {
                                                             </div>
                                                         </div>
                                                         <div className="space-y-3">
-                                                            <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Beds</Label>
+                                                            <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Beds/Room</Label>
                                                             <Input
                                                                 type="number"
                                                                 value={room.beds}
                                                                 onChange={(e) => handleRoomChange(idx, 'beds', parseInt(e.target.value))}
+                                                                className="h-14 rounded-xl border-slate-100 bg-slate-50/50 font-black"
+                                                            />
+                                                        </div>
+                                                        <div className="space-y-3">
+                                                            <Label className="text-xs font-black uppercase tracking-widest text-slate-400 ml-1">Total Beds</Label>
+                                                            <Input
+                                                                type="number"
+                                                                value={room.total_beds ?? 20}
+                                                                onChange={(e) => handleRoomChange(idx, 'total_beds', parseInt(e.target.value) || 1)}
+                                                                min={1}
                                                                 className="h-14 rounded-xl border-slate-100 bg-slate-50/50 font-black"
                                                             />
                                                         </div>

@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('api', '0002_property_video_url_alter_amenity_id_and_more'),
-        ('auth', '0012_alter_user_first_name_max_length'),
+        ('auth', '0001_initial'),
     ]
 
     operations = [

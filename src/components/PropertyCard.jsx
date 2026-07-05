@@ -2,6 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { ArrowRight, Star } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const PropertyCard = ({
     id, main_image, name, location, type, gender, price, rating, index
@@ -13,6 +14,17 @@ const PropertyCard = ({
     const activeViews = Math.floor(Math.random() * 5) + 3;
     const finalRating = typeof rating === "number" ? rating.toFixed(1) : "4.8";
 
+    const handleExplore = (e) => {
+        if (e) e.stopPropagation();
+        const token = localStorage.getItem("token");
+        if (!token) {
+            toast.error("Please login first to explore properties!");
+            navigate("/login");
+            return;
+        }
+        navigate(`/hostel/${id}`);
+    };
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 30 }}
@@ -21,7 +33,7 @@ const PropertyCard = ({
             transition={{ duration: 0.6, delay: index * 0.1, ease: [0.25, 1, 0.5, 1] }}
             onMouseEnter={() => setIsHovered(true)}
             onMouseLeave={() => setIsHovered(false)}
-            onClick={() => navigate(`/hostel/${id}`)}
+            onClick={() => handleExplore()}
             className="group relative cursor-pointer h-[500px] w-full rounded-[2rem] overflow-hidden bg-slate-900 border border-slate-100/50 shadow-lg shadow-slate-950/5 flex flex-col justify-between p-6 select-none"
         >
             {/* ── Background Image Layer ── */}
@@ -79,10 +91,7 @@ const PropertyCard = ({
                             <span className="text-white">{finalRating}</span>
                         </div>
                         <button
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/hostel/${id}`);
-                            }}
+                            onClick={handleExplore}
                             className="flex-1 flex items-center justify-center gap-1.5 py-3 rounded-full text-xs font-black text-slate-900 bg-white hover:bg-slate-50 transition-colors shadow-sm h-full"
                         >
                             <span>Explore home</span>

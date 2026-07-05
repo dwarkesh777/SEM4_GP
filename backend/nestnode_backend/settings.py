@@ -159,6 +159,11 @@ STORAGES = {
     },
 }
 
+# django-cloudinary-storage's collectstatic command still reads this old-style
+# setting directly, so it must be defined even though STORAGES (above) is the
+# modern equivalent that Django itself uses.
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+
 SILENCED_SYSTEM_CHECKS = ["mongodb.E001"]
 
 # Razorpay Payment Gateway

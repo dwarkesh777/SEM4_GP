@@ -52,7 +52,7 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
             collegeCoords?.lat,
             collegeCoords?.lng,
             filters,
-            showAll ? null : 6 // Show only 6 properties initially, all when showAll is true
+            showAll ? null : 8 // Show only 8 properties initially, all when showAll is true
         ),
     });
 
@@ -149,7 +149,7 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                         <div className="flex-1 text-center md:text-left">
                             <h3 className="text-xl font-bold text-slate-900 mb-1">{collegeCoords.name}</h3>
                             <p className="text-slate-600 font-medium">
-                                Found <span className="text-indigo-600 font-bold">{properties?.length || 0}</span> hostels & PGs within 30km radius {showAll ? "" : "(showing top 6)"}
+                                Found <span className="text-indigo-600 font-bold">{properties?.length || 0}</span> hostels & PGs within 30km radius {showAll ? "" : "(showing top 8)"}
                             </p>
                         </div>
                     </motion.div>

@@ -86,6 +86,7 @@ class Property(models.Model):
     amenities = models.ManyToManyField(Amenity, related_name='properties', blank=True)
     appliances = models.ManyToManyField(Appliance, related_name='properties', blank=True)
     is_verified = models.BooleanField(default=None, null=True, blank=True)  # None=pending, True=approved, False=rejected
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True, null=True, blank=True)
 
     def __str__(self):
         return self.name

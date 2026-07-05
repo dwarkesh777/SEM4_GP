@@ -53,7 +53,7 @@ def public_properties(request):
     if not validate_external_api_key(request, mode='read'):
         return Response({'detail': 'Missing or invalid API key.'}, status=status.HTTP_401_UNAUTHORIZED)
 
-    queryset = Property.objects.filter(is_verified=True)
+    queryset = Property.objects.filter(is_verified=True).order_by('-created_at')
 
     search_query = request.query_params.get('search')
     if search_query:
@@ -207,7 +207,7 @@ def public_booking_detail(request, booking_id):
 
 class PropertyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
-        queryset = Property.objects.all()
+        queryset = Property.objects.all().order_by('-created_at')
 
         # IMPORTANT: Only show verified properties on the public website
         # Admin can see all properties (including pending/rejected)

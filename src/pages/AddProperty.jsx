@@ -582,8 +582,8 @@ const AddProperty = () => {
                                                             key={item}
                                                             onClick={() => toggleItem('appliances', item)}
                                                             className={`p-4 rounded-2xl border-2 transition-all duration-300 font-bold text-sm tracking-tight flex items-center justify-center border-dashed ${formData.appliances.includes(item)
-                                                                ? "bg-accent border-accent text-white shadow-lg shadow-accent/20 scale-105"
-                                                                : "bg-white border-slate-100 text-slate-400 hover:border-accent/30 hover:text-accent"
+                                                                ? "bg-indigo-600 border-indigo-600 text-white shadow-lg shadow-indigo-600/20 scale-105"
+                                                                : "bg-white border-slate-100 text-slate-400 hover:border-indigo-300 hover:text-indigo-600"
                                                                 }`}
                                                         >
                                                             {item.replace(/_app/g, '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}

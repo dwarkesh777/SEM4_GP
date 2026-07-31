@@ -12,8 +12,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-kh0u0i5zn@(^@8#1lxbvf^vy0!l(o0__t=jn@uq*id9pdr%=&*')
-DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',') + ['hastiest-lorretta-strengtheningly.ngrok-free.dev']
+DEBUG = os.getenv('DEBUG', 'False').lower() == 'true'
+
+# Build ALLOWED_HOSTS from env variable + Render auto-hostname
+_allowed = os.getenv('ALLOWED_HOSTS', '*').split(',')
+RENDER_EXTERNAL_HOSTNAME = os.getenv('RENDER_EXTERNAL_HOSTNAME')
+if RENDER_EXTERNAL_HOSTNAME:
+    _allowed.append(RENDER_EXTERNAL_HOSTNAME)
+ALLOWED_HOSTS = _allowed or ['*']
   
 # Gmail SMTP Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -174,3 +180,7 @@ RAZORPAY_KEY_SECRET = os.getenv('RAZORPAY_KEY_SECRET', 'v7E2TU5WJt5Ws5a8xdzA9yTs
 DEVELOPER_API_KEY = os.getenv('DEVELOPER_API_KEY', 'nestnode-dev-key-2026')
 DEVELOPER_READONLY_API_KEY = os.getenv('DEVELOPER_READONLY_API_KEY', 'nestnode-readonly-key-2026')
 DEVELOPER_BOOKING_API_KEY = os.getenv('DEVELOPER_BOOKING_API_KEY', 'nestnode-booking-key-2026')
+
+# Max upload size: 50 MB
+DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800
+FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800

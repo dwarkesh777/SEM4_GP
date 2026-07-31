@@ -31,6 +31,10 @@ import DeveloperSignup from "./pages/DeveloperSignup";
 import DeveloperDashboard from "./pages/DeveloperDashboard";
 import UserSignupPage from "./pages/UserSignupPage";
 import OwnerSignupPage from "./pages/OwnerSignupPage";
+import AdminLogin from "./pages/AdminLogin";
+import AdminSignup from "./pages/AdminSignup";
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminPropertyDetail from "./pages/AdminPropertyDetail";
 
 const queryClient = new QueryClient();
 
@@ -59,6 +63,11 @@ const App = () => (
                         <Route path="/student/signup" element={<StudentSignup />} />
                         <Route path="/owner/login" element={<OwnerLogin />} />
                         <Route path="/owner/signup" element={<OwnerSignup />} />
+                        
+                        <Route path="/admin/login" element={<AdminLogin />} />
+                        <Route path="/admin/signup" element={<AdminSignup />} />
+                        <Route path="/admin/dashboard" element={<AdminDashboard />} />
+                        <Route path="/admin/property/:id" element={<AdminPropertyDetail />} />
 
                         <Route path="/add-property" element={<AddProperty />} />
                         <Route path="/edit-property/:id" element={<EditProperty />} />

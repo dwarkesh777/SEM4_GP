@@ -82,17 +82,17 @@ class EmptyStringIntField(serializers.IntegerField):
 
 class PropertySerializer(serializers.ModelSerializer):
     id = serializers.CharField(read_only=True)
+    # amenities/appliances are read_only here — writing is handled in create() via get_or_create
+    # This avoids SlugRelatedField validation failures when names don't exist in DB yet
     amenities = serializers.SlugRelatedField(
         many=True,
-        queryset=Amenity.objects.all(),
-        slug_field='name',
-        required=False
+        read_only=True,
+        slug_field='name'
     )
     appliances = serializers.SlugRelatedField(
         many=True,
-        queryset=Appliance.objects.all(),
-        slug_field='name',
-        required=False
+        read_only=True,
+        slug_field='name'
     )
     images = PropertyImageSerializer(many=True, read_only=True)
 
@@ -188,7 +188,10 @@ class PropertySerializer(serializers.ModelSerializer):
                     logger.error(f"Error creating room: {e}")
 
         for img in uploaded_images:
-            PropertyImage.objects.create(property=property_obj, image=img)
+            try:
+                PropertyImage.objects.create(property=property_obj, image=img)
+            except Exception as e:
+                logger.error(f"Error saving gallery image to Cloudinary: {e}")
 
         return property_obj
 

@@ -6,7 +6,7 @@ from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
 from .models import Property, Booking, Room, Enquiry, Wishlist, User, Review
 from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer, ReviewSerializer
-from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer, UserSignupSerializer, OwnerSignupSerializer
+from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer, UserSignupSerializer, OwnerSignupSerializer, AdminSignupSerializer, AdminTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.core.mail import send_mail
 import requests
@@ -320,24 +320,26 @@ class PropertyViewSet(viewsets.ModelViewSet):
         logger.info(f"POST /api/properties/ - files: {list(request.FILES.keys())}")
         logger.info(f"POST /api/properties/ - user: {request.user} authenticated: {request.user.is_authenticated}")
 
-        mutable_data = request.data.copy()
-        mutable_data['is_verified'] = None
-
-        serializer = self.get_serializer(data=mutable_data)
-        if not serializer.is_valid():
-            logger.error(f"Validation errors: {serializer.errors}")
-            return Response(
-                {"error": self._flatten_errors(serializer.errors), "details": serializer.errors},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
         try:
+            # Use request.data directly — do NOT copy() it when files are present,
+            # as file handles (BufferedRandom) cannot be pickled and cause a crash.
+            serializer = self.get_serializer(data=request.data)
+            if not serializer.is_valid():
+                logger.error(f"Validation errors: {serializer.errors}")
+                return Response(
+                    {"error": self._flatten_errors(serializer.errors), "details": serializer.errors},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
             self.perform_create(serializer)
             logger.info(f"Property created successfully: {serializer.data.get('name')} - ID: {serializer.data.get('id')} - Status: Pending")
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         except Exception as e:
-            logger.error(f"Error during property creation: {e}", exc_info=True)
-            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            logger.error(f"Unexpected error during property creation: {e}", exc_info=True)
+            return Response(
+                {"error": f"Something went wrong: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
     def _flatten_errors(self, errors):
         messages = []
@@ -352,7 +354,9 @@ class PropertyViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         if self.request.user.is_authenticated:
-            property_instance = serializer.save(owner=self.request.user)
+            # is_verified=None means "pending review" — passed here instead of copying
+            # request.data (which would crash on file uploads due to BufferedRandom)
+            property_instance = serializer.save(owner=self.request.user, is_verified=None)
 
             try:
                 subject = 'Property Listed Successfully - NestNode'
@@ -365,6 +369,33 @@ class PropertyViewSet(viewsets.ModelViewSet):
         else:
             from rest_framework.exceptions import AuthenticationFailed
             raise AuthenticationFailed("You must be logged in as an owner to list a property.")
+
+    @action(detail=False, methods=['get'], permission_classes=[permissions.IsAdminUser])
+    def pending(self, request):
+        queryset = Property.objects.filter(is_verified__isnull=True).order_by('-created_at')
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def approve(self, request, pk=None):
+        property_obj = self.get_object()
+        property_obj.is_verified = True
+        property_obj.save()
+        return Response({'status': 'Property approved'})
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def reject(self, request, pk=None):
+        property_obj = self.get_object()
+        property_obj.is_verified = False
+        property_obj.save()
+        return Response({'status': 'Property rejected'})
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
+    def pause(self, request, pk=None):
+        property_obj = self.get_object()
+        property_obj.is_verified = None
+        property_obj.save()
+        return Response({'status': 'Property paused'})
 
 
 class RegisterView(generics.CreateAPIView):
@@ -396,6 +427,15 @@ class UserLoginView(TokenObtainPairView):
 
 class OwnerLoginView(TokenObtainPairView):
     serializer_class = OwnerTokenObtainPairSerializer
+
+
+class AdminSignupView(generics.CreateAPIView):
+    serializer_class = AdminSignupSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class AdminLoginView(TokenObtainPairView):
+    serializer_class = AdminTokenObtainPairSerializer
 
 
 # ─── RAZORPAY PAYMENT VIEWS ───────────────────────────────────────────────────
@@ -1115,3 +1155,90 @@ def get_similar_properties(request, property_id):
     except Exception as e:
         logger.error(f"Error fetching similar properties: {e}")
         return Response({'error': 'Failed to fetch similar properties'}, status=500)
+
+from rest_framework.views import APIView
+
+class AdminUserViewSet(viewsets.ReadOnlyModelViewSet):
+    permission_classes = [permissions.IsAdminUser]
+    serializer_class = UserSerializer
+
+    def get_queryset(self):
+        role = self.request.query_params.get('role')
+        if role == 'student':
+            return User.objects.filter(is_owner=False, is_staff=False)
+        elif role == 'owner':
+            return User.objects.filter(is_owner=True, is_staff=False)
+        return User.objects.all()
+
+class AdminAnalyticsView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get(self, request):
+        total_properties = Property.objects.count()
+        pending_properties = Property.objects.filter(is_verified__isnull=True).count()
+        total_students = User.objects.filter(is_owner=False, is_staff=False).count()
+        total_owners = User.objects.filter(is_owner=True, is_staff=False).count()
+        total_bookings = Booking.objects.count()
+
+        return Response({
+            'total_properties': total_properties,
+            'pending_properties': pending_properties,
+            'total_students': total_students,
+            'total_owners': total_owners,
+            'total_bookings': total_bookings
+        })
+
+
+
+# Admin Views
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def admin_students_list(request):
+    if not request.user.is_staff:
+        return Response({'error': 'Unauthorized'}, status=403)
+    
+    students = User.objects.filter(is_owner=False, is_staff=False).order_by('-date_joined')
+    serializer = UserSerializer(students, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def admin_owners_list(request):
+    if not request.user.is_staff:
+        return Response({'error': 'Unauthorized'}, status=403)
+    
+    owners = User.objects.filter(is_owner=True).order_by('-date_joined')
+    serializer = UserSerializer(owners, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def admin_analytics(request):
+    if not request.user.is_staff:
+        return Response({'error': 'Unauthorized'}, status=403)
+    
+    total_bookings = Booking.objects.count()
+    pending_bookings = Booking.objects.filter(status='PENDING').count()
+    confirmed_bookings = Booking.objects.filter(status='CONFIRMED').count()
+    cancelled_bookings = Booking.objects.filter(status='CANCELLED').count()
+    
+    total_properties = Property.objects.count()
+    total_students = User.objects.filter(is_owner=False, is_staff=False).count()
+    total_owners = User.objects.filter(is_owner=True).count()
+    
+    # Revenue data (approx)
+    confirmed = Booking.objects.filter(status='CONFIRMED')
+    total_revenue = sum(b.total_amount for b in confirmed if b.total_amount)
+    
+    return Response({
+        'total_bookings': total_bookings,
+        'booking_status': {
+            'pending': pending_bookings,
+            'confirmed': confirmed_bookings,
+            'cancelled': cancelled_bookings
+        },
+        'total_properties': total_properties,
+        'total_students': total_students,
+        'total_owners': total_owners,
+        'total_revenue': total_revenue
+    })

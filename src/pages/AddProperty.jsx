@@ -205,6 +205,11 @@ const AddProperty = () => {
             setCurrentStep(2);
             return;
         }
+        if (!formData.description?.trim()) {
+            toast.error("Short Description is required in Step 2.");
+            setCurrentStep(2);
+            return;
+        }
 
         setLoading(true);
         try {
@@ -245,15 +250,25 @@ const AddProperty = () => {
                 toast.success("Property listed successfully!");
                 navigate("/");
             } else {
-                const errorData = await response.json().catch(() => ({}));
-                // DRF returns errors as { field: ["msg"] } or { error: "msg" } or { detail: "msg" }
+                let errorData = {};
+                try {
+                    errorData = await response.json();
+                } catch (e) {
+                    if (response.status === 413) {
+                        toast.error("Files are too large. Please upload smaller images/video.");
+                    } else {
+                        toast.error(`Server error (${response.status}). Please try again later.`);
+                    }
+                    setLoading(false);
+                    return;
+                }
+                
                 let errorMsg = "Listing failed.";
                 if (errorData.error) {
                     errorMsg = errorData.error;
                 } else if (errorData.detail) {
                     errorMsg = errorData.detail;
-                } else if (typeof errorData === 'object') {
-                    // Flatten field-level errors: { name: ["required"], price: ["invalid"] }
+                } else if (Object.keys(errorData).length > 0) {
                     const fieldErrors = Object.entries(errorData)
                         .map(([k, v]) => `${k}: ${Array.isArray(v) ? v[0] : v}`)
                         .join(" | ");
@@ -530,7 +545,7 @@ const AddProperty = () => {
                                                 <p className="text-xs font-bold text-slate-400 ml-1 italic">Show discount with strikethrough price</p>
                                             </div>
                                             <div className="md:col-span-2 space-y-4">
-                                                <Label className="text-sm font-bold text-slate-700 ml-1">Short Description</Label>
+                                                <Label className="text-sm font-bold text-slate-700 ml-1">Short Description *</Label>
                                                 <Textarea
                                                     name="description"
                                                     value={formData.description}

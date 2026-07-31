@@ -195,8 +195,65 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const adminLogin = async (email, password) => {
+        try {
+            const response = await fetch(`${API_URL}/api/auth/admin/login/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem("token", data.access);
+                const userResponse = await fetch(`${API_URL}/api/auth/profile/`, {
+                    headers: { Authorization: `Bearer ${data.access}` }
+                });
+                const userData = await userResponse.json();
+                setUser(userData);
+                return { success: true };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                return {
+                    success: false,
+                    error: errorData.detail || errorData.error || "Invalid admin credentials."
+                };
+            }
+        } catch (error) {
+            console.error("Admin login failed:", error);
+            return {
+                success: false,
+                error: `Cannot connect to server at ${API_URL}.`
+            };
+        }
+    };
+
+    const adminSignup = async (email, password, fullName) => {
+        try {
+            const response = await fetch(`${API_URL}/api/auth/signup/admin`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, full_name: fullName })
+            });
+            if (response.ok) {
+                return { success: true };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                let errorMessage = "Registration failed.";
+                if (errorData.email) {
+                    errorMessage = Array.isArray(errorData.email) ? errorData.email[0] : errorData.email;
+                } else if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                }
+                return { success: false, error: errorMessage };
+            }
+        } catch (error) {
+            console.error("Admin signup failed:", error);
+            return { success: false, error: `Cannot connect to server at ${API_URL}.` };
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, ownerLogin, signup, logout, loading, sendOTP, loginWithOTP }}>
+        <AuthContext.Provider value={{ user, login, ownerLogin, adminLogin, signup, adminSignup, logout, loading, sendOTP, loginWithOTP }}>
             {children}
         </AuthContext.Provider>
     );

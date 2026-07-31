@@ -164,7 +164,7 @@ STORAGES = {
 # modern equivalent that Django itself uses.
 STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
-SILENCED_SYSTEM_CHECKS = ["mongodb.E001"]
+SILENCED_SYSTEM_CHECKS = ["mongodb.E001", "mongodb.fields.auto.E001"]
 
 # Razorpay Payment Gateway
 RAZORPAY_KEY_ID = os.getenv('RAZORPAY_KEY_ID', 'rzp_live_SKk9PuXXC5dsm6')

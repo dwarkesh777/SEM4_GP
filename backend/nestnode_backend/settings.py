@@ -13,7 +13,7 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-kh0u0i5zn@(^@8#1lxbvf^vy0!l(o0__t=jn@uq*id9pdr%=&*')
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',') + ['hastiest-lorretta-strengtheningly.ngrok-free.dev']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',') + ['hastiest-lorretta-strengtheningly.ngrok-free.dev', '.onrender.com']
   
 # Gmail SMTP Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

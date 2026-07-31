@@ -76,3 +76,26 @@ class OwnerSignupSerializer(serializers.ModelSerializer):
             is_owner=True
         )
         return user
+
+class AdminTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        if not self.user.is_staff:
+            raise serializers.ValidationError("This account does not have admin privileges.")
+        return data
+
+class AdminSignupSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'full_name', 'password')
+
+    def create(self, validated_data):
+        user = User.objects.create_superuser(
+            email=validated_data['email'],
+            password=validated_data['password'],
+            full_name=validated_data['full_name'],
+        )
+        return user
+

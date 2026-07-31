@@ -1,12 +1,8 @@
 #!/usr/bin/env bash
-# Render build script for NestNode Django backend
+# exit on error
+set -o errexit
 
-set -e  # Exit immediately on any error
-
-echo "=== Installing Python dependencies ==="
 pip install -r requirements.txt
 
-echo "=== Collecting static files ==="
-python manage.py collectstatic --noinput
-
-echo "=== Build complete ==="
+python manage.py collectstatic --no-input
+python manage.py migrate

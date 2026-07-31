@@ -1,0 +1,21 @@
+services:
+  - type: web
+    name: nestnode-backend
+    env: python
+    rootDir: backend
+    buildCommand: "./build.sh"
+    startCommand: "gunicorn nestnode_backend.wsgi:application"
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: DEBUG
+        value: "False"
+      - key: ALLOWED_HOSTS
+        value: "*"
+      # You need to manually add these environment variables in the Render Dashboard later:
+      # - MONGODB_URI
+      # - CLOUDINARY_CLOUD_NAME
+      # - CLOUDINARY_API_KEY
+      # - CLOUDINARY_API_SECRET
+      # - RAZORPAY_KEY_ID
+      # - RAZORPAY_KEY_SECRET

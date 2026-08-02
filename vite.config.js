@@ -5,6 +5,8 @@ import { componentTagger } from "lovable-tagger";
 import { VitePWA } from 'vite-plugin-pwa';
 
 // https://vitejs.dev/config/
+// Re-trigger Vite bundle
+
 export default defineConfig(({ mode }) => ({
     server: {
         host: "::",
@@ -56,6 +58,7 @@ export default defineConfig(({ mode }) => ({
     resolve: {
         alias: {
             "@": path.resolve(__dirname, "./src"),
+            "plotly.js/dist/plotly": "plotly.js-dist-min",
         },
     },
 }));

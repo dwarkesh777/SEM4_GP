@@ -34,6 +34,7 @@ const Index = () => {
             <Navbar />
             <main>
                 <HeroSection onSearch={handleSearch} />
+
                 <div className="w-full px-4 sm:px-6 lg:px-8 py-8">
                     <div className="lg:flex lg:gap-8 lg:items-start">
                         {showAll && (
@@ -54,6 +55,7 @@ const Index = () => {
                                 filters={filters}
                                 showAll={showAll}
                                 setShowAll={setShowAll}
+                                onResetCity={() => setSearchQuery("")}
                             />
                         </div>
                     </div>

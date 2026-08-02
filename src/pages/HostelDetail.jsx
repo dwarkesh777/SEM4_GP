@@ -878,7 +878,7 @@ const HostelDetail = () => {
                                                     </div>
 
                                                     <div className="flex flex-col sm:flex-row items-center gap-3 min-w-[120px]">
-                                                        {room.available && room.available_beds !== 0 ? (
+                                                        {room.available_beds !== 0 ? (
                                                             <>
                                                                 <div className="w-full sm:w-auto px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 font-black text-[10px] uppercase tracking-tighter flex items-center justify-center gap-2 border border-emerald-100 whitespace-nowrap">
                                                                     <Check className="w-3.5 h-3.5" /> Live Now

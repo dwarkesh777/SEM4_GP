@@ -1,7 +1,7 @@
 import { motion } from "framer-motion";
 import PropertyCard from "./PropertyCard";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Building2 } from "lucide-react";
+import { ArrowRight, Building2, MapPin, Sparkles, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { API_URL } from "@/lib/api";
 import { useState } from "react";
@@ -9,7 +9,7 @@ import ShowAllProperties from "./ShowAllProperties";
 import ImageGallery from "./ImageGallery";
 
 const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters = {}, limit = null) => {
-    let url = `${API_URL}/api/properties/?`;
+    let url = `http://localhost:8000/api/public/properties/list/?appid=nestnode-readonly-key-2026&`;
     if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
     if (lat && lng) url += `lat=${lat}&lng=${lng}&`;
     
@@ -39,10 +39,19 @@ const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters
 
     const res = await fetch(url);
     if (!res.ok) throw new Error("Network response was not ok");
-    return res.json();
+    const data = await res.json();
+    
+    let propertiesList = data.results || data;
+    if (Array.isArray(propertiesList)) {
+        propertiesList = propertiesList.filter(p => {
+            const type = p.type?.toLowerCase();
+            return type === 'hostel' || type === 'pg';
+        });
+    }
+    return propertiesList;
 };
 
-const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {}, showAll, setShowAll }) => {
+const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {}, showAll, setShowAll, onResetCity }) => {
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     
     const { data: properties, isLoading, error, refetch } = useQuery({
@@ -92,6 +101,8 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
         }
     };
 
+    const hasNoProperties = !properties || properties.length === 0;
+
     return (
         <section id="listings" className="relative py-8 bg-transparent overflow-hidden">
 
@@ -102,7 +113,7 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                         whileInView={{ opacity: 1, x: 0 }}
                         viewport={{ once: true }}
                         transition={{ duration: 0.6 }}
-                        className="max-w-2xl"
+                        className="max-w-2xl text-left"
                     >
                         <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-xs font-bold uppercase tracking-widest mb-4">
                             <span className="relative flex h-2 w-2">
@@ -112,7 +123,11 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                             Top Picks
                         </div>
                         <h2 className="text-4xl md:text-5xl font-heading font-bold text-slate-900 leading-tight">
-                            Explore <span className="text-primary italic">Popular</span> Living Spaces
+                            {searchQuery ? (
+                                <>Accommodations in <span className="text-primary italic">{searchQuery}</span></>
+                            ) : (
+                                <>Explore <span className="text-primary italic">Popular</span> Living Spaces</>
+                            )}
                         </h2>
                         <p className="mt-4 text-lg text-slate-500 font-medium">
                             Highly rated properties curated specifically for your comfort and needs.
@@ -136,6 +151,29 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                     </motion.div>
                 </div>
 
+                {/* City Filter Badge */}
+                {searchQuery && (
+                    <motion.div 
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mb-8 flex items-center justify-between p-4 rounded-2xl bg-blue-50 border border-blue-100 text-blue-900"
+                    >
+                        <div className="flex items-center gap-2 text-sm font-extrabold">
+                            <MapPin className="w-4 h-4 text-blue-600" />
+                            Showing results for: <span className="text-blue-700 font-black underline">{searchQuery}</span>
+                        </div>
+                        {onResetCity && (
+                            <button
+                                onClick={onResetCity}
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-blue-200 text-blue-700 text-xs font-bold hover:bg-blue-100 transition-colors shadow-sm"
+                            >
+                                <RefreshCw className="w-3 h-3" />
+                                Clear Filter
+                            </button>
+                        )}
+                    </motion.div>
+                )}
+
                 {/* College Search Summary */}
                 {collegeCoords && (
                     <motion.div
@@ -155,30 +193,60 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                     </motion.div>
                 )}
 
-                <motion.div
-                    variants={containerVariants}
-                    initial="hidden"
-                    whileInView="visible"
-                    viewport={{ once: true, margin: "-100px" }}
-                    className={`grid gap-8 ${
-                        showAll 
-                            ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
-                            : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                    }`}
-                >
-                    {properties?.map((property, index) => (
-                        <motion.div key={property.id} variants={itemVariants}>
-                            <PropertyCard {...property} index={index} />
-                        </motion.div>
-                    ))}
-                </motion.div>
+                {/* Empty State when 0 properties match city search */}
+                {hasNoProperties ? (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        transition={{ duration: 0.4 }}
+                        className="py-16 px-6 text-center bg-slate-50/90 rounded-[2.5rem] border border-slate-200/90 shadow-sm max-w-2xl mx-auto my-8"
+                    >
+                        <div className="w-20 h-20 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center mx-auto mb-6 shadow-inner">
+                            <Building2 className="w-10 h-10" />
+                        </div>
+                        <h3 className="text-2xl sm:text-3xl font-black text-slate-900 mb-3">
+                            Sorry, no PG and hostel found in {searchQuery || "this city"}
+                        </h3>
+                        <p className="text-slate-500 font-medium text-base mb-8 max-w-md mx-auto leading-relaxed">
+                            We haven't launched verified accommodations in <span className="font-bold text-slate-800">{searchQuery || "this city"}</span> yet. Explore available listings in major hubs like Pune, Ahmedabad, Mumbai, or Delhi!
+                        </p>
+                        {onResetCity && (
+                            <Button
+                                onClick={onResetCity}
+                                className="h-12 px-8 rounded-xl font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-500/20 active:scale-95 transition-all"
+                            >
+                                View All Available Cities
+                            </Button>
+                        )}
+                    </motion.div>
+                ) : (
+                    <motion.div
+                        variants={containerVariants}
+                        initial="hidden"
+                        whileInView="visible"
+                        viewport={{ once: true, margin: "-100px" }}
+                        className={`grid gap-8 ${
+                            showAll 
+                                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
+                                : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
+                        }`}
+                    >
+                        {properties?.map((property, index) => (
+                            <motion.div key={property.id} variants={itemVariants}>
+                                <PropertyCard {...property} index={index} />
+                            </motion.div>
+                        ))}
+                    </motion.div>
+                )}
 
-                <ShowAllProperties 
-                    showAll={showAll} 
-                    onShowAll={setShowAll ? () => setShowAll(true) : undefined}
-                    propertiesCount={properties?.length || 0}
-                    onBackToHome={setShowAll ? () => setShowAll(false) : undefined}
-                />
+                {!hasNoProperties && (
+                    <ShowAllProperties 
+                        showAll={showAll} 
+                        onShowAll={setShowAll ? () => setShowAll(true) : undefined}
+                        propertiesCount={properties?.length || 0}
+                        onBackToHome={setShowAll ? () => setShowAll(false) : undefined}
+                    />
+                )}
             </div>
             
             <ImageGallery 

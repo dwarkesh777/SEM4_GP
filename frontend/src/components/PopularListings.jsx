@@ -78,7 +78,10 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                 <ArrowRight className="w-8 h-8 rotate-45" />
             </div>
             <h3 className="text-xl font-bold text-slate-900 mb-2">Oops! Something went wrong</h3>
-            <p className="text-slate-500">We couldn't load the listings. Please try again later.</p>
+            <p className="text-slate-500 mb-4">We couldn't load the listings. Please try again later.</p>
+            <Button onClick={() => refetch()} variant="outline" className="gap-2">
+                <RefreshCw className="w-4 h-4" /> Try Again
+            </Button>
         </div>
     );
 

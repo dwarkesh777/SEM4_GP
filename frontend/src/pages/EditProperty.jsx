@@ -94,6 +94,16 @@ const EditProperty = () => {
     const extraFilesInputRef = useRef(null);
     const videoInputRef = useRef(null);
 
+    const getImageUrl = (item) => {
+        if (!item) return "";
+        let url = typeof item === 'object' ? (item.image || item.url || item.photo || "") : item;
+        if (typeof url !== 'string' || !url) return "";
+        if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
+            return url;
+        }
+        return `${API_URL}${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
     useEffect(() => {
         fetchProperty();
     }, [id]);
@@ -130,6 +140,7 @@ const EditProperty = () => {
             
             setMainImagePreview(data.main_image || null);
             setExtraImagesPreviews(data.images || []);
+            setVideoPreview(data.video || null);
         } catch (error) {
             toast.error("Failed to load property data");
             console.error("Error fetching property:", error);
@@ -634,7 +645,7 @@ const EditProperty = () => {
                                         <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center">
                                             {mainImagePreview ? (
                                                 <div className="space-y-4">
-                                                    <img src={mainImagePreview} alt="Main" className="w-32 h-32 object-cover rounded-lg mx-auto" />
+                                                    <img src={getImageUrl(mainImagePreview)} alt="Main" className="w-32 h-32 object-cover rounded-lg mx-auto" />
                                                     <Button
                                                         type="button"
                                                         variant="outline"
@@ -671,7 +682,7 @@ const EditProperty = () => {
                                             {extraImagesPreviews.map((preview, index) => (
                                                 <div key={index} className="relative group">
                                                     <img
-                                                        src={preview}
+                                                        src={getImageUrl(preview)}
                                                         alt={`Property ${index + 1}`}
                                                         className="w-full h-32 object-cover rounded-xl"
                                                     />
@@ -713,7 +724,7 @@ const EditProperty = () => {
                                         <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center">
                                             {videoPreview ? (
                                                 <div className="space-y-4">
-                                                    <video src={videoPreview} className="w-32 h-32 rounded-lg mx-auto" controls />
+                                                    <video src={getImageUrl(videoPreview)} className="w-32 h-32 rounded-lg mx-auto" controls />
                                                     <Button
                                                         type="button"
                                                         variant="outline"

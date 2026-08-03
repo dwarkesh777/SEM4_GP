@@ -180,26 +180,29 @@ const UserDashboard = () => {
         retryDelay: 1000,
     });
 
+    if (user?.is_owner) {
+        return (
+            <OwnerDashboard
+                user={user}
+                profileData={profileData}
+                setProfileData={setProfileData}
+                handleProfileUpdate={handleProfileUpdate}
+                isLoading={isLoading}
+                logout={logout}
+                properties={properties}
+                bookings={bookingData}
+                enquiries={enquiries}
+                refetchBookings={refetchBookings}
+            />
+        );
+    }
+
     return (
         <div className="min-h-screen bg-[#F8FAFC]">
             <Navbar />
 
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
-                {user?.is_owner ? (
-                    <OwnerDashboard
-                        user={user}
-                        profileData={profileData}
-                        setProfileData={setProfileData}
-                        handleProfileUpdate={handleProfileUpdate}
-                        isLoading={isLoading}
-                        logout={logout}
-                        properties={properties}
-                        bookings={bookingData}
-                        enquiries={enquiries}
-                        refetchBookings={refetchBookings}
-                    />
-                ) : (
-                    <div className="flex flex-col lg:flex-row gap-10">
+                <div className="flex flex-col lg:flex-row gap-10">
                         {/* Sidebar */}
                         <aside className="w-full lg:w-80 space-y-6">
                             <Card className="rounded-[40px] border-slate-100 shadow-xl shadow-slate-200/50 overflow-hidden">
@@ -494,7 +497,6 @@ const UserDashboard = () => {
                             </AnimatePresence>
                         </div>
                     </div>
-                )}
             </main>
 
             <div className="py-10 text-center text-slate-400 text-xs font-medium uppercase tracking-[0.2em]">

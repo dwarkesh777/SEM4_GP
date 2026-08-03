@@ -4,7 +4,7 @@ import re
 from django.db.models import Q
 from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
-from .models import Property, Booking, Room, Enquiry, Wishlist, User, Review
+from .models import Property, Booking, Room, Enquiry, Wishlist, User, Review, Amenity, Appliance, PropertyImage
 from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer, ReviewSerializer
 from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer, UserSignupSerializer, OwnerSignupSerializer, AdminSignupSerializer, AdminTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
@@ -83,6 +83,9 @@ def public_properties(request):
     if max_price:
         queryset = queryset.filter(price__lte=int(max_price))
 
+    # Count BEFORE slicing — Django cannot count a sliced queryset.
+    total_count = queryset.count()
+
     limit = request.query_params.get('limit')
     if limit:
         try:
@@ -90,8 +93,14 @@ def public_properties(request):
         except (ValueError, TypeError):
             pass
 
-    serializer = PropertySerializer(queryset, many=True, context={'request': request})
-    return Response({'count': queryset.count(), 'results': serializer.data})
+    # Convert to list then batch-prefetch all relations in a fixed number of queries.
+    properties = list(queryset)
+    _manual_prefetch_properties(properties)
+    serializer = PropertySerializer(properties, many=True, context={'request': request})
+    response = Response({'count': total_count, 'results': serializer.data})
+    # Allow clients and CDN edges to cache the public list for 60 seconds.
+    response['Cache-Control'] = 'public, max-age=60, stale-while-revalidate=300'
+    return response
 
 
 @api_view(['POST'])
@@ -205,6 +214,110 @@ def public_booking_detail(request, booking_id):
     return Response(serializer.data)
 
 
+def _manual_prefetch_properties(properties):
+    """
+    Batch-load all related data for a list of Property instances and attach results
+    via Django's internal _prefetched_objects_cache — the same slot that
+    prefetch_related() fills, but populated manually with plain .filter() queries.
+
+    django_mongodb_backend raises NotSupportedError for queryset.prefetch_related(),
+    so this function replaces it.  The net effect is identical: RelatedManager's
+    get_queryset() finds the pre-populated cache and returns data without an extra
+    round-trip to MongoDB.
+
+    For each related type (rooms, images, reviews, amenities, appliances) exactly
+    ONE query is issued for the entire batch of properties, reducing O(N * relations)
+    round-trips to a small fixed number.
+    """
+    if not properties:
+        return
+
+    from collections import defaultdict
+
+    prop_ids = [p.id for p in properties]
+
+    # Initialise the cache dict on every instance so get_queryset() finds it
+    # even when a property has no related objects.
+    for prop in properties:
+        prop._prefetched_objects_cache = {}
+
+    def _cached_qs(model_class, objects):
+        """
+        Return a queryset with _result_cache pre-set so Django's RelatedManager
+        uses the cached list instead of running another database query.
+        """
+        ids = [o.id for o in objects]
+        qs = model_class.objects.filter(id__in=ids) if ids else model_class.objects.none()
+        qs._result_cache = list(objects)
+        return qs
+
+    # ── 1. Rooms (reverse FK) ─────────────────────────────────────────
+    all_rooms = list(Room.objects.filter(property_id__in=prop_ids))
+    rooms_by_prop = defaultdict(list)
+    for room in all_rooms:
+        rooms_by_prop[room.property_id].append(room)
+
+    # ── 2. Confirmed-booking counts pre-attached to each Room object ─────────
+    if all_rooms:
+        room_ids = [r.id for r in all_rooms]
+        confirmed = list(Booking.objects.filter(room_id__in=room_ids, status='Confirmed'))
+        confirmed_by_room = defaultdict(list)
+        for bk in confirmed:
+            confirmed_by_room[bk.room_id].append(bk)
+        for room in all_rooms:
+            # RoomSerializer.get_booked_beds() checks this attribute first.
+            room.confirmed_bookings = confirmed_by_room.get(room.id, [])
+
+    for prop in properties:
+        prop._prefetched_objects_cache['rooms'] = _cached_qs(Room, rooms_by_prop.get(prop.id, []))
+
+    # ── 3. Images (reverse FK) ─────────────────────────────────────
+    all_images = list(PropertyImage.objects.filter(property_id__in=prop_ids))
+    images_by_prop = defaultdict(list)
+    for img in all_images:
+        images_by_prop[img.property_id].append(img)
+    for prop in properties:
+        prop._prefetched_objects_cache['images'] = _cached_qs(PropertyImage, images_by_prop.get(prop.id, []))
+
+    # ── 4. Reviews (reverse FK) ────────────────────────────────────
+    all_reviews = list(Review.objects.filter(property_id__in=prop_ids))
+    reviews_by_prop = defaultdict(list)
+    for review in all_reviews:
+        reviews_by_prop[review.property_id].append(review)
+    for prop in properties:
+        prop._prefetched_objects_cache['reviews_list'] = _cached_qs(Review, reviews_by_prop.get(prop.id, []))
+
+    # ── 5. Amenities (M2M via auto through-table) ────────────────────────
+    try:
+        AmenityThrough = Property.amenities.through
+        amenity_rels = list(AmenityThrough.objects.filter(property_id__in=prop_ids))
+        all_amenity_ids = list({rel.amenity_id for rel in amenity_rels})
+        amenity_map = {a.id: a for a in Amenity.objects.filter(id__in=all_amenity_ids)}
+        amenities_by_prop = defaultdict(list)
+        for rel in amenity_rels:
+            if rel.amenity_id in amenity_map:
+                amenities_by_prop[rel.property_id].append(amenity_map[rel.amenity_id])
+        for prop in properties:
+            prop._prefetched_objects_cache['amenities'] = _cached_qs(Amenity, amenities_by_prop.get(prop.id, []))
+    except Exception as exc:
+        logger.debug("Amenity batch-prefetch skipped (per-property fallback): %s", exc)
+
+    # ── 6. Appliances (M2M via auto through-table) ──────────────────────
+    try:
+        ApplianceThrough = Property.appliances.through
+        appliance_rels = list(ApplianceThrough.objects.filter(property_id__in=prop_ids))
+        all_appliance_ids = list({rel.appliance_id for rel in appliance_rels})
+        appliance_map = {a.id: a for a in Appliance.objects.filter(id__in=all_appliance_ids)}
+        appliances_by_prop = defaultdict(list)
+        for rel in appliance_rels:
+            if rel.appliance_id in appliance_map:
+                appliances_by_prop[rel.property_id].append(appliance_map[rel.appliance_id])
+        for prop in properties:
+            prop._prefetched_objects_cache['appliances'] = _cached_qs(Appliance, appliances_by_prop.get(prop.id, []))
+    except Exception as exc:
+        logger.debug("Appliance batch-prefetch skipped (per-property fallback): %s", exc)
+
+
 class PropertyViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         queryset = Property.objects.all().order_by('-created_at')
@@ -305,6 +418,9 @@ class PropertyViewSet(viewsets.ModelViewSet):
             elif ordering == 'distance_asc' and hasattr(results[0] if results else None, 'distance'):
                 results.sort(key=lambda x: x.distance)
 
+        # Batch-load all related data (rooms, images, reviews, amenities, appliances)
+        # in a fixed number of queries instead of one query per property per relation.
+        _manual_prefetch_properties(results)
         return results
 
     serializer_class = PropertySerializer
@@ -611,6 +727,46 @@ def verify_razorpay_payment(request):
     except Exception as e:
         logger.error(f"Razorpay verification failed: {e}", exc_info=True)
         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+def generate_payment_receipt_pdf(booking):
+    import io
+    from reportlab.pdfgen import canvas
+    from reportlab.lib.pagesizes import letter
+    from reportlab.lib.colors import HexColor
+    
+    buffer = io.BytesIO()
+    c = canvas.Canvas(buffer, pagesize=letter)
+    width, height = letter
+    
+    c.setFont("Helvetica-Bold", 24)
+    c.setFillColor(HexColor('#1e293b'))
+    c.drawString(50, height - 80, "PAYMENT RECEIPT")
+    
+    c.setFont("Helvetica", 14)
+    c.setFillColor(HexColor('#64748b'))
+    c.drawString(50, height - 110, f"Property: {booking.property.name}")
+    c.drawString(50, height - 130, f"Room: {booking.room.name if booking.room else 'N/A'}")
+    
+    customer_name = booking.customer_name or (booking.user.full_name if booking.user else 'Valued Resident')
+    c.setFillColor(HexColor('#1e293b'))
+    c.setFont("Helvetica-Bold", 12)
+    c.drawString(50, height - 170, f"Billed To: {customer_name}")
+    
+    date_str = booking.payment_date.strftime("%B %d, %Y") if booking.payment_date else "N/A"
+    c.setFont("Helvetica", 12)
+    c.drawString(50, height - 190, f"Date: {date_str}")
+    
+    amount = f"INR {booking.property.price}"
+    c.setFont("Helvetica-Bold", 16)
+    c.drawString(50, height - 230, f"Amount Paid: {amount}")
+    
+    c.setFont("Helvetica", 10)
+    c.setFillColor(HexColor('#94a3b8'))
+    c.drawString(50, height - 270, "Thank you for your payment!")
+    
+    c.save()
+    pdf = buffer.getvalue()
+    buffer.close()
+    return pdf
 
 
 class BookingViewSet(viewsets.ModelViewSet):
@@ -646,8 +802,397 @@ class BookingViewSet(viewsets.ModelViewSet):
                 # Skip bookings with broken property references
                 continue
         
-        return valid_bookings
+            return valid_bookings
+        
+    @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def add_student(self, request):
+        """Owner manually adding a student (offline booking)."""
+        if not request.user.is_owner:
+            return Response({'error': 'Only owners can manually add students.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        data = request.data
+        property_id = data.get('property_id')
+        room_id = data.get('room_id')
+        
+        if not property_id or not room_id:
+            return Response({'error': 'Property and Room are required.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            property_obj = Property.objects.get(id=property_id, owner=request.user)
+            room_obj = Room.objects.get(id=room_id, property=property_obj)
+        except (Property.DoesNotExist, Room.DoesNotExist):
+            return Response({'error': 'Invalid property or room.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        # Create booking
+        booking = Booking.objects.create(
+            property=property_obj,
+            room=room_obj,
+            status='Confirmed',
+            customer_name=data.get('customer_name', ''),
+            customer_email=data.get('customer_email', ''),
+            customer_phone=data.get('customer_phone', ''),
+            amount=room_obj.price, # Set default amount to room price
+        )
+        
+        # Send admission confirmed email
+        if booking.customer_email:
+            try:
+                from django.core.mail import EmailMultiAlternatives
+                from django.conf import settings
+                from datetime import datetime
+                
+                subject = f'Admission Confirmed - {property_obj.name}'
+                html_content = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        .wrapper {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; }}
+                        .container {{ max-width: 600px; margin: 0 auto; background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+                        .header {{ background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); padding: 40px; text-align: center; }}
+                        .content {{ padding: 40px; color: #1e293b; }}
+                        .footer {{ text-align: center; padding: 30px; color: #94a3b8; font-size: 12px; }}
+                        .details-box {{ background-color: #f1f5f9; padding: 20px; border-radius: 12px; margin-top: 20px; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="wrapper">
+                        <div class="container">
+                            <div class="header">
+                                <h1 style="color: white; margin: 0; font-size: 24px;">Admission Confirmed!</h1>
+                                <p style="color: rgba(255,255,255,0.9); margin-top: 8px;">Welcome to {property_obj.name}</p>
+                            </div>
+                            <div class="content">
+                                <p style="font-size: 16px;">Hello <strong>{booking.customer_name or 'Resident'}</strong>,</p>
+                                <p style="font-size: 16px; line-height: 1.6;">Your admission at <strong>{property_obj.name}</strong> has been successfully confirmed.</p>
+                                
+                                <div class="details-box">
+                                    <h3 style="margin-top: 0; color: #0f172a; margin-bottom: 12px;">Booking Details:</h3>
+                                    <p style="margin: 4px 0;"><strong>Room:</strong> {room_obj.name}</p>
+                                    <p style="margin: 4px 0;"><strong>Rent:</strong> ₹{room_obj.price} / month</p>
+                                    <p style="margin: 4px 0;"><strong>Joined Date:</strong> {datetime.now().strftime("%B %d, %Y")}</p>
+                                </div>
+                                <br>
+                                <p style="font-size: 14px; color: #64748b;">We are excited to have you with us!</p>
+                            </div>
+                            <div class="footer">
+                                © {datetime.now().year} NestNode • Premium Student Living Platforms
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+                msg = EmailMultiAlternatives(
+                    subject,
+                    f"Hello {booking.customer_name or 'Resident'},\n\nYour admission at {property_obj.name} (Room: {room_obj.name}) has been successfully confirmed.",
+                    settings.DEFAULT_FROM_EMAIL or 'noreply@nestnode.com',
+                    [booking.customer_email]
+                )
+                msg.attach_alternative(html_content, "text/html")
+                msg.send(fail_silently=True)
+            except Exception as e:
+                logger.error(f"Error sending admission email: {e}")
+        
+        serializer = self.get_serializer(booking)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def cancel(self, request, pk=None):
+        """Cancel a booking, making its bed available again."""
+        try:
+            booking = Booking.objects.get(pk=pk)
+        except Booking.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'DB error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        # Verify ownership
+        try:
+            if str(booking.property.owner_id) != str(request.user.id):
+                return Response({'error': f'Not authorized. Booking owner: {booking.property.owner_id}, Request user: {request.user.id}'}, status=status.HTTP_403_FORBIDDEN)
+        except Exception as e:
+            return Response({'error': f'Auth check error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        try:
+            # Send cancellation email before deleting the booking
+            user_email = booking.customer_email or (booking.user.email if booking.user else None)
+            customer_name = booking.customer_name or (booking.user.full_name if booking.user else 'Valued Resident')
+            property_name = booking.property.name
+            
+            if user_email:
+                subject = f'Important: Admission Cancelled - {property_name}'
+                
+                html_content = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        .wrapper {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; }}
+                        .container {{ max-width: 600px; margin: 0 auto; background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+                        .header {{ background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 40px; text-align: center; }}
+                        .content {{ padding: 40px; color: #1e293b; }}
+                        .footer {{ text-align: center; padding: 30px; color: #94a3b8; font-size: 12px; }}
+                    </style>
+                </head>
+                <body>
+                    <div class="wrapper">
+                        <div class="container">
+                            <div class="header">
+                                <h1 style="color: white; margin: 0; font-size: 24px;">Admission Cancelled</h1>
+                            </div>
+                            <div class="content">
+                                <p style="font-size: 16px;">Hello <strong>{customer_name}</strong>,</p>
+                                <p style="font-size: 16px; line-height: 1.6;">This email is to notify you that your admission and booking at <strong>{property_name}</strong> has been cancelled by the property management.</p>
+                                <p style="font-size: 16px; line-height: 1.6;">If you believe this is a mistake or if you need further clarification, please contact the property owner directly.</p>
+                            </div>
+                            <div class="footer">
+                                © NestNode • Premium Student Living Platforms
+                            </div>
+                        </div>
+                    </div>
+                </body>
+                </html>
+                """
+                
+                try:
+                    from django.core.mail import send_mail
+                    send_mail(
+                        subject,
+                        f"Hello {customer_name},\n\nYour admission at {property_name} has been cancelled by the property management. Please contact them for more details.",
+                        settings.DEFAULT_FROM_EMAIL or 'noreply@nestnode.com',
+                        [user_email],
+                        fail_silently=True,
+                        html_message=html_content
+                    )
+                except Exception as e:
+                    logger.error(f"Failed to send cancellation email: {e}")
+            
+            # Finally, delete the booking
+            booking.delete()
+            return Response({'status': 'Booking deleted and notification sent successfully'})
+        except Exception as e:
+            return Response({'error': f'Delete error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+    @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAuthenticated])
+    def update_joined_date(self, request, pk=None):
+        """Update the joined date (created_at) of a booking."""
+        try:
+            booking = Booking.objects.get(pk=pk)
+        except Booking.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Verify ownership
+        if str(booking.property.owner_id) != str(request.user.id):
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+        new_date_str = request.data.get('created_at')
+        if not new_date_str:
+            return Response({'error': 'Date is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            from datetime import datetime
+            from django.utils.timezone import make_aware
+            
+            # Parse the incoming date. Depending on frontend, it might just be YYYY-MM-DD
+            parsed_date = datetime.strptime(new_date_str.split('T')[0], '%Y-%m-%d')
+            # Make it timezone aware using Django's built-in utility
+            aware_date = make_aware(parsed_date)
+            
+            booking.created_at = aware_date
+            booking.save(update_fields=['created_at'])
+            # Some databases/Django versions might not respect update_fields for auto_now_add, 
+            # so we just do a regular save as fallback
+            booking.save()
+            return Response({'status': 'Date updated successfully'})
+        except Exception as e:
+            return Response({'error': f'Error updating date: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAuthenticated])
+    def update_payment_date(self, request, pk=None):
+        """Update the payment date of a booking."""
+        try:
+            booking = Booking.objects.get(pk=pk)
+        except Booking.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Verify ownership
+        if str(booking.property.owner_id) != str(request.user.id):
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+        new_date_str = request.data.get('payment_date')
+        send_receipt = request.data.get('send_receipt', False)
+        
+        if not new_date_str:
+            return Response({'error': 'Date is required'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            from datetime import datetime
+            from django.utils.timezone import make_aware
+            
+            parsed_date = datetime.strptime(new_date_str.split('T')[0], '%Y-%m-%d')
+            aware_date = make_aware(parsed_date)
+            
+            booking.payment_date = aware_date
+            booking.save(update_fields=['payment_date'])
+            
+            if send_receipt:
+                user_email = booking.customer_email or (booking.user.email if booking.user else None)
+                if user_email:
+                    pdf_bytes = generate_payment_receipt_pdf(booking)
+                    subject = f'Payment Receipt - {booking.property.name}'
+                    customer_name = booking.customer_name or (booking.user.full_name if booking.user else 'Valued Resident')
+                    
+                    html_content = f"""
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <style>
+                            .wrapper {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; }}
+                            .container {{ max-width: 600px; margin: 0 auto; background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+                            .header {{ background: linear-gradient(135deg, #10b981 0%, #059669 100%); padding: 40px; text-align: center; }}
+                            .content {{ padding: 40px; color: #1e293b; }}
+                            .footer {{ text-align: center; padding: 30px; color: #94a3b8; font-size: 12px; }}
+                        </style>
+                    </head>
+                    <body>
+                        <div class="wrapper">
+                            <div class="container">
+                                <div class="header">
+                                    <h1 style="color: white; margin: 0; font-size: 24px;">Payment Successful</h1>
+                                    <p style="color: rgba(255,255,255,0.9); margin-top: 8px;">Your payment has been received</p>
+                                </div>
+                                <div class="content">
+                                    <p style="font-size: 16px;">Hello <strong>{customer_name}</strong>,</p>
+                                    <p style="font-size: 16px; line-height: 1.6;">Your payment for this month at <strong>{booking.property.name}</strong> was successfully received.</p>
+                                    <p style="font-size: 16px; line-height: 1.6;">Please find your payment receipt attached to this email.</p>
+                                    <br>
+                                    <p style="font-size: 14px; color: #64748b;">Thank you!</p>
+                                </div>
+                                <div class="footer">
+                                    © {datetime.now().year} NestNode • Premium Student Living Platforms
+                                </div>
+                            </div>
+                        </div>
+                    </body>
+                    </html>
+                    """
+                    
+                    from django.core.mail import EmailMultiAlternatives
+                    msg = EmailMultiAlternatives(
+                        subject,
+                        f"Hello {customer_name},\n\nYour payment for this month at {booking.property.name} was successfully received. Find your receipt attached.",
+                        settings.DEFAULT_FROM_EMAIL or 'noreply@nestnode.com',
+                        [user_email]
+                    )
+                    msg.attach_alternative(html_content, "text/html")
+                    msg.attach('payment_receipt.pdf', pdf_bytes, 'application/pdf')
+                    try:
+                        msg.send(fail_silently=True)
+                    except Exception as e:
+                        logger.error(f"Error sending PDF receipt: {e}")
+
+            return Response({'status': 'Payment date updated successfully'})
+        except Exception as e:
+            return Response({'error': f'Error updating payment date: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    @action(detail=True, methods=['patch'], permission_classes=[permissions.IsAuthenticated])
+    def update_student_profile(self, request, pk=None):
+        """Update a student's profile details in their booking."""
+        try:
+            booking = Booking.objects.get(pk=pk)
+        except Booking.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+            
+        # Verify ownership
+        if str(booking.property.owner_id) != str(request.user.id):
+            return Response({'error': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+            
+        data = request.data
+        if 'customer_name' in data:
+            booking.customer_name = data['customer_name']
+        if 'customer_email' in data:
+            booking.customer_email = data['customer_email']
+        if 'customer_phone' in data:
+            booking.customer_phone = data['customer_phone']
+            
+        booking.save()
+        return Response({'status': 'Student profile updated successfully'})
+
+    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAuthenticated])
+    def remind_payment(self, request, pk=None):
+        """Send a beautiful HTML payment reminder email to the user."""
+        try:
+            booking = Booking.objects.get(pk=pk)
+        except Booking.DoesNotExist:
+            return Response({'error': 'Not found'}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({'error': f'DB error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            
+        # Verify ownership
+        try:
+            if str(booking.property.owner_id) != str(request.user.id):
+                return Response({'error': f'Not authorized. Booking owner: {booking.property.owner_id}, Request user: {request.user.id}'}, status=status.HTTP_403_FORBIDDEN)
+        except Exception as e:
+            return Response({'error': f'Auth check error: {str(e)}'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        user_email = booking.customer_email or (booking.user.email if booking.user else None)
+        if not user_email:
+            return Response({'error': 'No email address associated with this booking'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        subject = f'Pending Payment Reminder - {booking.property.name}'
+        customer_name = booking.customer_name or (booking.user.full_name if booking.user else 'Valued Resident')
+        
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                .wrapper {{ font-family: 'Segoe UI', Arial, sans-serif; background-color: #f8fafc; padding: 40px 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; background: white; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+                .header {{ background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); padding: 40px; text-align: center; }}
+                .content {{ padding: 40px; color: #1e293b; }}
+                .value {{ color: #1e293b; font-size: 16px; font-weight: 600; margin-bottom: 24px; }}
+                .footer {{ text-align: center; padding: 30px; color: #94a3b8; font-size: 12px; }}
+            </style>
+        </head>
+        <body>
+            <div class="wrapper">
+                <div class="container">
+                    <div class="header">
+                        <h1 style="color: white; margin: 0; font-size: 24px;">Payment Reminder</h1>
+                        <p style="color: rgba(255,255,255,0.9); margin-top: 8px;">Your upcoming payment is due</p>
+                    </div>
+                    <div class="content">
+                        <p style="font-size: 16px;">Hello <strong>{customer_name}</strong>,</p>
+                        <p style="font-size: 16px; line-height: 1.6;">This is a friendly reminder from <strong>{booking.property.owner.full_name}</strong> that your payment for this month at <strong>{booking.property.name}</strong> is currently pending.</p>
+                        <p style="font-size: 16px; line-height: 1.6;">Please clear your dues at your earliest convenience to ensure uninterrupted services.</p>
+                        <br>
+                        <p style="font-size: 14px; color: #64748b;">If you have already made the payment, please disregard this email.</p>
+                    </div>
+                    <div class="footer">
+                        © {datetime.now().year} NestNode • Premium Student Living Platforms
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+        
+        try:
+            from django.core.mail import send_mail
+            send_mail(
+                subject,
+                f"Hello {customer_name},\n\nYour payment for {booking.property.name} is pending. Please clear your dues.",
+                settings.DEFAULT_FROM_EMAIL or 'noreply@nestnode.com',
+                [user_email],
+                fail_silently=False,
+                html_message=html_content
+            )
+            return Response({'status': 'Reminder email sent successfully'})
+        except Exception as e:
+            logger.error(f"Failed to send payment reminder email: {e}")
+            return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 def send_enquiry_notification_email(enquiry):
     """

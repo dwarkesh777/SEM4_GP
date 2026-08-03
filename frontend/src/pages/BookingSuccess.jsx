@@ -450,13 +450,13 @@ const BookingSuccess = () => {
                                         onClick={() => {
                                             queryClient.invalidateQueries(['user-bookings']);
                                             queryClient.invalidateQueries(['booking-history']);
-                                            navigate('/dashboard');
+                                            navigate('/');
                                         }}
                                         variant="outline"
                                         className="flex items-center gap-2 h-12 px-6"
                                     >
-                                        <ArrowLeft className="w-5 h-5" />
-                                        Back to Dashboard
+                                        <Home className="w-5 h-5" />
+                                        Home Page
                                     </Button>
                                 </div>
                             </CardContent>

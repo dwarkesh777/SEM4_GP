@@ -133,6 +133,7 @@ class Booking(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Confirmed')
     created_at = models.DateTimeField(auto_now_add=True)
     # Payment details
+    payment_date = models.DateTimeField(null=True, blank=True)
     payment_id = models.CharField(max_length=100, null=True, blank=True)
     razorpay_order_id = models.CharField(max_length=100, null=True, blank=True)
     amount = models.IntegerField(null=True, blank=True)

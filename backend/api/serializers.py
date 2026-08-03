@@ -27,9 +27,15 @@ class RoomSerializer(serializers.ModelSerializer):
     available_beds = serializers.SerializerMethodField()
 
     def get_booked_beds(self, obj):
+        # Use prefetched confirmed_bookings list (set by Prefetch to_attr in views.py)
+        # to avoid an extra DB query per room.
+        if hasattr(obj, 'confirmed_bookings'):
+            return len(obj.confirmed_bookings)
         return obj.get_booked_beds()
 
     def get_available_beds(self, obj):
+        if hasattr(obj, 'confirmed_bookings'):
+            return max(0, obj.total_beds - len(obj.confirmed_bookings))
         return obj.get_available_beds()
 
     class Meta:
@@ -195,6 +201,117 @@ class PropertySerializer(serializers.ModelSerializer):
 
         return property_obj
 
+    def update(self, instance, validated_data):
+        import json
+        import logging
+        logger = logging.getLogger(__name__)
+
+        validated_data.pop('rooms', None)
+        validated_data.pop('amenities', None)
+        validated_data.pop('appliances', None)
+
+        # Update basic fields on instance
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        instance.save()
+
+        request = self.context.get('request')
+        if not request:
+            return instance
+
+        # 1. Update Amenities
+        raw_amenities = request.data.getlist('amenities')
+        if raw_amenities:
+            amenities_objs = [Amenity.objects.get_or_create(name=n)[0] for n in raw_amenities if n]
+            instance.amenities.set(amenities_objs)
+
+        # 2. Update Appliances
+        raw_appliances = request.data.getlist('appliances')
+        if raw_appliances:
+            appliances_objs = [Appliance.objects.get_or_create(name=n)[0] for n in raw_appliances if n]
+            instance.appliances.set(appliances_objs)
+
+        # 3. Update Rooms
+        rooms_json = request.data.get('rooms_json')
+        if rooms_json:
+            try:
+                rooms_data = json.loads(rooms_json)
+            except Exception as e:
+                logger.error(f"Error parsing rooms_json during update: {e}")
+                rooms_data = None
+
+            if isinstance(rooms_data, list):
+                from .models import Room
+                processed_room_ids = []
+
+                for room_data in rooms_data:
+                    if isinstance(room_data, dict) and room_data.get('name') and room_data.get('price') is not None:
+                        try:
+                            room_id = room_data.get('id')
+                            name = str(room_data.get('name', 'Room')).strip()
+                            beds = int(room_data.get('beds', 1))
+                            total_beds = int(room_data.get('total_beds', 20))
+                            occupancy = str(room_data.get('occupancy', 'Single'))
+                            price = int(float(room_data.get('price', 0)))
+                            is_ac = str(room_data.get('is_ac', 'Non-AC'))
+                            available = bool(room_data.get('available', True))
+
+                            room_obj = None
+                            if room_id:
+                                try:
+                                    room_obj = Room.objects.get(id=room_id, property=instance)
+                                    room_obj.name = name
+                                    room_obj.beds = beds
+                                    room_obj.total_beds = total_beds
+                                    room_obj.occupancy = occupancy
+                                    room_obj.price = price
+                                    room_obj.is_ac = is_ac
+                                    room_obj.available = available
+                                    room_obj.save()
+                                except (Room.DoesNotExist, ValueError):
+                                    room_obj = Room.objects.create(
+                                        property=instance,
+                                        name=name,
+                                        beds=beds,
+                                        total_beds=total_beds,
+                                        occupancy=occupancy,
+                                        price=price,
+                                        is_ac=is_ac,
+                                        available=available
+                                    )
+                            else:
+                                room_obj = Room.objects.create(
+                                    property=instance,
+                                    name=name,
+                                    beds=beds,
+                                    total_beds=total_beds,
+                                    occupancy=occupancy,
+                                    price=price,
+                                    is_ac=is_ac,
+                                    available=available
+                                )
+
+                            if room_obj:
+                                processed_room_ids.append(room_obj.id)
+
+                        except Exception as e:
+                            logger.error(f"Error updating/creating room during property edit: {e}")
+
+                if processed_room_ids:
+                    instance.rooms.exclude(id__in=processed_room_ids).delete()
+
+        # 4. Save uploaded gallery images if any
+        uploaded_images = request.FILES.getlist('uploaded_images')
+        if uploaded_images:
+            from .models import PropertyImage
+            for img in uploaded_images:
+                try:
+                    PropertyImage.objects.create(property=instance, image=img)
+                except Exception as e:
+                    logger.error(f"Error saving uploaded gallery image during edit: {e}")
+
+        return instance
+
 
 class BookingSerializer(serializers.ModelSerializer):
     property_name = serializers.CharField(source='property.name', read_only=True)
@@ -207,7 +324,7 @@ class BookingSerializer(serializers.ModelSerializer):
         model = Booking
         fields = [
             'id', 'property_name', 'property_image', 
-            'room_name', 'status', 'created_at',
+            'room_name', 'status', 'created_at', 'payment_date',
             'payment_id', 'razorpay_order_id', 'amount',
             'customer_name', 'customer_phone', 'customer_email', 'customer_age',
             'property_location', 'property_city'

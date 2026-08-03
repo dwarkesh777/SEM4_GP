@@ -29,8 +29,8 @@ EMAIL_SERVICE_URL = os.getenv('EMAIL_SERVICE_URL')
 EMAIL_SERVICE_API_KEY = os.getenv('EMAIL_SERVICE_API_KEY')
 
 INSTALLED_APPS = [
-    'nestnode_backend.apps.MongoAuthConfig',
-    'nestnode_backend.apps.MongoContentTypesConfig',
+    'django.contrib.auth',
+    'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.messages',
     'cloudinary_storage',
@@ -39,18 +39,8 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
-    'django_mongodb_backend',
     'api',
 ]
-
-# auth and contenttypes need their own MongoDB-compatible migrations because
-# their built-in migrations use AutoField, which MongoDB does not support.
-MIGRATION_MODULES = {
-    'auth': 'nestnode_backend.mongo_migrations.auth',
-    'contenttypes': 'nestnode_backend.mongo_migrations.contenttypes',
-}
-
-DATABASE_ROUTERS = ['django_mongodb_backend.routers.MongoRouter']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -106,7 +96,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django_mongodb_backend',
         'NAME': 'nestnode_db_v2',
-        'HOST': os.getenv('MONGODB_URI', 'mongodb+srv://savaliyadwarkesh95_db_user:kUfCaHxvmJlsI57x@dwarkeshsem4.m40hhtg.mongodb.net/nestnode_db_v2'),
+        'HOST': os.getenv('MONGODB_URI'),
     }
 }
 
@@ -130,7 +120,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_TZ = True
 
-STATIC_URL = '/static/'
+STATIC_URL = 'static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -155,9 +145,9 @@ CORS_ALLOW_METHODS = [
 DEFAULT_AUTO_FIELD = 'django_mongodb_backend.fields.ObjectIdAutoField'
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME', 'dqddawu42'),
-    'API_KEY': os.getenv('CLOUDINARY_API_KEY', '588757514664146'),
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', 'zGJ3E4-oukgesomhK-Aoa55Gp6E'),
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
 }
 
 STORAGES = {
@@ -165,11 +155,14 @@ STORAGES = {
         "BACKEND": "cloudinary_storage.storage.MediaCloudinaryStorage",
     },
     "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+        "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
 }
 
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+# django-cloudinary-storage's collectstatic command still reads this old-style
+# setting directly, so it must be defined even though STORAGES (above) is the
+# modern equivalent that Django itself uses.
+STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 
 SILENCED_SYSTEM_CHECKS = ["mongodb.E001", "mongodb.fields.auto.E001"]
 

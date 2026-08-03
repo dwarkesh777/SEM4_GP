@@ -13,7 +13,8 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'django-insecure-kh0u0i5zn@(^@8#1lxbvf^vy0!l(o0__t=jn@uq*id9pdr%=&*')
 DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',') + ['hastiest-lorretta-strengtheningly.ngrok-free.dev']
+ALLOWED_HOSTS = [h.strip() for h in os.getenv('ALLOWED_HOSTS', '*').split(',') if h.strip()] + ['hastiest-lorretta-strengtheningly.ngrok-free.dev', '.onrender.com', '.up.railway.app']
+CSRF_TRUSTED_ORIGINS = [origin.strip() for origin in os.getenv('CSRF_TRUSTED_ORIGINS', 'https://*.up.railway.app,https://*.onrender.com').split(',') if origin.strip()]
   
 # Gmail SMTP Configuration
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'

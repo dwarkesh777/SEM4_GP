@@ -91,7 +91,7 @@ def public_properties(request):
             pass
 
     serializer = PropertySerializer(queryset, many=True, context={'request': request})
-    return Response({'count': queryset.count(), 'results': serializer.data})
+    return Response({'count': len(serializer.data), 'results': serializer.data})
 
 
 @api_view(['POST'])
@@ -314,6 +314,11 @@ class PropertyViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.get_queryset()
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
     def create(self, request, *args, **kwargs):
         logger.info(f"POST /api/properties/ - data keys: {list(request.data.keys())}")

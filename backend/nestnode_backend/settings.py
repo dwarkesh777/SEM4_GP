@@ -106,7 +106,7 @@ DATABASES = {
     'default': {
         'ENGINE': 'django_mongodb_backend',
         'NAME': 'nestnode_db_v2',
-        'HOST': os.getenv('MONGODB_URI'),
+        'HOST': os.getenv('MONGODB_URI', 'mongodb+srv://savaliyadwarkesh95_db_user:kUfCaHxvmJlsI57x@dwarkeshsem4.m40hhtg.mongodb.net/nestnode_db_v2'),
     }
 }
 
@@ -155,9 +155,9 @@ CORS_ALLOW_METHODS = [
 DEFAULT_AUTO_FIELD = 'django_mongodb_backend.fields.ObjectIdAutoField'
 
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME'),
-    'API_KEY': os.getenv('CLOUDINARY_API_KEY'),
-    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET'),
+    'CLOUD_NAME': os.getenv('CLOUDINARY_CLOUD_NAME', 'dqddawu42'),
+    'API_KEY': os.getenv('CLOUDINARY_API_KEY', '588757514664146'),
+    'API_SECRET': os.getenv('CLOUDINARY_API_SECRET', 'zGJ3E4-oukgesomhK-Aoa55Gp6E'),
 }
 
 STORAGES = {

@@ -7,7 +7,7 @@ services:
     startCommand: "gunicorn nestnode_backend.wsgi:application"
     envVars:
       - key: PYTHON_VERSION
-        value: 3.12.0
+        value: 3.12.8
       - key: DEBUG
         value: "False"
       - key: ALLOWED_HOSTS

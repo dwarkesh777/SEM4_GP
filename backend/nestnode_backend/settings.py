@@ -29,8 +29,8 @@ EMAIL_SERVICE_URL = os.getenv('EMAIL_SERVICE_URL')
 EMAIL_SERVICE_API_KEY = os.getenv('EMAIL_SERVICE_API_KEY')
 
 INSTALLED_APPS = [
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
+    'nestnode_backend.apps.MongoAuthConfig',
+    'nestnode_backend.apps.MongoContentTypesConfig',
     'django.contrib.sessions',
     'django.contrib.messages',
     'cloudinary_storage',
@@ -39,8 +39,18 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'corsheaders',
+    'django_mongodb_backend',
     'api',
 ]
+
+# auth and contenttypes need their own MongoDB-compatible migrations because
+# their built-in migrations use AutoField, which MongoDB does not support.
+MIGRATION_MODULES = {
+    'auth': 'nestnode_backend.mongo_migrations.auth',
+    'contenttypes': 'nestnode_backend.mongo_migrations.contenttypes',
+}
+
+DATABASE_ROUTERS = ['django_mongodb_backend.routers.MongoRouter']
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',

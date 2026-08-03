@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import CameraModal from '@/components/CameraModal';
 import { Building2, ArrowLeft, Loader2 } from "lucide-react";
+import { API_URL } from "@/lib/api";
 
 const OwnerSignupPage = () => {
     const [formData, setFormData] = useState({
@@ -76,7 +77,7 @@ const OwnerSignupPage = () => {
                 face_photo: facePhotoUrl
             };
 
-            const response = await fetch('http://localhost:8000/api/auth/signup/owner', {
+            const response = await fetch(`${API_URL}/api/auth/signup/owner`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',

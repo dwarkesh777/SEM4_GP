@@ -9,7 +9,7 @@ import ShowAllProperties from "./ShowAllProperties";
 import ImageGallery from "./ImageGallery";
 
 const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters = {}, limit = null) => {
-    let url = `http://localhost:8000/api/public/properties/list/?appid=nestnode-readonly-key-2026&`;
+    let url = `${API_URL}/api/public/properties/list/?appid=nestnode-readonly-key-2026&`;
     if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
     if (lat && lng) url += `lat=${lat}&lng=${lng}&`;
     

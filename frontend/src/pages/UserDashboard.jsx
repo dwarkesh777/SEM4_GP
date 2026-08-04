@@ -86,6 +86,12 @@ const UserDashboard = () => {
         email: user?.email || "",
         phone_number: user?.phone_number || "",
         business_name: user?.business_name || "",
+        business_type: user?.business_type || "Individual",
+        address: user?.address || "",
+        city: user?.city || "",
+        state: user?.state || "",
+        pincode: user?.pincode || "",
+        bio: user?.bio || "",
         face_photo: user?.face_photo || "",
     });
 
@@ -102,10 +108,16 @@ const UserDashboard = () => {
     useEffect(() => {
         if (user) {
             setProfileData({
-                full_name: user.full_name,
-                email: user.email,
+                full_name: user.full_name || "",
+                email: user.email || "",
                 phone_number: user.phone_number || "",
                 business_name: user.business_name || "",
+                business_type: user.business_type || "Individual",
+                address: user.address || "",
+                city: user.city || "",
+                state: user.state || "",
+                pincode: user.pincode || "",
+                bio: user.bio || "",
                 face_photo: user.face_photo || "",
             });
             // Only fetch enquiries and properties - bookings handled by React Query
@@ -141,7 +153,7 @@ const UserDashboard = () => {
     };
 
     const handleProfileUpdate = async (e) => {
-        e.preventDefault();
+        if (e) e.preventDefault();
         setIsLoading(true);
         try {
             const token = localStorage.getItem('token');
@@ -154,11 +166,37 @@ const UserDashboard = () => {
                 body: JSON.stringify(profileData)
             });
             if (res.ok) {
-                toast({ title: "Profile Updated", description: "Your changes have been saved." });
+                const updatedUser = await res.json();
+                toast({ title: "Profile Saved! 🎉", description: "Profile details saved successfully to database." });
                 setIsEditing(false);
+
+                // Update local storage user object
+                try {
+                    const localUser = JSON.parse(localStorage.getItem("user") || "{}");
+                    localStorage.setItem("user", JSON.stringify({ ...localUser, ...updatedUser }));
+                } catch (err) {}
+
+                setProfileData({
+                    full_name: updatedUser.full_name || "",
+                    email: updatedUser.email || "",
+                    phone_number: updatedUser.phone_number || "",
+                    business_name: updatedUser.business_name || "",
+                    business_type: updatedUser.business_type || "Individual",
+                    address: updatedUser.address || "",
+                    city: updatedUser.city || "",
+                    state: updatedUser.state || "",
+                    pincode: updatedUser.pincode || "",
+                    bio: updatedUser.bio || "",
+                    face_photo: updatedUser.face_photo || "",
+                });
+                return true;
+            } else {
+                toast({ title: "Save Failed", description: "Could not save profile details to database.", variant: "destructive" });
+                return false;
             }
         } catch (error) {
             toast({ title: "Error", description: "Failed to update profile.", variant: "destructive" });
+            return false;
         } finally {
             setIsLoading(false);
         }

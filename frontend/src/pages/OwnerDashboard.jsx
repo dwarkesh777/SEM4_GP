@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import Plot from "react-plotly.js";
 import {
@@ -37,7 +37,8 @@ import {
     Play,
     Pause,
     Target,
-    Flame
+    Flame,
+    Upload
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +55,117 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
     const { toast } = useToast();
     const [view, setView] = useState("home"); // home, listings, bookings, queries, analytics, profile, verify, management
     const [sidebarOpen, setSidebarOpen] = useState(false);
+
+    const [isEditingProfile, setIsEditingProfile] = useState(() => {
+        const isComplete = Boolean(
+            profileData?.full_name?.trim() &&
+            profileData?.phone_number?.trim() &&
+            profileData?.business_name?.trim() &&
+            profileData?.address?.trim() &&
+            profileData?.city?.trim() &&
+            profileData?.state?.trim() &&
+            profileData?.pincode?.trim() &&
+            profileData?.bio?.trim()
+        );
+        return !isComplete;
+    });
+
+    const [showCameraModal, setShowCameraModal] = useState(false);
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+
+    const startCamera = async () => {
+        setShowCameraModal(true);
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
+            if (videoRef.current) {
+                videoRef.current.srcObject = stream;
+            }
+        } catch (err) {
+            console.error("Camera error:", err);
+            toast({
+                title: "Camera Access Error",
+                description: "Unable to access camera. Please check browser permissions or upload an image file.",
+                variant: "destructive"
+            });
+        }
+    };
+
+    const stopCamera = () => {
+        if (videoRef.current && videoRef.current.srcObject) {
+            const stream = videoRef.current.srcObject;
+            stream.getTracks().forEach(track => track.stop());
+            videoRef.current.srcObject = null;
+        }
+        setShowCameraModal(false);
+    };
+
+    const captureCameraPhoto = () => {
+        if (videoRef.current && canvasRef.current) {
+            const video = videoRef.current;
+            const canvas = canvasRef.current;
+            canvas.width = video.videoWidth || 640;
+            canvas.height = video.videoHeight || 480;
+            const context = canvas.getContext('2d');
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+            setProfileData(prev => ({ ...prev, face_photo: dataUrl }));
+            stopCamera();
+            toast({
+                title: "Photo Captured! 📷",
+                description: "Click 'Save Profile' to store profile details and upload image to Cloudinary.",
+            });
+        }
+    };
+
+    const handleFileUpload = (e) => {
+        const file = e.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onloadend = () => {
+                setProfileData(prev => ({ ...prev, face_photo: reader.result }));
+                toast({
+                    title: "Image Uploaded 🖼️",
+                    description: "Click 'Save Profile' to store profile details and upload image to Cloudinary.",
+                });
+            };
+            reader.readAsDataURL(file);
+        }
+    };
+
+    const requiredProfileFields = [
+        { key: 'full_name', label: 'Full Name' },
+        { key: 'phone_number', label: 'Phone Number' },
+        { key: 'business_name', label: 'Business Name' },
+        { key: 'business_type', label: 'Business Type' },
+        { key: 'address', label: 'Full Address' },
+        { key: 'city', label: 'City' },
+        { key: 'state', label: 'State' },
+        { key: 'pincode', label: 'PIN Code' },
+        { key: 'bio', label: 'Bio' },
+        { key: 'face_photo', label: 'Profile Photo' },
+    ];
+
+    const filledCount = requiredProfileFields.filter(f => profileData?.[f.key] && String(profileData[f.key]).trim().length > 0).length;
+    const profileProgress = Math.round((filledCount / requiredProfileFields.length) * 100);
+
+    const onOwnerProfileSubmit = async (e) => {
+        e.preventDefault();
+        const emptyFields = requiredProfileFields.filter(f => !profileData?.[f.key] || !String(profileData[f.key]).trim());
+        if (emptyFields.length > 0) {
+            toast({
+                title: "All Fields Mandatory",
+                description: `All fields are required. Please fill in: ${emptyFields.map(f => f.label).join(", ")}`,
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const success = await handleProfileUpdate(e);
+        if (success !== false) {
+            setIsEditingProfile(false);
+        }
+    };
 
     const analytics = useMemo(() => {
         const monthLabels = [];
@@ -165,7 +277,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
 
     const handleSaveVerification = async () => {
         const { pan_number, aadhar_number, bank_account, ifsc_code } = verifyForm;
-        
+
         if (!pan_number?.trim() || !aadhar_number?.trim() || !bank_account?.trim() || !ifsc_code?.trim()) {
             toast({
                 title: "All Fields Mandatory",
@@ -199,7 +311,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                 try {
                     const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
                     localStorage.setItem("user", JSON.stringify({ ...currentUser, ...updatedData }));
-                } catch (e) {}
+                } catch (e) { }
 
                 toast({
                     title: "Verification Details Saved! 🎉",
@@ -357,7 +469,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                 try {
                     const data = await res.json();
                     if (data.error) errorMsg = data.error;
-                } catch (e) {}
+                } catch (e) { }
                 toast({ title: "Error", description: errorMsg, variant: "destructive" });
             }
         } catch (err) {
@@ -388,7 +500,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                 try {
                     const data = await res.json();
                     if (data.error) errorMsg = data.error;
-                } catch (e) {}
+                } catch (e) { }
                 toast({ title: "Error", description: errorMsg, variant: "destructive" });
             }
         } catch (err) {
@@ -419,7 +531,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                 try {
                     const data = await res.json();
                     if (data.error) errorMsg = data.error;
-                } catch (e) {}
+                } catch (e) { }
                 toast({ title: "Error", description: errorMsg, variant: "destructive" });
             }
         } catch (err) {
@@ -450,7 +562,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                 try {
                     const data = await res.json();
                     if (data.error) errorMsg = data.error;
-                } catch (e) {}
+                } catch (e) { }
                 toast({ title: "Error", description: errorMsg, variant: "destructive" });
             }
         } catch (err) {
@@ -461,12 +573,12 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
 
     const handleMarkPaid = async (booking) => {
         if (!confirm("Mark this booking as paid for the current cycle? This will advance the next due date by one month.")) return;
-        
+
         // Advance the payment date by exactly 1 month from the current payment date
         const currentPaymentDate = new Date(booking.payment_date || booking.created_at);
         currentPaymentDate.setMonth(currentPaymentDate.getMonth() + 1);
         const newDateStr = currentPaymentDate.toISOString().split('T')[0];
-        
+
         setActionLoading(`mark-paid-${booking.id}`);
         try {
             const res = await fetch(`${API_URL}/api/bookings/${booking.id}/update_payment_date/`, {
@@ -475,7 +587,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${localStorage.getItem("token")}`
                 },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     payment_date: newDateStr,
                     send_receipt: true
                 })
@@ -488,7 +600,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                 try {
                     const data = await res.json();
                     if (data.error) errorMsg = data.error;
-                } catch (e) {}
+                } catch (e) { }
                 toast({ title: "Error", description: errorMsg, variant: "destructive" });
             }
         } catch (err) {
@@ -572,8 +684,8 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                         <h1 className="text-3xl font-black text-slate-900 font-heading">Promote & Ads Center</h1>
                         <p className="text-slate-500 mt-1 text-sm">Boost your property's bookings by launching sponsored ads on the Home Page.</p>
                     </div>
-                    <Button 
-                        onClick={() => setIsCreatingAd(true)} 
+                    <Button
+                        onClick={() => setIsCreatingAd(true)}
                         className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl px-6 py-6 shadow-lg shadow-amber-500/25 flex items-center gap-2 text-base transition-transform active:scale-95"
                     >
                         <Megaphone className="w-5 h-5" />
@@ -844,11 +956,10 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                                 <div className="text-xs text-slate-700 font-medium line-clamp-1">{ad.headline}</div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                                                    ad.status === "Active" 
-                                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${ad.status === "Active"
+                                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                                         : "bg-slate-100 text-slate-600 border border-slate-200"
-                                                }`}>
+                                                    }`}>
                                                     <span className={`w-2 h-2 rounded-full ${ad.status === "Active" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
                                                     {ad.status}
                                                 </span>
@@ -915,15 +1026,15 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                         <div className="flex items-center gap-3 w-full sm:w-auto">
                             <div className="relative flex-1 sm:w-64">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                                <Input 
-                                    placeholder="Search student..." 
+                                <Input
+                                    placeholder="Search student..."
                                     value={searchQuery}
                                     onChange={(e) => setSearchQuery(e.target.value)}
                                     className="pl-9 rounded-xl bg-white border-slate-200"
                                 />
                             </div>
-                            <Button 
-                                onClick={() => setIsAddingStudent(true)} 
+                            <Button
+                                onClick={() => setIsAddingStudent(true)}
                                 className="bg-blue-600 hover:bg-blue-700 rounded-xl flex items-center gap-2 whitespace-nowrap"
                             >
                                 <PlusCircle className="w-5 h-5" />
@@ -931,7 +1042,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                             </Button>
                         </div>
                     </div>
-                    
+
                     <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left">
@@ -953,7 +1064,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                     ) : activeBookings.map((booking) => {
                                         const joinedDate = new Date(booking.created_at);
                                         const paymentDate = new Date(booking.payment_date || booking.created_at);
-                                        
+
                                         const nextPaymentDate = new Date(paymentDate);
                                         nextPaymentDate.setMonth(nextPaymentDate.getMonth() + 1);
 
@@ -962,10 +1073,10 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                         const dateStr = joinedDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
                                         const paymentDateStr = paymentDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
                                         const nextDateStr = nextPaymentDate.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-                                        
+
                                         return (
                                             <tr key={booking.id} className={`${isOverdue ? "bg-red-50 hover:bg-red-100" : "hover:bg-slate-50/50"} transition-colors`}>
-                                                <td 
+                                                <td
                                                     className="px-6 py-4 cursor-pointer hover:bg-slate-100/50 transition-colors"
                                                     onClick={() => {
                                                         setSelectedStudent(booking);
@@ -995,23 +1106,23 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                                 <td className="px-6 py-4">
                                                     <div className="flex flex-col gap-1">
                                                         <div className="text-xs flex justify-between items-center">
-                                                            <span className="text-slate-500">Joined:</span> 
+                                                            <span className="text-slate-500">Joined:</span>
                                                             {editBookingId === booking.id ? (
                                                                 <div className="flex items-center gap-1">
-                                                                    <input 
-                                                                        type="date" 
+                                                                    <input
+                                                                        type="date"
                                                                         value={editDate}
                                                                         onChange={(e) => setEditDate(e.target.value)}
                                                                         className="text-xs border border-slate-300 rounded px-1 py-0.5 w-24"
                                                                     />
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleUpdateDate(booking.id)}
                                                                         disabled={actionLoading === `update-${booking.id}`}
                                                                         className="text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded hover:bg-emerald-100 disabled:opacity-50"
                                                                     >
                                                                         <CheckCircle2 className="w-3 h-3" />
                                                                     </button>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => setEditBookingId(null)}
                                                                         className="text-slate-400 bg-slate-100 px-1 py-0.5 rounded hover:bg-slate-200"
                                                                     >
@@ -1023,23 +1134,23 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                                             )}
                                                         </div>
                                                         <div className="text-xs flex justify-between items-center bg-slate-50 px-2 py-1 rounded-md">
-                                                            <span className="text-slate-500">Last Paid:</span> 
+                                                            <span className="text-slate-500">Last Paid:</span>
                                                             {editPaymentBookingId === booking.id ? (
                                                                 <div className="flex items-center gap-1">
-                                                                    <input 
-                                                                        type="date" 
+                                                                    <input
+                                                                        type="date"
                                                                         value={editPaymentDate}
                                                                         onChange={(e) => setEditPaymentDate(e.target.value)}
                                                                         className="text-xs border border-slate-300 rounded px-1 py-0.5 w-24"
                                                                     />
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => handleUpdatePaymentDate(booking.id)}
                                                                         disabled={actionLoading === `update-payment-${booking.id}`}
                                                                         className="text-emerald-600 bg-emerald-50 px-1 py-0.5 rounded hover:bg-emerald-100 disabled:opacity-50"
                                                                     >
                                                                         <CheckCircle2 className="w-3 h-3" />
                                                                     </button>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => setEditPaymentBookingId(null)}
                                                                         className="text-slate-400 bg-slate-100 px-1 py-0.5 rounded hover:bg-slate-200"
                                                                     >
@@ -1049,7 +1160,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                                             ) : (
                                                                 <div className="flex items-center gap-2">
                                                                     <span className="font-medium text-slate-700">{paymentDateStr}</span>
-                                                                    <button 
+                                                                    <button
                                                                         onClick={() => {
                                                                             setEditPaymentBookingId(booking.id);
                                                                             const dt = new Date(booking.payment_date || booking.created_at);
@@ -1064,10 +1175,10 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                                             )}
                                                         </div>
                                                         <div className="text-xs text-blue-600 flex justify-between items-center bg-blue-50 px-2 py-1 rounded-md">
-                                                            <span>Next Due:</span> 
+                                                            <span>Next Due:</span>
                                                             <div className="flex items-center gap-1">
                                                                 <span className="font-bold text-sm">{nextDateStr}</span>
-                                                                <button 
+                                                                <button
                                                                     onClick={() => handleMarkPaid(booking)}
                                                                     disabled={actionLoading === `mark-paid-${booking.id}`}
                                                                     className="text-blue-500 hover:text-emerald-600 hover:bg-emerald-50 rounded p-1 transition-colors disabled:opacity-50"
@@ -1081,14 +1192,14 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                                 </td>
                                                 <td className="px-6 py-4 text-right">
                                                     <div className="flex items-center justify-end gap-2">
-                                                        <a 
-                                                            href={`tel:${booking.customer_phone}`} 
+                                                        <a
+                                                            href={`tel:${booking.customer_phone}`}
                                                             className="p-2 text-slate-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
                                                             title="Call Resident"
                                                         >
                                                             <Phone className="w-4 h-4" />
                                                         </a>
-                                                        <button 
+                                                        <button
                                                             onClick={() => {
                                                                 setEditBookingId(booking.id);
                                                                 // Extract YYYY-MM-DD from the booking date string
@@ -1101,7 +1212,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                                         >
                                                             <Edit className="w-4 h-4" />
                                                         </button>
-                                                        <button 
+                                                        <button
                                                             onClick={() => handleSendReminder(booking.id)}
                                                             disabled={actionLoading === `remind-${booking.id}`}
                                                             className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors disabled:opacity-50"
@@ -1110,7 +1221,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                                             <Mail className="w-4 h-4" />
                                                         </button>
                                                         <div className="w-px h-6 bg-slate-200 mx-1"></div>
-                                                        <button 
+                                                        <button
                                                             onClick={() => handleRemoveUser(booking.id)}
                                                             disabled={actionLoading === `remove-${booking.id}`}
                                                             className="px-3 py-1.5 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors flex items-center gap-1 disabled:opacity-50"
@@ -1132,7 +1243,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                     <AnimatePresence>
                         {selectedStudent && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setSelectedStudent(null)}>
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -1145,7 +1256,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                             <X className="w-5 h-5" />
                                         </button>
                                     </div>
-                                    
+
                                     <div className="p-6 flex-1 overflow-y-auto">
                                         <div className="flex items-center gap-4 mb-6">
                                             <div className="w-16 h-16 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-black text-2xl">
@@ -1161,35 +1272,35 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                             <div className="space-y-4">
                                                 <div>
                                                     <Label className="text-slate-500 mb-1.5 block">Full Name</Label>
-                                                    <Input 
-                                                        value={editStudentForm.customer_name} 
-                                                        onChange={(e) => setEditStudentForm({...editStudentForm, customer_name: e.target.value})}
+                                                    <Input
+                                                        value={editStudentForm.customer_name}
+                                                        onChange={(e) => setEditStudentForm({ ...editStudentForm, customer_name: e.target.value })}
                                                     />
                                                 </div>
                                                 <div>
                                                     <Label className="text-slate-500 mb-1.5 block">Email Address</Label>
-                                                    <Input 
+                                                    <Input
                                                         type="email"
-                                                        value={editStudentForm.customer_email} 
-                                                        onChange={(e) => setEditStudentForm({...editStudentForm, customer_email: e.target.value})}
+                                                        value={editStudentForm.customer_email}
+                                                        onChange={(e) => setEditStudentForm({ ...editStudentForm, customer_email: e.target.value })}
                                                     />
                                                 </div>
                                                 <div>
                                                     <Label className="text-slate-500 mb-1.5 block">Phone Number</Label>
-                                                    <Input 
-                                                        value={editStudentForm.customer_phone} 
-                                                        onChange={(e) => setEditStudentForm({...editStudentForm, customer_phone: e.target.value})}
+                                                    <Input
+                                                        value={editStudentForm.customer_phone}
+                                                        onChange={(e) => setEditStudentForm({ ...editStudentForm, customer_phone: e.target.value })}
                                                     />
                                                 </div>
                                                 <div className="pt-4 flex gap-3">
-                                                    <Button 
-                                                        variant="outline" 
+                                                    <Button
+                                                        variant="outline"
                                                         className="flex-1 rounded-xl"
                                                         onClick={() => setIsEditingStudent(false)}
                                                     >
                                                         Cancel
                                                     </Button>
-                                                    <Button 
+                                                    <Button
                                                         className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700"
                                                         onClick={handleUpdateStudentProfile}
                                                         disabled={actionLoading === "update-student"}
@@ -1225,8 +1336,8 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                                         </div>
                                                     </div>
                                                 </div>
-                                                
-                                                <Button 
+
+                                                <Button
                                                     className="w-full rounded-xl bg-slate-900 hover:bg-slate-800 flex items-center gap-2"
                                                     onClick={() => setIsEditingStudent(true)}
                                                 >
@@ -1245,7 +1356,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                     <AnimatePresence>
                         {isAddingStudent && (
                             <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsAddingStudent(false)}>
-                                <motion.div 
+                                <motion.div
                                     initial={{ opacity: 0, scale: 0.95, y: 10 }}
                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95, y: 10 }}
@@ -1258,39 +1369,39 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                             <X className="w-5 h-5" />
                                         </button>
                                     </div>
-                                    
+
                                     <div className="p-6 flex-1 overflow-y-auto space-y-4">
                                         <div>
                                             <Label className="text-slate-500 mb-1.5 block">Full Name</Label>
-                                            <Input 
-                                                value={addStudentForm.customer_name} 
-                                                onChange={(e) => setAddStudentForm({...addStudentForm, customer_name: e.target.value})}
+                                            <Input
+                                                value={addStudentForm.customer_name}
+                                                onChange={(e) => setAddStudentForm({ ...addStudentForm, customer_name: e.target.value })}
                                                 placeholder="Enter student's name"
                                             />
                                         </div>
                                         <div>
                                             <Label className="text-slate-500 mb-1.5 block">Email Address</Label>
-                                            <Input 
+                                            <Input
                                                 type="email"
-                                                value={addStudentForm.customer_email} 
-                                                onChange={(e) => setAddStudentForm({...addStudentForm, customer_email: e.target.value})}
+                                                value={addStudentForm.customer_email}
+                                                onChange={(e) => setAddStudentForm({ ...addStudentForm, customer_email: e.target.value })}
                                                 placeholder="Enter email address"
                                             />
                                         </div>
                                         <div>
                                             <Label className="text-slate-500 mb-1.5 block">Phone Number</Label>
-                                            <Input 
-                                                value={addStudentForm.customer_phone} 
-                                                onChange={(e) => setAddStudentForm({...addStudentForm, customer_phone: e.target.value})}
+                                            <Input
+                                                value={addStudentForm.customer_phone}
+                                                onChange={(e) => setAddStudentForm({ ...addStudentForm, customer_phone: e.target.value })}
                                                 placeholder="Enter phone number"
                                             />
                                         </div>
                                         <div>
                                             <Label className="text-slate-500 mb-1.5 block">Select Property</Label>
-                                            <select 
+                                            <select
                                                 className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                 value={addStudentForm.property_id}
-                                                onChange={(e) => setAddStudentForm({...addStudentForm, property_id: e.target.value, room_id: ""})}
+                                                onChange={(e) => setAddStudentForm({ ...addStudentForm, property_id: e.target.value, room_id: "" })}
                                             >
                                                 <option value="">-- Select Property --</option>
                                                 {properties.map(p => (
@@ -1301,10 +1412,10 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                         {addStudentForm.property_id && (
                                             <div>
                                                 <Label className="text-slate-500 mb-1.5 block">Select Room</Label>
-                                                <select 
+                                                <select
                                                     className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                                     value={addStudentForm.room_id}
-                                                    onChange={(e) => setAddStudentForm({...addStudentForm, room_id: e.target.value})}
+                                                    onChange={(e) => setAddStudentForm({ ...addStudentForm, room_id: e.target.value })}
                                                 >
                                                     <option value="">-- Select Room --</option>
                                                     {properties.find(p => p.id === addStudentForm.property_id)?.rooms?.map(r => (
@@ -1314,14 +1425,14 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                             </div>
                                         )}
                                         <div className="pt-4 flex gap-3">
-                                            <Button 
-                                                variant="outline" 
+                                            <Button
+                                                variant="outline"
                                                 className="flex-1 rounded-xl"
                                                 onClick={() => setIsAddingStudent(false)}
                                             >
                                                 Cancel
                                             </Button>
-                                            <Button 
+                                            <Button
                                                 className="flex-1 rounded-xl bg-blue-600 hover:bg-blue-700"
                                                 onClick={handleAddStudent}
                                                 disabled={actionLoading === "add-student" || !addStudentForm.property_id || !addStudentForm.room_id}
@@ -1606,167 +1717,379 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
 
         if (view === "profile") {
             return (
-                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div>
-                        <h1 className="text-3xl font-black text-slate-900 font-heading">Complete Your Profile</h1>
-                        <p className="text-slate-500">Fill in your details to increase visibility and trust</p>
+                <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 relative">
+                    {/* Hidden canvas for taking snapshot from camera */}
+                    <canvas ref={canvasRef} className="hidden" />
+
+                    {/* Camera Modal */}
+                    {showCameraModal && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+                            <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-4">
+                                <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                                    <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                                        <Camera className="w-5 h-5 text-blue-600" />
+                                        Owner Profile Camera
+                                    </h3>
+                                    <button type="button" onClick={stopCamera} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                <div className="relative aspect-video bg-slate-900 rounded-2xl overflow-hidden shadow-inner flex items-center justify-center">
+                                    <video ref={videoRef} autoPlay playsInline className="w-full h-full object-cover" />
+                                </div>
+
+                                <div className="flex flex-col sm:flex-row gap-3 pt-2">
+                                    <Button type="button" onClick={captureCameraPhoto} className="flex-1 h-12 bg-blue-600 hover:bg-blue-700 font-bold rounded-xl gap-2 shadow-lg shadow-blue-500/20">
+                                        <Camera className="w-5 h-5" />
+                                        Capture Photo
+                                    </Button>
+                                    <label className="flex-1">
+                                        <input type="file" accept="image/*" onChange={(e) => { handleFileUpload(e); stopCamera(); }} className="hidden" />
+                                        <div className="h-12 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl flex items-center justify-center gap-2 cursor-pointer transition-colors">
+                                            <Upload className="w-4 h-4" />
+                                            Choose File
+                                        </div>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-900 font-heading">
+                                {isEditingProfile ? "Edit Owner Profile" : "Owner Profile"}
+                            </h1>
+                            <p className="text-slate-500">Fill in all required fields to reach 100% completion & trust verification</p>
+                        </div>
+                        {!isEditingProfile && (
+                            <Button
+                                onClick={() => setIsEditingProfile(true)}
+                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-2xl px-6 py-3 shadow-lg shadow-blue-500/20 flex items-center gap-2"
+                            >
+                                <Edit className="w-4 h-4" />
+                                Edit Profile
+                            </Button>
+                        )}
                     </div>
 
-                    <div className="space-y-2">
+                    {/* Progress Bar */}
+                    <div className="space-y-2 bg-white p-6 rounded-3xl border border-slate-100 shadow-sm">
                         <div className="flex items-center justify-between text-sm font-bold">
-                            <span className="text-slate-700">Profile Completion</span>
-                            <span className="text-emerald-600 px-2 py-0.5 bg-emerald-50 rounded-lg">100%</span>
+                            <span className="text-slate-700 flex items-center gap-2">
+                                <Sparkles className="w-4 h-4 text-emerald-500" /> Profile Completion
+                            </span>
+                            <span className={`px-3 py-1 rounded-full text-xs font-black ${profileProgress === 100 ? 'bg-emerald-100 text-emerald-700' : 'bg-blue-50 text-blue-600'}`}>
+                                {profileProgress}% {profileProgress === 100 ? "• Complete! 🎉" : ""}
+                            </span>
                         </div>
-                        <div className="h-3 bg-slate-100 rounded-full overflow-hidden border border-slate-200">
+                        <div className="h-3.5 bg-slate-100 rounded-full overflow-hidden border border-slate-200 p-0.5">
                             <motion.div
                                 initial={{ width: 0 }}
-                                animate={{ width: "100%" }}
-                                className="h-full bg-emerald-500"
+                                animate={{ width: `${profileProgress}%` }}
+                                transition={{ duration: 0.5 }}
+                                className={`h-full rounded-full ${profileProgress === 100 ? 'bg-gradient-to-r from-emerald-500 to-green-500' : 'bg-blue-600'}`}
                             />
                         </div>
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                         <Card className="lg:col-span-2 rounded-[32px] border-slate-100 shadow-sm overflow-hidden">
-                            <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-8">
+                            <CardHeader className="bg-slate-50/50 border-b border-slate-100 p-8 flex flex-row items-center justify-between">
                                 <CardTitle className="flex items-center gap-3 text-xl font-bold">
                                     <User className="w-5 h-5 text-blue-600" />
-                                    Personal Information
+                                    {isEditingProfile ? "Edit Information" : "Saved Profile Information"}
                                 </CardTitle>
+                                {!isEditingProfile && (
+                                    <Badge className="bg-emerald-50 text-emerald-600 border-emerald-200 font-bold px-3 py-1">
+                                        Saved in Database
+                                    </Badge>
+                                )}
                             </CardHeader>
                             <CardContent className="p-8">
+                                {/* Profile Photo & Info Top Banner */}
                                 <div className="flex flex-col md:flex-row items-center gap-8 mb-10 pb-10 border-b border-slate-100">
                                     <div className="relative group">
                                         <div className="w-32 h-32 rounded-[36px] bg-slate-100 border-4 border-white shadow-xl overflow-hidden flex items-center justify-center text-slate-300">
-                                            {user?.face_photo ? (
-                                                <img src={user.face_photo} alt={user.full_name} className="w-full h-full object-cover" />
+                                            {profileData.face_photo || user?.face_photo ? (
+                                                <img src={profileData.face_photo || user?.face_photo} alt={profileData.full_name || user?.full_name} className="w-full h-full object-cover" />
                                             ) : (
                                                 <User className="w-16 h-16" />
                                             )}
                                         </div>
-                                        <button className="absolute -bottom-2 -right-2 w-10 h-10 rounded-2xl bg-white border-4 border-slate-50 flex items-center justify-center text-slate-400 hover:text-blue-600 shadow-lg transition-colors">
+                                        <button
+                                            type="button"
+                                            onClick={startCamera}
+                                            title="Open Camera / Change Photo"
+                                            className="absolute -bottom-2 -right-2 w-11 h-11 rounded-2xl bg-blue-600 text-white flex items-center justify-center shadow-lg hover:bg-blue-700 transition-all hover:scale-105"
+                                        >
                                             <Camera className="w-5 h-5" />
                                         </button>
                                     </div>
-                                    <div className="text-center md:text-left">
-                                        <h3 className="text-2xl font-black text-slate-900 mb-1">{user?.full_name}</h3>
-                                        <p className="text-slate-500 font-bold mb-3">{user?.is_owner ? 'Property Owner' : 'Student'}</p>
-                                        <Badge className="bg-blue-50 text-blue-600 border-blue-100 font-bold px-4 py-1.5 rounded-full">
-                                            {user?.email}
-                                        </Badge>
+                                    <div className="text-center md:text-left space-y-1.5">
+                                        <h3 className="text-2xl font-black text-slate-900">{profileData.full_name || user?.full_name || "Owner Name"}</h3>
+                                        <p className="text-slate-500 font-bold text-sm">Property Owner • {profileData.business_name || "Business Account"}</p>
+                                        <div className="flex flex-wrap items-center justify-center md:justify-start gap-2 pt-1">
+                                            <Badge className="bg-blue-50 text-blue-600 border-blue-100 font-bold px-3 py-1 rounded-full">
+                                                {user?.email}
+                                            </Badge>
+                                            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 font-bold px-3 py-1 rounded-full">
+                                                Verified Owner
+                                            </Badge>
+                                        </div>
                                     </div>
                                 </div>
-                                <form onSubmit={handleProfileUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Full Name</Label>
-                                        <Input
-                                            value={profileData.full_name}
-                                            onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
-                                            className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Phone Number</Label>
-                                        <Input
-                                            value={profileData.phone_number}
-                                            onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
-                                            className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
-                                        />
-                                    </div>
-                                    <div className="space-y-2 col-span-full">
-                                        <Label className="font-bold text-slate-700">Email</Label>
-                                        <Input value={user?.email} disabled className="h-12 rounded-xl bg-slate-50 border-slate-200 text-slate-500" />
-                                        <p className="text-[10px] text-slate-400 font-medium ml-1">Email cannot be changed</p>
-                                    </div>
 
-                                    <div className="col-span-full border-t border-slate-100 my-4" />
+                                {!isEditingProfile ? (
+                                    /* VIEW MODE DISPLAY */
+                                    <div className="space-y-8">
+                                        {/* Personal Info */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Personal Details</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/70 p-5 rounded-2xl border border-slate-100">
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-bold">Full Name</p>
+                                                    <p className="font-bold text-slate-900 mt-0.5">{profileData.full_name || "Not provided"}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-bold">Phone Number</p>
+                                                    <p className="font-bold text-slate-900 mt-0.5">{profileData.phone_number || "Not provided"}</p>
+                                                </div>
+                                                <div className="col-span-full">
+                                                    <p className="text-xs text-slate-400 font-bold">Email Address</p>
+                                                    <p className="font-bold text-slate-900 mt-0.5">{user?.email}</p>
+                                                </div>
+                                            </div>
+                                        </div>
 
-                                    <div className="col-span-full space-y-6">
-                                        <h3 className="flex items-center gap-3 text-lg font-bold text-slate-900">
-                                            <Building2 className="w-5 h-5 text-blue-600" />
-                                            Business Information
-                                        </h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        {/* Business Details */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Business Details</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50/70 p-5 rounded-2xl border border-slate-100">
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-bold">Business Name</p>
+                                                    <p className="font-bold text-slate-900 mt-0.5">{profileData.business_name || "Not provided"}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-bold">Business Type</p>
+                                                    <p className="font-bold text-slate-900 mt-0.5">{profileData.business_type || "Individual"}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Address Details */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">Office / Business Address</h4>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50/70 p-5 rounded-2xl border border-slate-100">
+                                                <div className="col-span-full">
+                                                    <p className="text-xs text-slate-400 font-bold">Full Address</p>
+                                                    <p className="font-bold text-slate-900 mt-0.5">{profileData.address || "Not provided"}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-bold">City</p>
+                                                    <p className="font-bold text-slate-900 mt-0.5">{profileData.city || "Not provided"}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-bold">State</p>
+                                                    <p className="font-bold text-slate-900 mt-0.5">{profileData.state || "Not provided"}</p>
+                                                </div>
+                                                <div>
+                                                    <p className="text-xs text-slate-400 font-bold">PIN Code</p>
+                                                    <p className="font-bold text-slate-900 mt-0.5">{profileData.pincode || "Not provided"}</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        {/* Bio */}
+                                        <div className="space-y-4">
+                                            <h4 className="text-sm font-bold text-slate-400 uppercase tracking-wider">About Owner</h4>
+                                            <div className="bg-slate-50/70 p-5 rounded-2xl border border-slate-100">
+                                                <p className="font-medium text-slate-700 whitespace-pre-line">{profileData.bio || "No bio provided."}</p>
+                                            </div>
+                                        </div>
+
+                                        <div className="pt-4 border-t border-slate-100 flex justify-end">
+                                            <Button
+                                                onClick={() => setIsEditingProfile(true)}
+                                                className="h-12 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2 px-6 shadow-lg shadow-blue-200"
+                                            >
+                                                <Edit className="w-4 h-4" />
+                                                Edit Profile Details
+                                            </Button>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    /* EDIT MODE FORM */
+                                    <form onSubmit={onOwnerProfileSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <Label className="font-bold text-slate-700">Full Name *</Label>
+                                            <Input
+                                                value={profileData.full_name || ""}
+                                                onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                                                placeholder="Enter full name"
+                                                className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <Label className="font-bold text-slate-700">Phone Number *</Label>
+                                            <Input
+                                                value={profileData.phone_number || ""}
+                                                onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
+                                                placeholder="Enter phone number"
+                                                className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2 col-span-full">
+                                            <Label className="font-bold text-slate-700">Email Address</Label>
+                                            <Input value={user?.email || ""} disabled className="h-12 rounded-xl bg-slate-50 border-slate-200 text-slate-500 font-medium" />
+                                            <p className="text-[10px] text-slate-400 font-medium ml-1">Email cannot be changed</p>
+                                        </div>
+
+                                        <div className="col-span-full border-t border-slate-100 my-2" />
+
+                                        <div className="col-span-full space-y-6">
+                                            <h3 className="flex items-center gap-3 text-lg font-bold text-slate-900">
+                                                <Building2 className="w-5 h-5 text-blue-600" />
+                                                Business Information
+                                            </h3>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <Label className="font-bold text-slate-700">Business Name *</Label>
+                                                    <Input
+                                                        value={profileData.business_name || ""}
+                                                        onChange={(e) => setProfileData({ ...profileData, business_name: e.target.value })}
+                                                        placeholder="Enter business name"
+                                                        className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="font-bold text-slate-700">Business Type *</Label>
+                                                    <select
+                                                        value={profileData.business_type || "Individual"}
+                                                        onChange={(e) => setProfileData({ ...profileData, business_type: e.target.value })}
+                                                        className="w-full h-12 rounded-xl border border-slate-200 bg-white px-4 font-medium focus:ring-blue-500 focus:border-blue-500"
+                                                        required
+                                                    >
+                                                        <option value="Individual">Individual</option>
+                                                        <option value="Partnership">Partnership</option>
+                                                        <option value="Private Limited">Private Limited</option>
+                                                        <option value="Sole Proprietorship">Sole Proprietorship</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="col-span-full border-t border-slate-100 my-2" />
+
+                                        <div className="col-span-full space-y-6">
+                                            <h3 className="flex items-center gap-3 text-lg font-bold text-slate-900">
+                                                <MapPin className="w-5 h-5 text-blue-600" />
+                                                Office / Business Address
+                                            </h3>
                                             <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700">Business Name</Label>
-                                                <Input
-                                                    value={profileData.business_name}
-                                                    onChange={(e) => setProfileData({ ...profileData, business_name: e.target.value })}
-                                                    placeholder="Enter business name"
-                                                    className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
+                                                <Label className="font-bold text-slate-700">Full Address *</Label>
+                                                <textarea
+                                                    value={profileData.address || ""}
+                                                    onChange={(e) => setProfileData({ ...profileData, address: e.target.value })}
+                                                    className="w-full h-24 rounded-xl border border-slate-200 bg-white p-4 font-medium focus:ring-blue-500 focus:border-blue-500"
+                                                    placeholder="Enter full office/business address"
+                                                    required
                                                 />
                                             </div>
-                                            <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700">Business Type</Label>
-                                                <select className="w-full h-12 rounded-xl border border-slate-200 bg-white px-4 font-medium focus:ring-blue-500">
-                                                    <option>Partnership</option>
-                                                    <option>Individual</option>
-                                                    <option>Private Limited</option>
-                                                </select>
+                                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                                <div className="space-y-2">
+                                                    <Label className="font-bold text-slate-700">City *</Label>
+                                                    <Input
+                                                        value={profileData.city || ""}
+                                                        onChange={(e) => setProfileData({ ...profileData, city: e.target.value })}
+                                                        placeholder="City"
+                                                        className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="font-bold text-slate-700">State *</Label>
+                                                    <Input
+                                                        value={profileData.state || ""}
+                                                        onChange={(e) => setProfileData({ ...profileData, state: e.target.value })}
+                                                        placeholder="State"
+                                                        className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
+                                                        required
+                                                    />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="font-bold text-slate-700">PIN Code *</Label>
+                                                    <Input
+                                                        value={profileData.pincode || ""}
+                                                        onChange={(e) => setProfileData({ ...profileData, pincode: e.target.value })}
+                                                        placeholder="PIN Code"
+                                                        className="h-12 rounded-xl border-slate-200 focus:ring-blue-500"
+                                                        required
+                                                    />
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="col-span-full border-t border-slate-100 my-4" />
+                                        <div className="col-span-full border-t border-slate-100 my-2" />
 
-                                    <div className="col-span-full space-y-6">
-                                        <h3 className="flex items-center gap-3 text-lg font-bold text-slate-900">
-                                            <MapPin className="w-5 h-5 text-blue-600" />
-                                            Address
-                                        </h3>
-                                        <div className="space-y-2">
-                                            <Label className="font-bold text-slate-700">Full Address</Label>
-                                            <textarea className="w-full h-24 rounded-xl border border-slate-200 bg-white p-4 font-medium focus:ring-blue-500" placeholder="Enter full office/business address" />
-                                        </div>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                        <div className="col-span-full space-y-4">
+                                            <h3 className="flex items-center gap-3 text-lg font-bold text-slate-900">
+                                                <FileText className="w-5 h-5 text-blue-600" />
+                                                About You
+                                            </h3>
                                             <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700">City</Label>
-                                                <Input className="h-12 rounded-xl border-slate-200" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700">State</Label>
-                                                <Input className="h-12 rounded-xl border-slate-200" />
-                                            </div>
-                                            <div className="space-y-2">
-                                                <Label className="font-bold text-slate-700">PIN Code</Label>
-                                                <Input className="h-12 rounded-xl border-slate-200" />
+                                                <Label className="font-bold text-slate-700">Bio *</Label>
+                                                <textarea
+                                                    value={profileData.bio || ""}
+                                                    onChange={(e) => setProfileData({ ...profileData, bio: e.target.value })}
+                                                    className="w-full h-32 rounded-xl border border-slate-200 bg-white p-4 font-medium focus:ring-blue-500 focus:border-blue-500"
+                                                    placeholder="Tell potential tenants about yourself and your properties..."
+                                                    required
+                                                />
                                             </div>
                                         </div>
-                                    </div>
 
-                                    <div className="col-span-full border-t border-slate-100 my-4" />
-
-                                    <div className="col-span-full space-y-4">
-                                        <h3 className="flex items-center gap-3 text-lg font-bold text-slate-900">
-                                            <FileText className="w-5 h-5 text-blue-600" />
-                                            About You
-                                        </h3>
-                                        <div className="space-y-2">
-                                            <Label className="font-bold text-slate-700">Bio</Label>
-                                            <textarea className="w-full h-32 rounded-xl border border-slate-200 bg-white p-4 font-medium focus:ring-blue-500" placeholder="Tell potential tenants about yourself and your properties..." />
+                                        <div className="col-span-full flex items-center justify-end gap-3 pt-4 border-t border-slate-100">
+                                            {filledCount > 0 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    onClick={() => setIsEditingProfile(false)}
+                                                    className="h-14 rounded-2xl px-6 font-bold text-slate-600"
+                                                >
+                                                    Cancel
+                                                </Button>
+                                            )}
+                                            <Button
+                                                type="submit"
+                                                disabled={isLoading}
+                                                className="flex-1 sm:flex-none h-14 px-8 rounded-2xl bg-blue-600 hover:bg-blue-700 text-lg font-black gap-3 shadow-xl shadow-blue-200"
+                                            >
+                                                <CheckCircle2 className="w-6 h-6" />
+                                                {isLoading ? "Saving to Database..." : "Save Profile"}
+                                            </Button>
                                         </div>
-                                    </div>
-
-                                    <Button type="submit" disabled={isLoading} className="col-span-full h-14 rounded-2xl bg-blue-600 hover:bg-blue-700 text-lg font-black gap-3 shadow-xl shadow-blue-200">
-                                        <CheckCircle2 className="w-6 h-6" />
-                                        Save Profile
-                                    </Button>
-                                </form>
+                                    </form>
+                                )}
                             </CardContent>
                         </Card>
 
                         <div className="space-y-6">
-                            <Card className="rounded-3xl border-orange-100 bg-orange-50/30 p-6">
+                            <Card className="rounded-3xl border-emerald-100 bg-emerald-50/30 p-6">
                                 <h3 className="font-bold text-slate-900 flex items-center gap-2 mb-4">
-                                    <Globe className="w-4 h-4 text-orange-500" />
-                                    Profile Tips
+                                    <Globe className="w-4 h-4 text-emerald-600" />
+                                    100% Profile Tips
                                 </h3>
                                 <ul className="space-y-3">
                                     {[
-                                        "Complete all fields for 100% profile",
-                                        "Add a professional bio",
-                                        "Keep phone number updated",
-                                        "Verify your account for trust badge"
+                                        "Fill all required fields for 100% progress bar",
+                                        "Use Camera to upload profile photo to Cloudinary",
+                                        "Keep phone number & business name updated",
+                                        "Saved details are stored in database & editable anytime"
                                     ].map((tip, i) => (
                                         <li key={i} className="flex gap-3 text-sm font-medium text-slate-600">
                                             <CheckCircle2 className="w-4 h-4 text-emerald-500 shrink-0 mt-0.5" />
@@ -1774,6 +2097,13 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                         </li>
                                     ))}
                                 </ul>
+                            </Card>
+
+                            <Card className="rounded-3xl border-slate-100 p-6">
+                                <h4 className="font-bold text-slate-900 text-sm mb-3">Camera & Cloudinary Info</h4>
+                                <p className="text-xs text-slate-500 leading-relaxed">
+                                    Clicking on your profile camera button opens your webcam camera. Captured photos are uploaded securely to Cloudinary storage and stored in the database.
+                                </p>
                             </Card>
                         </div>
                     </div>
@@ -1890,88 +2220,87 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                 const availableBeds = rooms.reduce((s, r) => s + (r.available_beds ?? 0), 0);
 
                                 return (
-                                <Card key={property.id} className="rounded-3xl border-slate-100 overflow-hidden group shadow-sm hover:shadow-xl transition-all duration-300">
-                                    <div className="h-44 bg-slate-100 relative">
-                                        {property.main_image ? (
-                                            <img src={property.main_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                        ) : (
-                                            <div className="w-full h-full flex items-center justify-center">
-                                                <Building2 className="w-12 h-12 text-slate-300" />
+                                    <Card key={property.id} className="rounded-3xl border-slate-100 overflow-hidden group shadow-sm hover:shadow-xl transition-all duration-300">
+                                        <div className="h-44 bg-slate-100 relative">
+                                            {property.main_image ? (
+                                                <img src={property.main_image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                            ) : (
+                                                <div className="w-full h-full flex items-center justify-center">
+                                                    <Building2 className="w-12 h-12 text-slate-300" />
+                                                </div>
+                                            )}
+                                            <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                                            <div className="absolute top-4 right-4 flex gap-2">
+                                                <Badge className="bg-white/90 backdrop-blur-md text-blue-600 border-none font-bold">
+                                                    {property.type}
+                                                </Badge>
+                                                <Badge className={`backdrop-blur-md border-none font-bold ${property.is_verified === true ? 'bg-emerald-500/90 text-white' :
+                                                        property.is_verified === false ? 'bg-red-500/90 text-white' :
+                                                            'bg-amber-500/90 text-white'
+                                                    }`}>
+                                                    {property.is_verified === true ? '✓ Verified' : property.is_verified === false ? 'Rejected' : 'Pending'}
+                                                </Badge>
                                             </div>
-                                        )}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-                                        <div className="absolute top-4 right-4 flex gap-2">
-                                            <Badge className="bg-white/90 backdrop-blur-md text-blue-600 border-none font-bold">
-                                                {property.type}
-                                            </Badge>
-                                            <Badge className={`backdrop-blur-md border-none font-bold ${
-                                                property.is_verified === true ? 'bg-emerald-500/90 text-white' :
-                                                property.is_verified === false ? 'bg-red-500/90 text-white' :
-                                                'bg-amber-500/90 text-white'
-                                            }`}>
-                                                {property.is_verified === true ? '✓ Verified' : property.is_verified === false ? 'Rejected' : 'Pending'}
-                                            </Badge>
-                                        </div>
-                                        <div className="absolute bottom-3 left-4">
-                                            <h3 className="font-bold text-white text-lg drop-shadow">{property.name}</h3>
-                                            <p className="text-xs text-white/80 flex items-center gap-1">
-                                                <MapPin className="w-3 h-3" /> {property.city}, {property.location}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="p-5">
-                                        <div className="grid grid-cols-3 gap-3 mb-4">
-                                            <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
-                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total</p>
-                                                <p className="text-2xl font-black text-slate-800">{totalBeds}</p>
-                                                <p className="text-[10px] font-bold text-slate-400">Beds</p>
-                                            </div>
-                                            <div className="bg-emerald-50 rounded-2xl p-3 text-center border border-emerald-100">
-                                                <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1">Available</p>
-                                                <p className="text-2xl font-black text-emerald-700">{availableBeds}</p>
-                                                <p className="text-[10px] font-bold text-emerald-400">Beds</p>
-                                            </div>
-                                            <div className="bg-blue-50 rounded-2xl p-3 text-center border border-blue-100">
-                                                <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Booked</p>
-                                                <p className="text-2xl font-black text-blue-700">{bookedBeds}</p>
-                                                <p className="text-[10px] font-bold text-blue-400">Beds</p>
-                                            </div>
-                                        </div>
-
-                                        {rooms.length > 0 && (
-                                            <div className="space-y-2 mb-4">
-                                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
-                                                    <Bed className="w-3.5 h-3.5" /> Room Types
+                                            <div className="absolute bottom-3 left-4">
+                                                <h3 className="font-bold text-white text-lg drop-shadow">{property.name}</h3>
+                                                <p className="text-xs text-white/80 flex items-center gap-1">
+                                                    <MapPin className="w-3 h-3" /> {property.city}, {property.location}
                                                 </p>
-                                                <div className="space-y-1.5">
-                                                    {rooms.map((room, ri) => (
-                                                        <div key={ri} className="flex items-center justify-between text-xs bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
-                                                            <span className="font-bold text-slate-700 truncate max-w-[120px]">{room.name}</span>
-                                                            <div className="flex items-center gap-2 shrink-0">
-                                                                <span className="text-slate-400 font-medium">{room.total_beds ?? 0} total</span>
-                                                                <span className="text-emerald-600 font-bold">{room.available_beds ?? 0} avail</span>
-                                                                <span className="text-blue-600 font-bold">{room.booked_beds ?? 0} booked</span>
-                                                            </div>
-                                                        </div>
-                                                    ))}
+                                            </div>
+                                        </div>
+                                        <div className="p-5">
+                                            <div className="grid grid-cols-3 gap-3 mb-4">
+                                                <div className="bg-slate-50 rounded-2xl p-3 text-center border border-slate-100">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Total</p>
+                                                    <p className="text-2xl font-black text-slate-800">{totalBeds}</p>
+                                                    <p className="text-[10px] font-bold text-slate-400">Beds</p>
+                                                </div>
+                                                <div className="bg-emerald-50 rounded-2xl p-3 text-center border border-emerald-100">
+                                                    <p className="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1">Available</p>
+                                                    <p className="text-2xl font-black text-emerald-700">{availableBeds}</p>
+                                                    <p className="text-[10px] font-bold text-emerald-400">Beds</p>
+                                                </div>
+                                                <div className="bg-blue-50 rounded-2xl p-3 text-center border border-blue-100">
+                                                    <p className="text-xs font-bold text-blue-500 uppercase tracking-wider mb-1">Booked</p>
+                                                    <p className="text-2xl font-black text-blue-700">{bookedBeds}</p>
+                                                    <p className="text-[10px] font-bold text-blue-400">Beds</p>
                                                 </div>
                                             </div>
-                                        )}
 
-                                        <div className="flex items-center justify-between pt-3 border-t border-slate-50">
-                                            <span className="font-black text-blue-600 text-lg">₹{property.price}<span className="text-xs font-bold text-slate-400">/mo</span></span>
-                                            <div className="flex gap-2">
-                                                <Button variant="outline" size="sm" className="text-xs font-bold text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600" onClick={() => navigate(`/edit-property/${property.id}`)}>
-                                                    <Edit className="w-3 h-3 mr-1" />
-                                                    Edit
-                                                </Button>
-                                                <Button variant="ghost" size="sm" className="text-xs font-bold text-slate-400 hover:text-blue-600" onClick={() => navigate(`/hostel/${property.id}`)}>
-                                                    View Page
-                                                </Button>
+                                            {rooms.length > 0 && (
+                                                <div className="space-y-2 mb-4">
+                                                    <p className="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                                        <Bed className="w-3.5 h-3.5" /> Room Types
+                                                    </p>
+                                                    <div className="space-y-1.5">
+                                                        {rooms.map((room, ri) => (
+                                                            <div key={ri} className="flex items-center justify-between text-xs bg-slate-50 rounded-xl px-3 py-2 border border-slate-100">
+                                                                <span className="font-bold text-slate-700 truncate max-w-[120px]">{room.name}</span>
+                                                                <div className="flex items-center gap-2 shrink-0">
+                                                                    <span className="text-slate-400 font-medium">{room.total_beds ?? 0} total</span>
+                                                                    <span className="text-emerald-600 font-bold">{room.available_beds ?? 0} avail</span>
+                                                                    <span className="text-blue-600 font-bold">{room.booked_beds ?? 0} booked</span>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+
+                                            <div className="flex items-center justify-between pt-3 border-t border-slate-50">
+                                                <span className="font-black text-blue-600 text-lg">₹{property.price}<span className="text-xs font-bold text-slate-400">/mo</span></span>
+                                                <div className="flex gap-2">
+                                                    <Button variant="outline" size="sm" className="text-xs font-bold text-slate-600 border-slate-200 hover:bg-blue-50 hover:text-blue-600" onClick={() => navigate(`/edit-property/${property.id}`)}>
+                                                        <Edit className="w-3 h-3 mr-1" />
+                                                        Edit
+                                                    </Button>
+                                                    <Button variant="ghost" size="sm" className="text-xs font-bold text-slate-400 hover:text-blue-600" onClick={() => navigate(`/hostel/${property.id}`)}>
+                                                        View Page
+                                                    </Button>
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                </Card>
+                                    </Card>
                                 );
                             })
                         ) : (
@@ -2018,29 +2347,25 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                     </div>
 
                     {/* Status Banner */}
-                    <Card className={`rounded-[28px] overflow-hidden ${
-                        isVerified 
-                            ? "border-emerald-200 bg-emerald-50/60" 
+                    <Card className={`rounded-[28px] overflow-hidden ${isVerified
+                            ? "border-emerald-200 bg-emerald-50/60"
                             : "border-amber-200 bg-amber-50/60"
-                    }`}>
+                        }`}>
                         <CardContent className="p-6 flex items-center gap-5">
-                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm shrink-0 ${
-                                isVerified 
-                                    ? "bg-white text-emerald-600 shadow-emerald-200" 
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm shrink-0 ${isVerified
+                                    ? "bg-white text-emerald-600 shadow-emerald-200"
                                     : "bg-white text-amber-600 shadow-amber-200"
-                            }`}>
+                                }`}>
                                 <ShieldCheck className="w-7 h-7" />
                             </div>
                             <div>
-                                <h3 className={`text-lg font-bold ${
-                                    isVerified ? "text-emerald-900" : "text-amber-900"
-                                }`}>
+                                <h3 className={`text-lg font-bold ${isVerified ? "text-emerald-900" : "text-amber-900"
+                                    }`}>
                                     {isVerified ? "Verified Account" : "Verification Incomplete"}
                                 </h3>
-                                <p className={`text-sm font-medium ${
-                                    isVerified ? "text-emerald-700" : "text-amber-700"
-                                }`}>
-                                    {isVerified 
+                                <p className={`text-sm font-medium ${isVerified ? "text-emerald-700" : "text-amber-700"
+                                    }`}>
+                                    {isVerified
                                         ? "Your account is fully verified. All mandatory fields have been submitted and saved to the database."
                                         : "All 4 fields (PAN, Aadhar, Bank Account, IFSC) are mandatory. Fill all fields below and click Save to earn your Verified Badge."}
                                 </p>
@@ -2060,16 +2385,15 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                         <Label className="font-bold text-slate-700 flex items-center gap-1">
                                             PAN Number <span className="text-red-500 font-bold">*</span>
                                         </Label>
-                                        <Input 
+                                        <Input
                                             value={verifyForm.pan_number}
                                             disabled={isVerified && !isEditingVerification}
                                             onChange={(e) => setVerifyForm(prev => ({ ...prev, pan_number: e.target.value }))}
-                                            placeholder="e.g. BVRPS4074R" 
-                                            className={`h-12 rounded-xl font-mono text-sm uppercase ${
-                                                isVerified && !isEditingVerification
+                                            placeholder="e.g. BVRPS4074R"
+                                            className={`h-12 rounded-xl font-mono text-sm uppercase ${isVerified && !isEditingVerification
                                                     ? "bg-slate-50 text-slate-700 border-slate-200 cursor-not-allowed font-semibold"
                                                     : "border-slate-200"
-                                            }`} 
+                                                }`}
                                         />
                                         <p className="text-[10px] font-medium text-slate-400 ml-1">10-character PAN number</p>
                                     </div>
@@ -2077,16 +2401,15 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                         <Label className="font-bold text-slate-700 flex items-center gap-1">
                                             Aadhar Number <span className="text-red-500 font-bold">*</span>
                                         </Label>
-                                        <Input 
+                                        <Input
                                             value={verifyForm.aadhar_number}
                                             disabled={isVerified && !isEditingVerification}
                                             onChange={(e) => setVerifyForm(prev => ({ ...prev, aadhar_number: e.target.value }))}
-                                            placeholder="e.g. 224160267925" 
-                                            className={`h-12 rounded-xl font-mono text-sm ${
-                                                isVerified && !isEditingVerification
+                                            placeholder="e.g. 224160267925"
+                                            className={`h-12 rounded-xl font-mono text-sm ${isVerified && !isEditingVerification
                                                     ? "bg-slate-50 text-slate-700 border-slate-200 cursor-not-allowed font-semibold"
                                                     : "border-slate-200"
-                                            }`} 
+                                                }`}
                                         />
                                         <p className="text-[10px] font-medium text-slate-400 ml-1">12-digit Aadhar number</p>
                                     </div>
@@ -2105,32 +2428,30 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                         <Label className="font-bold text-slate-700 flex items-center gap-1">
                                             Bank Account Number <span className="text-red-500 font-bold">*</span>
                                         </Label>
-                                        <Input 
+                                        <Input
                                             value={verifyForm.bank_account}
                                             disabled={isVerified && !isEditingVerification}
                                             onChange={(e) => setVerifyForm(prev => ({ ...prev, bank_account: e.target.value }))}
-                                            placeholder="Enter account number" 
-                                            className={`h-12 rounded-xl font-mono text-sm ${
-                                                isVerified && !isEditingVerification
+                                            placeholder="Enter account number"
+                                            className={`h-12 rounded-xl font-mono text-sm ${isVerified && !isEditingVerification
                                                     ? "bg-slate-50 text-slate-700 border-slate-200 cursor-not-allowed font-semibold"
                                                     : "border-slate-200"
-                                            }`} 
+                                                }`}
                                         />
                                     </div>
                                     <div className="space-y-2">
                                         <Label className="font-bold text-slate-700 flex items-center gap-1">
                                             IFSC Code <span className="text-red-500 font-bold">*</span>
                                         </Label>
-                                        <Input 
+                                        <Input
                                             value={verifyForm.ifsc_code}
                                             disabled={isVerified && !isEditingVerification}
                                             onChange={(e) => setVerifyForm(prev => ({ ...prev, ifsc_code: e.target.value }))}
-                                            placeholder="e.g. SBIN0001234" 
-                                            className={`h-12 rounded-xl uppercase font-mono text-sm ${
-                                                isVerified && !isEditingVerification
+                                            placeholder="e.g. SBIN0001234"
+                                            className={`h-12 rounded-xl uppercase font-mono text-sm ${isVerified && !isEditingVerification
                                                     ? "bg-slate-50 text-slate-700 border-slate-200 cursor-not-allowed font-semibold"
                                                     : "border-slate-200"
-                                            }`} 
+                                                }`}
                                         />
                                     </div>
                                 </div>
@@ -2206,6 +2527,46 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
         // Overview / Home View
         return (
             <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Welcome Header Banner showing Owner Name */}
+                <div className="bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 text-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-blue-500/10 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-6 relative overflow-hidden">
+                    <div className="flex items-center gap-5 z-10">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 flex items-center justify-center overflow-hidden shrink-0 shadow-lg">
+                            {profileData?.face_photo || user?.face_photo ? (
+                                <img src={profileData?.face_photo || user?.face_photo} alt={profileData?.full_name || user?.full_name} className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-2xl font-black text-white">{profileData?.full_name?.[0] || user?.full_name?.[0] || "O"}</span>
+                            )}
+                        </div>
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold bg-white/20 backdrop-blur-md px-3 py-1 rounded-full uppercase tracking-wider text-blue-100">
+                                    Owner Dashboard
+                                </span>
+                                {isVerified && (
+                                    <span className="text-xs font-bold bg-emerald-500 text-white px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                                        ✓ Verified
+                                    </span>
+                                )}
+                            </div>
+                            <h1 className="text-2xl sm:text-3xl font-black text-white font-heading mt-1">
+                                Welcome back, {profileData?.full_name || user?.full_name || "Owner"}! 👋
+                            </h1>
+                            <p className="text-blue-100 text-xs sm:text-sm mt-1 max-w-xl font-medium">
+                                Track bookings, property status, student enquiries, and your earnings.
+                            </p>
+                        </div>
+                    </div>
+                    <Button
+                        onClick={() => setView("profile")}
+                        className="bg-white hover:bg-slate-100 text-blue-700 font-bold rounded-2xl px-5 py-6 shadow-md shrink-0 flex items-center gap-2 z-10"
+                    >
+                        <User className="w-4 h-4" />
+                        View Profile
+                    </Button>
+
+                    <div className="absolute -right-12 -bottom-12 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
+                </div>
+
                 {/* Key Metrics Grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                     {stats.map((stat, i) => (
@@ -2277,7 +2638,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
     return (
         <div className="min-h-screen bg-slate-50/50 flex">
             <Navbar />
-            
+
             {/* Mobile Sidebar Overlay Backdrop */}
             <AnimatePresence>
                 {sidebarOpen && (
@@ -2293,132 +2654,113 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
 
             {/* Sidebar Navigation */}
             <aside
-                className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-white border-r border-slate-200/80 flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out ${
-                    sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
-                }`}
+                className={`fixed lg:sticky top-0 left-0 z-50 h-screen w-72 bg-white border-r border-slate-200/80 flex flex-col justify-between overflow-hidden transition-transform duration-300 ease-in-out ${sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+                    }`}
             >
-                    <div>
-                        {/* Brand Header */}
-                        <div className="p-6 border-b border-slate-100 flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                                <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
-                                    <Building2 className="w-5 h-5" />
-                                </div>
-                                <div>
-                                    <h2 className="font-black text-slate-900 text-lg font-heading leading-none">NestNode</h2>
-                                    <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Owner Portal</span>
-                                </div>
+                <div>
+                    {/* Brand Header */}
+                    <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-blue-500/20">
+                                <Building2 className="w-5 h-5" />
                             </div>
-                            <button
-                                onClick={() => setSidebarOpen(false)}
-                                className="lg:hidden p-2 rounded-xl text-slate-400 hover:bg-slate-100"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
-                        {/* Owner Mini Profile Card */}
-                        <div className="p-4 mx-4 my-4 rounded-2xl bg-slate-50 border border-slate-100 flex items-center gap-3">
-                            <div className="w-11 h-11 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm overflow-hidden shrink-0">
-                                {user?.face_photo ? (
-                                    <img src={user.face_photo} alt={user.full_name} className="w-full h-full object-cover" />
-                                ) : (
-                                    user?.full_name?.[0] || "O"
-                                )}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                                <p className="font-bold text-slate-900 text-sm truncate">{user?.full_name}</p>
-                                <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                            <div>
+                                <h2 className="font-black text-slate-900 text-lg font-heading leading-none">NestNode</h2>
+                                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-600">Owner Portal</span>
                             </div>
                         </div>
-
-                        {/* Navigation Items */}
-                        <nav className="px-3 space-y-1">
-                            {navItems.map((item) => {
-                                const isActive = view === item.id;
-                                const Icon = item.icon;
-                                return (
-                                    <button
-                                        key={item.id}
-                                        onClick={() => {
-                                            setView(item.id);
-                                            setSidebarOpen(false);
-                                        }}
-                                        className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold text-sm transition-all ${
-                                            isActive
-                                                ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
-                                                : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
-                                        }`}
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <Icon className={`w-5 h-5 ${isActive ? "text-white" : "text-slate-400"}`} />
-                                            <span>{item.label}</span>
-                                        </div>
-                                        {item.count !== undefined && (
-                                            <span
-                                                className={`text-xs px-2.5 py-0.5 rounded-full font-extrabold ${
-                                                    isActive
-                                                        ? "bg-white/20 text-white"
-                                                        : "bg-slate-100 text-slate-600"
-                                                }`}
-                                            >
-                                                {item.count}
-                                            </span>
-                                        )}
-                                        {item.badge && !item.count && (
-                                            <span
-                                                className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${
-                                                    isActive
-                                                        ? "bg-white/20 text-white"
-                                                        : "bg-emerald-50 text-emerald-600 border border-emerald-100"
-                                                }`}
-                                            >
-                                                {item.badge}
-                                            </span>
-                                        )}
-                                    </button>
-                                );
-                            })}
-                        </nav>
-                    </div>
-
-                    {/* Sidebar Footer / Logout */}
-                    <div className="p-4 border-t border-slate-100 space-y-3">
-                        <Button
-                            onClick={() => navigate("/add-property")}
-                            className="w-full h-11 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100 font-bold gap-2 shadow-none"
-                        >
-                            <PlusCircle className="w-4 h-4" />
-                            Add New Property
-                        </Button>
-                        <Button
-                            onClick={logout}
-                            className="w-full h-11 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 font-bold gap-2 shadow-none"
-                        >
-                            <LogOut className="w-4 h-4" />
-                            Logout
-                        </Button>
-                    </div>
-                </aside>
-
-                {/* Main Content Workspace */}
-                <div className="flex-1 flex flex-col min-w-0 pt-24">
-                    {/* Mobile Menu Button */}
-                    <div className="lg:hidden p-4 pb-0">
                         <button
-                            onClick={() => setSidebarOpen(true)}
-                            className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-sm flex items-center gap-2 font-bold text-sm"
+                            onClick={() => setSidebarOpen(false)}
+                            className="lg:hidden p-2 rounded-xl text-slate-400 hover:bg-slate-100"
                         >
-                            <Menu className="w-5 h-5 text-blue-600" />
-                            <span>Menu</span>
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
 
-                    {/* Main Content Body */}
-                    <main className="p-6 md:p-8 w-full flex-1 flex flex-col justify-between">
-                        {renderContent()}
-                    </main>
+                    {/* Navigation Items */}
+                    <nav className="px-3 space-y-1 mt-4">
+                        {navItems.map((item) => {
+                            const isActive = view === item.id;
+                            const Icon = item.icon;
+                            return (
+                                <button
+                                    key={item.id}
+                                    onClick={() => {
+                                        setView(item.id);
+                                        setSidebarOpen(false);
+                                    }}
+                                    className={`w-full flex items-center justify-between px-4 py-3 rounded-2xl font-bold text-sm transition-all ${isActive
+                                            ? "bg-blue-600 text-white shadow-lg shadow-blue-600/20"
+                                            : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-900"
+                                        }`}
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <Icon className={`w-5 h-5 ${isActive ? "text-white" : "text-slate-400"}`} />
+                                        <span>{item.label}</span>
+                                    </div>
+                                    {item.count !== undefined && (
+                                        <span
+                                            className={`text-xs px-2.5 py-0.5 rounded-full font-extrabold ${isActive
+                                                    ? "bg-white/20 text-white"
+                                                    : "bg-slate-100 text-slate-600"
+                                                }`}
+                                        >
+                                            {item.count}
+                                        </span>
+                                    )}
+                                    {item.badge && !item.count && (
+                                        <span
+                                            className={`text-[10px] px-2 py-0.5 rounded-md font-bold uppercase tracking-wider ${isActive
+                                                    ? "bg-white/20 text-white"
+                                                    : "bg-emerald-50 text-emerald-600 border border-emerald-100"
+                                                }`}
+                                        >
+                                            {item.badge}
+                                        </span>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </nav>
                 </div>
+
+                {/* Sidebar Footer / Logout */}
+                <div className="p-4 border-t border-slate-100 space-y-3">
+                    <Button
+                        onClick={() => navigate("/add-property")}
+                        className="w-full h-11 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 border border-blue-100 font-bold gap-2 shadow-none"
+                    >
+                        <PlusCircle className="w-4 h-4" />
+                        Add New Property
+                    </Button>
+                    <Button
+                        onClick={logout}
+                        className="w-full h-11 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-100 font-bold gap-2 shadow-none"
+                    >
+                        <LogOut className="w-4 h-4" />
+                        Logout
+                    </Button>
+                </div>
+            </aside>
+
+            {/* Main Content Workspace */}
+            <div className="flex-1 flex flex-col min-w-0 pt-24">
+                {/* Mobile Menu Button */}
+                <div className="lg:hidden p-4 pb-0">
+                    <button
+                        onClick={() => setSidebarOpen(true)}
+                        className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-sm flex items-center gap-2 font-bold text-sm"
+                    >
+                        <Menu className="w-5 h-5 text-blue-600" />
+                        <span>Menu</span>
+                    </button>
+                </div>
+
+                {/* Main Content Body */}
+                <main className="p-6 md:p-8 w-full flex-1 flex flex-col justify-between">
+                    {renderContent()}
+                </main>
+            </div>
         </div>
     );
 };

@@ -8,17 +8,29 @@ class UserSerializer(serializers.ModelSerializer):
     face_photo = serializers.CharField(max_length=None, required=False, allow_blank=True, allow_null=True)
     class Meta:
         model = User
-        fields = ('id', 'email', 'full_name', 'is_owner', 'date_joined', 'face_photo', 'business_name', 'phone_number', 'pan_number', 'aadhar_number', 'bank_account', 'ifsc_code')
+        fields = (
+            'id', 'email', 'full_name', 'is_owner', 'date_joined',
+            'face_photo', 'business_name', 'business_type', 'address', 'city',
+            'state', 'pincode', 'bio', 'phone_number',
+            'pan_number', 'aadhar_number', 'bank_account', 'ifsc_code'
+        )
         read_only_fields = ('id', 'date_joined')
 
     def update(self, instance, validated_data):
         face_photo = validated_data.get('face_photo')
         if face_photo and isinstance(face_photo, str) and face_photo.startswith('data:image'):
             import cloudinary.uploader
+            import cloudinary
+            import os
+            cloudinary.config(
+                cloud_name=os.getenv('CLOUDINARY_CLOUD_NAME', 'dqddawu42'),
+                api_key=os.getenv('CLOUDINARY_API_KEY', '588757514664146'),
+                api_secret=os.getenv('CLOUDINARY_API_SECRET', 'zGJ3E4-oukgesomhK-Aoa55Gp6E')
+            )
             import logging
             logger = logging.getLogger(__name__)
             try:
-                upload_data = cloudinary.uploader.upload(face_photo)
+                upload_data = cloudinary.uploader.upload(face_photo, folder="owner_profiles")
                 validated_data['face_photo'] = upload_data.get('secure_url') or upload_data.get('url')
             except Exception as e:
                 logger.error(f"Error uploading face_photo to cloudinary: {e}")

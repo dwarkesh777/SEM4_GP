@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
+import ScrollToTop from "./components/ScrollToTop";
 
 // --- Lazy-loaded pages (code splitting) ---
 // Each page is bundled into its own JS chunk, downloaded only when navigated to.
@@ -40,6 +41,10 @@ const AdminSignup       = lazy(() => import("./pages/AdminSignup"));
 const AdminDashboard    = lazy(() => import("./pages/AdminDashboard"));
 const AdminPropertyDetail = lazy(() => import("./pages/AdminPropertyDetail"));
 
+const Contact           = lazy(() => import("./pages/Contact"));
+const FAQ               = lazy(() => import("./pages/FAQ"));
+const PolicyPage        = lazy(() => import("./pages/PolicyPage"));
+
 // --- Query client with caching tuned for a property-listings app ---
 // staleTime: data fetched once is served from cache for 3 min — no re-fetch on navigation.
 // gcTime: unused cache entries are kept for 10 min before GC.
@@ -70,6 +75,7 @@ const App = () => (
                 <Toaster />
                 <Sonner />
                 <BrowserRouter>
+                    <ScrollToTop />
                     <Suspense fallback={<PageLoader />}>
                         <Routes>
                             <Route path="/" element={<Index />} />
@@ -99,12 +105,42 @@ const App = () => (
                             <Route path="/edit-property/:id" element={<EditProperty />} />
 
                             <Route path="/about" element={<AboutUs />} />
+                            <Route path="/contact" element={<Contact />} />
+                            <Route path="/faq" element={<FAQ />} />
+                            
                             <Route path="/help" element={<HelpCenter />} />
                             <Route path="/support" element={<SupportPage />} />
                             <Route path="/safety" element={<SafetyInfo />} />
                             <Route path="/cancellation" element={<CancellationPolicy />} />
                             <Route path="/terms" element={<TermsOfService />} />
                             <Route path="/privacy" element={<PrivacyPolicy />} />
+                            
+                            {/* Dynamic Policy Pages */}
+                            <Route path="/refund" element={<PolicyPage 
+                                title="Refund Policy" 
+                                lastUpdated="February 2026"
+                                content={[
+                                    { heading: "General Refund Terms", paragraphs: ["Refunds are processed within 5-7 business days of cancellation approval.", "A nominal processing fee of 2% may apply to certain transactions."] },
+                                    { heading: "Hostel Bookings", paragraphs: ["If you cancel 15 days prior to move-in, you get a full refund.", "Cancellations within 15 days incur a 1-month rent penalty."] }
+                                ]}
+                            />} />
+                            <Route path="/booking-policy" element={<PolicyPage 
+                                title="Booking Policy" 
+                                lastUpdated="January 2026"
+                                content={[
+                                    { heading: "Booking Confirmation", paragraphs: ["A booking is only confirmed once the security deposit or advance rent is fully paid.", "You will receive a confirmation email with your booking ID."] },
+                                    { heading: "Move-in Procedures", paragraphs: ["Please carry a valid ID proof and your booking confirmation on the day of move-in."] }
+                                ]}
+                            />} />
+                            <Route path="/equality" element={<PolicyPage 
+                                title="Non-Discrimination Policy" 
+                                lastUpdated="March 2026"
+                                content={[
+                                    { heading: "Our Commitment to Equality", paragraphs: ["NestNode is committed to providing an inclusive and welcoming environment for all users.", "We strictly prohibit discrimination based on race, color, religion, gender, sexual orientation, or national origin."] },
+                                    { heading: "Reporting Violations", paragraphs: ["If you experience or witness discrimination by any property owner or tenant on our platform, please report it immediately to our support team.", "Violators will face strict action, including permanent ban from the platform."] }
+                                ]}
+                            />} />
+                            
                             <Route path="/dashboard" element={<UserDashboard />} />
                             <Route path="/booking-success" element={<BookingSuccess />} />
                             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

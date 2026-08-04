@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import HeroSection from "@/components/HeroSection";
@@ -10,8 +10,14 @@ import Footer from "@/components/Footer";
 const Index = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [filters, setFilters] = useState({});
-    const [showAll, setShowAll] = useState(false);
+    const [showAll, setShowAll] = useState(() => {
+        return sessionStorage.getItem('home_showAll') === 'true';
+    });
 
+    // Persist showAll state
+    useEffect(() => {
+        sessionStorage.setItem('home_showAll', showAll);
+    }, [showAll]);
     const handleSearch = (query) => {
         setSearchQuery(query);
         // Scroll to listings section

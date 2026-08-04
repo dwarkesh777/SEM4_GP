@@ -226,8 +226,7 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                     <motion.div
                         variants={containerVariants}
                         initial="hidden"
-                        whileInView="visible"
-                        viewport={{ once: true, margin: "-100px" }}
+                        animate="visible"
                         className={`grid gap-8 ${
                             showAll 
                                 ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
@@ -247,7 +246,16 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                         showAll={showAll} 
                         onShowAll={setShowAll ? () => setShowAll(true) : undefined}
                         propertiesCount={properties?.length || 0}
-                        onBackToHome={setShowAll ? () => setShowAll(false) : undefined}
+                        onBackToHome={setShowAll ? () => {
+                            setShowAll(false);
+                            setTimeout(() => {
+                                const el = document.getElementById('listings');
+                                if (el) {
+                                    const y = el.getBoundingClientRect().top + window.scrollY - 100;
+                                    window.scrollTo({ top: y, behavior: 'smooth' });
+                                }
+                            }, 50);
+                        } : undefined}
                     />
                 )}
             </div>

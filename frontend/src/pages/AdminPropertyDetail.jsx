@@ -219,16 +219,22 @@ const AdminPropertyDetail = () => {
                     <section>
                         <h3 className="text-2xl font-bold mb-4 text-slate-900 border-b border-slate-200 pb-3">Amenities & Appliances</h3>
                         <div className="flex flex-wrap gap-3">
-                            {property.amenities?.map(a => (
-                                <span key={a.name} className="bg-blue-50 px-4 py-2 rounded-xl text-sm font-medium border border-blue-100 text-blue-700 shadow-sm">
-                                    {a.name}
-                                </span>
-                            ))}
-                            {property.appliances?.map(a => (
-                                <span key={a.name} className="bg-indigo-50 px-4 py-2 rounded-xl text-sm font-medium border border-indigo-100 text-indigo-700 shadow-sm">
-                                    {a.name}
-                                </span>
-                            ))}
+                            {property.amenities?.map(a => {
+                                const name = typeof a === 'object' ? a.name : a;
+                                return (
+                                    <span key={name} className="bg-blue-50 px-4 py-2 rounded-xl text-sm font-bold border border-blue-100 text-blue-700 shadow-sm capitalize">
+                                        {name.replace(/_/g, ' ')}
+                                    </span>
+                                );
+                            })}
+                            {property.appliances?.map(a => {
+                                const name = typeof a === 'object' ? a.name : a;
+                                return (
+                                    <span key={name} className="bg-indigo-50 px-4 py-2 rounded-xl text-sm font-bold border border-indigo-100 text-indigo-700 shadow-sm capitalize">
+                                        {name.replace(/_app/g, '').replace(/_/g, ' ')}
+                                    </span>
+                                );
+                            })}
                             {(!property.amenities?.length && !property.appliances?.length) && (
                                 <span className="text-slate-500 italic">No amenities or appliances listed.</span>
                             )}

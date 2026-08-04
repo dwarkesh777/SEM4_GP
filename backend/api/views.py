@@ -86,15 +86,48 @@ def public_properties(request):
     # Count BEFORE slicing — Django cannot count a sliced queryset.
     total_count = queryset.count()
 
+    # Convert to list
+    properties = list(queryset)
+    
+    college_lat = request.query_params.get('lat')
+    college_lng = request.query_params.get('lng')
+    if college_lat and college_lng:
+        try:
+            import math
+            c_lat = float(college_lat)
+            c_lng = float(college_lng)
+            
+            filtered_results = []
+            for prop in properties:
+                if prop.latitude is not None and prop.longitude is not None:
+                    R = 6371.0
+                    lat1, lon1 = math.radians(c_lat), math.radians(c_lng)
+                    lat2, lon2 = math.radians(prop.latitude), math.radians(prop.longitude)
+                    
+                    dlat = lat2 - lat1
+                    dlon = lon2 - lon1
+                    
+                    a = math.sin(dlat / 2)**2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2)**2
+                    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+                    distance = R * c
+                    
+                    if distance <= 30:
+                        prop.distance = round(distance, 2)
+                        filtered_results.append(prop)
+            properties = filtered_results
+            properties.sort(key=lambda x: getattr(x, 'distance', float('inf')))
+            total_count = len(properties)
+        except (ValueError, TypeError) as e:
+            pass
+
     limit = request.query_params.get('limit')
     if limit:
         try:
-            queryset = queryset[:int(limit)]
+            properties = properties[:int(limit)]
         except (ValueError, TypeError):
             pass
 
-    # Convert to list then batch-prefetch all relations in a fixed number of queries.
-    properties = list(queryset)
+    # Batch-prefetch all relations in a fixed number of queries.
     _manual_prefetch_properties(properties)
     serializer = PropertySerializer(properties, many=True, context={'request': request})
     response = Response({'count': total_count, 'results': serializer.data})

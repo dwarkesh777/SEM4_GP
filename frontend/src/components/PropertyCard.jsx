@@ -1,11 +1,11 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
-import { ArrowRight, Star } from "lucide-react";
+import { ArrowRight, Star, MapPin } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 const PropertyCard = ({
-    id, main_image, name, location, type, gender, price, rating, index
+    id, main_image, name, location, type, gender, price, rating, index, distance
 }) => {
     const navigate = useNavigate();
     const [isHovered, setIsHovered] = useState(false);
@@ -48,7 +48,7 @@ const PropertyCard = ({
             </div>
 
             {/* ── Top Badges Row ── */}
-            <div className="relative z-10">
+            <div className="relative z-10 flex justify-between items-start w-full">
                 <div className="flex items-center gap-2">
                     <span className="px-3.5 py-1.5 rounded-full bg-white text-slate-800 text-[11px] font-extrabold uppercase tracking-wide shadow-sm">
                         {type}
@@ -57,6 +57,12 @@ const PropertyCard = ({
                         {gender}
                     </span>
                 </div>
+                {distance !== undefined && distance !== null && (
+                    <span className="px-3.5 py-1.5 rounded-full bg-indigo-500/90 text-white text-[11px] font-extrabold uppercase tracking-wide backdrop-blur-md shadow-sm border border-indigo-400/30 flex items-center gap-1.5 whitespace-nowrap">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {distance} km
+                    </span>
+                )}
             </div>
 
             {/* ── Bottom Content Panel ── */}

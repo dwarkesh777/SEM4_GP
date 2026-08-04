@@ -337,18 +337,6 @@ const UserDashboard = () => {
                             >
                                 {activeTab === "profile" && (
                                     <div className="space-y-8">
-                                        {/* Verification Alert */}
-                                        <Card className="rounded-[24px] border-emerald-100 bg-emerald-50/50 shadow-sm p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-12 h-12 rounded-2xl bg-emerald-100 flex items-center justify-center">
-                                                    <CheckCircle2 className="w-6 h-6 text-emerald-600" />
-                                                </div>
-                                                <div>
-                                                    <h3 className="font-bold text-emerald-900 text-lg">Verified Account</h3>
-                                                    <p className="text-sm text-emerald-700 font-medium">Your identity is verified. You have access to all features.</p>
-                                                </div>
-                                            </div>
-                                        </Card>
 
                                         <Card className="rounded-[32px] border-slate-200 shadow-sm overflow-hidden bg-white">
                                             <div className="bg-slate-50 p-8 border-b border-slate-100">

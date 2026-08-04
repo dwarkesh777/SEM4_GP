@@ -12,8 +12,8 @@ const HeroSection = ({ onSearch }) => {
   const containerRef = useRef(null);
   const x = useMotionValue(0);
   const y = useMotionValue(0);
-  const rotateX = useSpring(useTransform(y, [-300, 300], [10, -10]), { stiffness: 100, damping: 30 });
-  const rotateY = useSpring(useTransform(x, [-300, 300], [-10, 10]), { stiffness: 100, damping: 30 });
+  const rotateX = useSpring(useTransform(y, [-800, 800], [5, -5]), { stiffness: 100, damping: 30 });
+  const rotateY = useSpring(useTransform(x, [-800, 800], [-5, 5]), { stiffness: 100, damping: 30 });
 
   const handleMouseMove = (e) => {
     if (!containerRef.current) return;

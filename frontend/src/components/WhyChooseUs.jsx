@@ -95,24 +95,7 @@ const WhyChooseUs = () => {
                     ))}
                 </div>
 
-                {/* Bottom CTA / Highlight */}
-                <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ duration: 0.8, delay: 0.6 }}
-                    className="mt-24 p-1 rounded-[3rem] bg-gradient-to-r from-primary/20 via-indigo-600/10 to-purple-600/10 border border-white"
-                >
-                    <div className="bg-white/90 backdrop-blur-xl p-10 md:p-12 rounded-[2.85rem] flex flex-col md:flex-row items-center justify-between gap-8 border border-slate-100">
-                        <div className="text-center md:text-left">
-                            <h3 className="text-2xl md:text-3xl font-heading font-bold text-slate-900 mb-2">Ready to find your next home?</h3>
-                            <p className="text-slate-500 font-medium italic">Join over 10,000 students already living their best life.</p>
-                        </div>
-                        <Button className="h-16 px-12 rounded-[2rem] bg-gradient-to-r from-primary to-indigo-600 hover:from-indigo-600 hover:to-purple-600 text-white shadow-2xl shadow-primary/30 transition-all text-lg font-bold hover:shadow-3xl hover:shadow-primary/40">
-                            Get Started Now
-                        </Button>
-                    </div>
-                </motion.div>
+
             </div>
         </section>
     );

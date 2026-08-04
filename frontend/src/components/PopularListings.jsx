@@ -7,6 +7,7 @@ import { API_URL } from "@/lib/api";
 import { useState } from "react";
 import ShowAllProperties from "./ShowAllProperties";
 import ImageGallery from "./ImageGallery";
+import HorizontalFilterBar from "./HorizontalFilterBar";
 
 const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters = {}, limit = null) => {
     let url = `${API_URL}/api/public/properties/list/?appid=nestnode-readonly-key-2026&`;
@@ -51,7 +52,7 @@ const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters
     return propertiesList;
 };
 
-const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {}, showAll, setShowAll, onResetCity }) => {
+const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {}, showAll, setShowAll, onResetCity, onFilterChange, onClearAll }) => {
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
     
     const { data: properties, isLoading, error, refetch } = useQuery({
@@ -107,7 +108,7 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
     const hasNoProperties = !properties || properties.length === 0;
 
     return (
-        <section id="listings" className="relative py-8 bg-transparent overflow-hidden">
+        <section id="listings" className="relative py-8 bg-transparent overflow-visible z-20">
 
             <div className="container relative z-10">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
@@ -144,15 +145,29 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                         transition={{ duration: 0.6 }}
                     >
                         <Button 
-                            variant="outline" 
-                            className="h-14 px-8 rounded-2xl font-bold border-slate-200 hover:border-primary hover:text-primary transition-all group"
                             onClick={() => setIsGalleryOpen(true)}
+                            variant="outline" 
+                            className="rounded-full px-6 py-6 border-slate-200 hover:border-primary hover:bg-primary/5 text-slate-700 font-bold text-sm shadow-sm transition-all gap-2"
                         >
                             Explore Gallery
-                            <ArrowRight className="ml-2 w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            <ArrowRight className="w-4 h-4 text-primary" />
                         </Button>
                     </motion.div>
                 </div>
+
+                {/* Horizontal Filter Bar right after title */}
+                <motion.div
+                    initial={{ opacity: 0, y: 15 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.4 }}
+                    className="relative z-40"
+                >
+                    <HorizontalFilterBar
+                        filters={filters}
+                        onFilterChange={onFilterChange}
+                        onClearAll={onClearAll}
+                    />
+                </motion.div>
 
                 {/* City Filter Badge */}
                 {searchQuery && (

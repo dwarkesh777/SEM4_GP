@@ -30,7 +30,14 @@ import {
     Users,
     Trash2,
     MessageSquare,
-    Search
+    Search,
+    Megaphone,
+    Eye,
+    MousePointerClick,
+    Play,
+    Pause,
+    Target,
+    Flame
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -136,6 +143,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
         { id: "listings", label: "My Properties", icon: Building2, count: properties.length },
         { id: "bookings", label: "Recent Bookings", icon: CheckCircle2, count: bookings.length },
         { id: "queries", label: "Student Queries", icon: Mail, count: enquiries.length },
+        { id: "ads", label: "Promote & Ads", icon: Megaphone, badge: "New" },
         { id: "analytics", label: "Analytics", icon: BarChart3 },
         { id: "management", label: "Management", icon: Users },
         { id: "profile", label: "Owner Profile", icon: User },
@@ -160,6 +168,84 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
     const [isAddingStudent, setIsAddingStudent] = useState(false);
     const [addStudentForm, setAddStudentForm] = useState({ customer_name: "", customer_email: "", customer_phone: "", property_id: "", room_id: "" });
     const [searchQuery, setSearchQuery] = useState("");
+
+    const [adsList, setAdsList] = useState(() => {
+        try {
+            return JSON.parse(localStorage.getItem("owner_ads_campaigns") || "[]");
+        } catch {
+            return [];
+        }
+    });
+    const [isCreatingAd, setIsCreatingAd] = useState(false);
+    const [adForm, setAdForm] = useState({
+        propertyId: "",
+        headline: "⚡ Special Offer: 15% OFF for First Month!",
+        badgeText: "Sponsored • Top Featured",
+        durationDays: "15",
+        budget: "499"
+    });
+
+    const handleCreateAdSubmit = (e) => {
+        e.preventDefault();
+        if (!adForm.propertyId) {
+            toast({ title: "Error", description: "Please select a property to promote.", variant: "destructive" });
+            return;
+        }
+
+        const selectedProperty = properties.find(p => String(p.id) === String(adForm.propertyId));
+        if (!selectedProperty) {
+            toast({ title: "Error", description: "Selected property not found.", variant: "destructive" });
+            return;
+        }
+
+        const newAd = {
+            id: `ad-${Date.now()}`,
+            propertyId: selectedProperty.id,
+            propertyName: selectedProperty.name,
+            location: selectedProperty.location || selectedProperty.city || "Ahmedabad",
+            price: selectedProperty.price,
+            originalPrice: selectedProperty.original_price || Number(selectedProperty.price) + 1500,
+            rating: selectedProperty.rating || 4.8,
+            reviewsCount: selectedProperty.reviews_count || 36,
+            type: selectedProperty.type || "PG",
+            gender: selectedProperty.gender || "Co-ed",
+            image: selectedProperty.main_image || "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=800",
+            headline: adForm.headline,
+            badgeText: adForm.badgeText,
+            durationDays: Number(adForm.durationDays),
+            budget: Number(adForm.budget),
+            clicks: 0,
+            impressions: Math.floor(Math.random() * 80) + 140,
+            status: "Active",
+            createdAt: new Date().toISOString()
+        };
+
+        const updated = [newAd, ...adsList];
+        setAdsList(updated);
+        localStorage.setItem("owner_ads_campaigns", JSON.stringify(updated));
+        setIsCreatingAd(false);
+        toast({ title: "Ad Campaign Published! 🎉", description: "Your property is now live as a Sponsored Listing on the Home Page." });
+    };
+
+    const handleToggleAdStatus = (adId) => {
+        const updated = adsList.map(ad => {
+            if (ad.id === adId) {
+                const nextStatus = ad.status === "Active" ? "Paused" : "Active";
+                return { ...ad, status: nextStatus };
+            }
+            return ad;
+        });
+        setAdsList(updated);
+        localStorage.setItem("owner_ads_campaigns", JSON.stringify(updated));
+        toast({ title: "Ad Campaign Updated", description: "Campaign status toggled successfully." });
+    };
+
+    const handleDeleteAd = (adId) => {
+        const updated = adsList.filter(ad => ad.id !== adId);
+        setAdsList(updated);
+        localStorage.setItem("owner_ads_campaigns", JSON.stringify(updated));
+        toast({ title: "Campaign Deleted", description: "Ad campaign removed." });
+    };
 
     const handleAddStudent = async () => {
         if (!addStudentForm.property_id || !addStudentForm.room_id) {
@@ -379,7 +465,348 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
         setActionLoading(null);
     };
 
+    const renderAdsSection = () => {
+        const totalImpressions = adsList.reduce((acc, curr) => acc + (curr.impressions || 0), 0);
+        const totalClicks = adsList.reduce((acc, curr) => acc + (curr.clicks || 0), 0);
+        const totalSpent = adsList.reduce((acc, curr) => acc + (curr.budget || 0), 0);
+        const activeCount = adsList.filter(a => a.status === "Active").length;
+
+        const selectedProp = properties.find(p => String(p.id) === String(adForm.propertyId)) || properties[0];
+
+        return (
+            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                {/* Header Banner */}
+                <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-amber-600/10 border border-amber-500/20 p-6 sm:p-8 rounded-3xl">
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <Badge className="bg-amber-500 text-white font-bold text-xs uppercase px-2.5 py-0.5">
+                                Google Ads Style
+                            </Badge>
+                            <span className="text-xs text-amber-700 font-bold">Featured Home Page Placements</span>
+                        </div>
+                        <h1 className="text-3xl font-black text-slate-900 font-heading">Promote & Ads Center</h1>
+                        <p className="text-slate-500 mt-1 text-sm">Boost your property's bookings by launching sponsored ads on the Home Page.</p>
+                    </div>
+                    <Button 
+                        onClick={() => setIsCreatingAd(true)} 
+                        className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-2xl px-6 py-6 shadow-lg shadow-amber-500/25 flex items-center gap-2 text-base transition-transform active:scale-95"
+                    >
+                        <Megaphone className="w-5 h-5" />
+                        Create New Ad Campaign
+                    </Button>
+                </div>
+
+                {/* Ads Analytics Overview Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                    <Card className="border-slate-100 shadow-sm rounded-2xl">
+                        <CardContent className="p-5 flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-black">
+                                <Megaphone className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Ads</p>
+                                <h3 className="text-2xl font-black text-slate-900 mt-0.5">{activeCount} / {adsList.length}</h3>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-slate-100 shadow-sm rounded-2xl">
+                        <CardContent className="p-5 flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black">
+                                <Eye className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Impressions</p>
+                                <h3 className="text-2xl font-black text-slate-900 mt-0.5">{totalImpressions.toLocaleString()}</h3>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-slate-100 shadow-sm rounded-2xl">
+                        <CardContent className="p-5 flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black">
+                                <MousePointerClick className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Clicks</p>
+                                <h3 className="text-2xl font-black text-slate-900 mt-0.5">{totalClicks.toLocaleString()}</h3>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-slate-100 shadow-sm rounded-2xl">
+                        <CardContent className="p-5 flex items-center gap-4">
+                            <div className="w-12 h-12 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-black">
+                                <Sparkles className="w-6 h-6" />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Ad Investment</p>
+                                <h3 className="text-2xl font-black text-slate-900 mt-0.5">₹{totalSpent.toLocaleString()}</h3>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Create Ad Form Modal / Panel */}
+                {isCreatingAd && (
+                    <Card className="border-2 border-amber-300 bg-amber-50/30 rounded-3xl shadow-xl p-6 sm:p-8 animate-in fade-in zoom-in-95 duration-300">
+                        <div className="flex justify-between items-center mb-6 pb-4 border-b border-amber-200">
+                            <div>
+                                <h2 className="text-2xl font-black text-slate-900 font-heading flex items-center gap-2">
+                                    <Sparkles className="w-6 h-6 text-amber-500" />
+                                    Launch Sponsored Ad Campaign
+                                </h2>
+                                <p className="text-xs text-slate-500 mt-0.5">Configure your Google Ads style sponsored banner for your property.</p>
+                            </div>
+                            <Button size="icon" variant="ghost" onClick={() => setIsCreatingAd(false)} className="rounded-full">
+                                <X className="w-5 h-5" />
+                            </Button>
+                        </div>
+
+                        <form onSubmit={handleCreateAdSubmit} className="space-y-6">
+                            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                                {/* Form Inputs */}
+                                <div className="space-y-4">
+                                    <div>
+                                        <Label className="font-bold text-slate-700">1. Select Property to Promote</Label>
+                                        <select
+                                            value={adForm.propertyId}
+                                            onChange={(e) => setAdForm({ ...adForm, propertyId: e.target.value })}
+                                            className="w-full mt-1.5 p-3.5 rounded-2xl bg-white border border-slate-200 font-medium text-slate-900 text-sm focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500"
+                                            required
+                                        >
+                                            <option value="">-- Select one of your properties --</option>
+                                            {properties.map((p) => (
+                                                <option key={p.id} value={p.id}>
+                                                    {p.name} ({p.type} • ₹{p.price}/mo)
+                                                </option>
+                                            ))}
+                                        </select>
+                                    </div>
+
+                                    <div>
+                                        <Label className="font-bold text-slate-700">2. Ad Headline / Offer Tagline</Label>
+                                        <Input
+                                            value={adForm.headline}
+                                            onChange={(e) => setAdForm({ ...adForm, headline: e.target.value })}
+                                            placeholder="e.g. ⚡ 20% OFF First Month — Free Meals & Wi-Fi!"
+                                            className="mt-1.5 p-3.5 rounded-2xl bg-white border border-slate-200 font-medium text-sm"
+                                            maxLength={80}
+                                            required
+                                        />
+                                    </div>
+
+                                    <div>
+                                        <Label className="font-bold text-slate-700">3. Promotional Badge Text</Label>
+                                        <select
+                                            value={adForm.badgeText}
+                                            onChange={(e) => setAdForm({ ...adForm, badgeText: e.target.value })}
+                                            className="w-full mt-1.5 p-3.5 rounded-2xl bg-white border border-slate-200 font-medium text-slate-900 text-sm"
+                                        >
+                                            <option value="Sponsored • Top Featured">Sponsored • Top Featured</option>
+                                            <option value="Sponsored • Recommended">Sponsored • Recommended</option>
+                                            <option value="Sponsored • Hot Deal">Sponsored • Hot Deal</option>
+                                            <option value="Sponsored • Best Value">Sponsored • Best Value</option>
+                                        </select>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <div>
+                                            <Label className="font-bold text-slate-700">Duration</Label>
+                                            <select
+                                                value={adForm.durationDays}
+                                                onChange={(e) => {
+                                                    const days = e.target.value;
+                                                    const budgetMap = { "7": "299", "15": "499", "30": "899" };
+                                                    setAdForm({ ...adForm, durationDays: days, budget: budgetMap[days] || "499" });
+                                                }}
+                                                className="w-full mt-1.5 p-3.5 rounded-2xl bg-white border border-slate-200 font-medium text-sm"
+                                            >
+                                                <option value="7">7 Days</option>
+                                                <option value="15">15 Days</option>
+                                                <option value="30">30 Days</option>
+                                            </select>
+                                        </div>
+
+                                        <div>
+                                            <Label className="font-bold text-slate-700">Campaign Budget</Label>
+                                            <Input
+                                                value={`₹${adForm.budget}`}
+                                                disabled
+                                                className="mt-1.5 p-3.5 rounded-2xl bg-slate-100 border border-slate-200 font-bold text-slate-900 text-sm"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Live Google Ads Preview */}
+                                <div className="bg-white p-5 rounded-2xl border border-amber-200 shadow-sm flex flex-col justify-between">
+                                    <div>
+                                        <div className="flex items-center justify-between border-b border-slate-100 pb-3 mb-3">
+                                            <span className="text-xs font-bold text-amber-600 flex items-center gap-1">
+                                                <Flame className="w-4 h-4 text-amber-500" />
+                                                Live Home Page Ad Preview
+                                            </span>
+                                            <Badge className="bg-amber-100 text-amber-800 text-[10px] font-bold">Google Ads Layout</Badge>
+                                        </div>
+
+                                        {selectedProp ? (
+                                            <div className="border border-amber-200 rounded-xl p-3 bg-amber-50/20 space-y-3">
+                                                <div className="flex gap-3">
+                                                    <div className="w-24 h-20 rounded-lg overflow-hidden shrink-0 relative bg-slate-200">
+                                                        <img
+                                                            src={selectedProp.main_image || "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=800"}
+                                                            alt="Preview"
+                                                            className="w-full h-full object-cover"
+                                                        />
+                                                        <div className="absolute top-1 left-1 bg-black/80 text-amber-400 text-[9px] font-black px-1.5 py-0.2 rounded-full uppercase">
+                                                            Ad
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="flex-1 min-w-0">
+                                                        <span className="text-[10px] font-bold text-amber-700 bg-amber-100/70 px-2 py-0.5 rounded">
+                                                            {adForm.badgeText}
+                                                        </span>
+                                                        <h4 className="font-bold text-slate-900 text-sm line-clamp-1 mt-1">{selectedProp.name}</h4>
+                                                        <p className="text-xs text-amber-800 font-medium line-clamp-2 mt-1 bg-white p-1 rounded border border-amber-200/50">
+                                                            {adForm.headline}
+                                                        </p>
+                                                    </div>
+                                                </div>
+
+                                                <div className="flex justify-between items-center text-xs font-bold pt-2 border-t border-amber-100">
+                                                    <span className="text-slate-900 text-sm">₹{selectedProp.price}/mo</span>
+                                                    <Button size="sm" className="h-7 text-xs bg-amber-500 hover:bg-amber-600 text-white rounded-lg px-3">
+                                                        View Property
+                                                    </Button>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <div className="text-center text-slate-400 py-8 text-sm">
+                                                Select a property to see live preview
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <div className="mt-4 pt-3 border-t border-slate-100 text-xs text-slate-500">
+                                        ⚡ Your ad will get instant top position placement in the **Promoted & Sponsored Listings** section on the Home Page.
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end gap-3 pt-4 border-t border-amber-200">
+                                <Button type="button" variant="outline" onClick={() => setIsCreatingAd(false)} className="rounded-xl font-bold">
+                                    Cancel
+                                </Button>
+                                <Button type="submit" className="bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl px-8 shadow-lg shadow-amber-500/20">
+                                    🚀 Publish Ad Campaign
+                                </Button>
+                            </div>
+                        </form>
+                    </Card>
+                )}
+
+                {/* Campaigns List Table */}
+                <div className="bg-white border border-slate-200 rounded-3xl overflow-hidden shadow-sm">
+                    <div className="p-6 border-b border-slate-100 flex justify-between items-center">
+                        <div>
+                            <h3 className="font-heading font-black text-slate-900 text-xl">Your Property Ad Campaigns</h3>
+                            <p className="text-slate-500 text-xs mt-0.5">Manage live ads, track clicks, or pause campaigns.</p>
+                        </div>
+                    </div>
+
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-sm text-left">
+                            <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b border-slate-100">
+                                <tr>
+                                    <th className="px-6 py-4 font-bold">Promoted Property</th>
+                                    <th className="px-6 py-4 font-bold">Headline & Badge</th>
+                                    <th className="px-6 py-4 font-bold">Status</th>
+                                    <th className="px-6 py-4 font-bold text-center">Impressions</th>
+                                    <th className="px-6 py-4 font-bold text-center">Clicks</th>
+                                    <th className="px-6 py-4 font-bold text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                                {adsList.length === 0 ? (
+                                    <tr>
+                                        <td colSpan="6" className="px-6 py-12 text-center text-slate-400 font-medium">
+                                            <Megaphone className="w-10 h-10 mx-auto mb-2 text-slate-300 stroke-[1.5]" />
+                                            No active ad campaigns yet. Click **"Create New Ad Campaign"** to promote your property on the Home Page!
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    adsList.map((ad) => (
+                                        <tr key={ad.id} className="hover:bg-slate-50/50 transition-colors">
+                                            <td className="px-6 py-4">
+                                                <div className="flex items-center gap-3">
+                                                    <img
+                                                        src={ad.image || "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=800"}
+                                                        alt={ad.propertyName}
+                                                        className="w-12 h-10 rounded-lg object-cover bg-slate-100"
+                                                    />
+                                                    <div>
+                                                        <div className="font-bold text-slate-900">{ad.propertyName}</div>
+                                                        <div className="text-xs text-slate-400">₹{ad.price}/month • {ad.location}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 max-w-xs">
+                                                <Badge className="bg-amber-100 text-amber-800 text-[10px] font-bold mb-1">
+                                                    {ad.badgeText || "Sponsored"}
+                                                </Badge>
+                                                <div className="text-xs text-slate-700 font-medium line-clamp-1">{ad.headline}</div>
+                                            </td>
+                                            <td className="px-6 py-4">
+                                                <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
+                                                    ad.status === "Active" 
+                                                        ? "bg-emerald-50 text-emerald-700 border border-emerald-200" 
+                                                        : "bg-slate-100 text-slate-600 border border-slate-200"
+                                                }`}>
+                                                    <span className={`w-2 h-2 rounded-full ${ad.status === "Active" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
+                                                    {ad.status}
+                                                </span>
+                                            </td>
+                                            <td className="px-6 py-4 text-center font-mono font-bold text-slate-700">
+                                                {(ad.impressions || 150).toLocaleString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-center font-mono font-bold text-amber-600">
+                                                {(ad.clicks || 0).toLocaleString()}
+                                            </td>
+                                            <td className="px-6 py-4 text-right">
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <button
+                                                        onClick={() => handleToggleAdStatus(ad.id)}
+                                                        className="p-2 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"
+                                                        title={ad.status === "Active" ? "Pause Ad Campaign" : "Activate Ad Campaign"}
+                                                    >
+                                                        {ad.status === "Active" ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteAd(ad.id)}
+                                                        className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                                                        title="Delete Ad Campaign"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        );
+    };
+
     const renderContent = () => {
+        if (view === "ads") {
+            return renderAdsSection();
+        }
         if (view === "management") {
             const activeBookings = bookings.filter(b => {
                 if (b.status !== "Confirmed") return false;

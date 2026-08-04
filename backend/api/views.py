@@ -1477,23 +1477,23 @@ class WishlistViewSet(viewsets.ModelViewSet):
         return Response({"wishlisted": True, "message": "Added to wishlist"}, status=status.HTTP_201_CREATED)
 
 
-# ─── OTP AUTHENTICATION VIEWS ───────────────────────────────────────────────
+# ─── OTP AUTHENTICATION & PASSWORD RESET VIEWS ───────────────────────────────
 
 @api_view(['POST'])
 @permission_classes([permissions.AllowAny])
 def send_otp(request):
     """
-    Generates and sends a 6-digit OTP to the user's email.
+    Generates and sends a 6-digit OTP in a beautiful HTML email to the user.
     Body: { "email": "user@example.com" }
     """
     try:
-        email = request.data.get('email')
+        email = request.data.get('email', '').strip()
         if not email:
             return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         user = User.objects.filter(email=email).first()
         if not user:
-            return Response({"error": "No account found with this email."}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": "No account found with this email address."}, status=status.HTTP_404_NOT_FOUND)
 
         # Generate 6-digit OTP
         otp_code = str(random.randint(100000, 999999))
@@ -1501,14 +1501,72 @@ def send_otp(request):
         user.otp_expiry = timezone.now() + timedelta(minutes=5)
         user.save()
 
-        # Send email via external Express SMTP service if configured
-        subject = 'Your NestNode Login OTP'
-        message = f'Your OTP for logging into NestNode is: {otp_code}\n\nThis code will expire in 5 minutes.'
+        subject = '🔐 NestNode OTP Verification & Password Reset Code'
+        plain_message = f'Your NestNode Verification OTP Code is: {otp_code}\n\nThis code will expire in 5 minutes. Do not share this OTP with anyone.'
+        
+        html_message = f"""<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NestNode OTP Verification</title>
+</head>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased;">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="background-color: #f8fafc; padding: 40px 10px;">
+        <tr>
+            <td align="center">
+                <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="max-width: 560px; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08); border: 1px solid #e2e8f0;">
+                    <!-- Header -->
+                    <tr>
+                        <td style="background: linear-gradient(135deg, #2563eb 0%, #4f46e5 100%); padding: 32px 40px; text-align: center;">
+                            <h1 style="color: #ffffff; font-size: 28px; font-weight: 800; margin: 0; letter-spacing: -0.5px;">NestNode</h1>
+                            <p style="color: #c7d2fe; font-size: 13px; margin: 6px 0 0 0; font-weight: 600; text-transform: uppercase; letter-spacing: 1px;">Security & Account Verification</p>
+                        </td>
+                    </tr>
+                    <!-- Body Content -->
+                    <tr>
+                        <td style="padding: 40px;">
+                            <h2 style="color: #0f172a; font-size: 22px; font-weight: 700; margin: 0 0 12px 0;">Verification Code 🔐</h2>
+                            <p style="color: #475569; font-size: 15px; line-height: 1.6; margin: 0 0 28px 0;">
+                                Hello <strong style="color: #0f172a;">{user.full_name or 'User'}</strong>,<br>
+                                Use the One-Time Password (OTP) code below to log in or reset your NestNode password:
+                            </p>
+
+                            <!-- OTP Box -->
+                            <div style="background-color: #f0f9ff; border: 2px dashed #0284c7; border-radius: 16px; padding: 24px; text-align: center; margin-bottom: 28px;">
+                                <span style="display: block; font-size: 12px; font-weight: 700; color: #0369a1; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">Your 6-Digit OTP Code</span>
+                                <span style="display: inline-block; font-size: 38px; font-weight: 900; color: #0284c7; letter-spacing: 8px; font-family: monospace;">{otp_code}</span>
+                            </div>
+
+                            <div style="background-color: #fff1f2; border-left: 4px solid #f43f5e; padding: 14px 18px; border-radius: 8px; margin-bottom: 24px;">
+                                <p style="color: #be123c; font-size: 13px; font-weight: 600; margin: 0; line-height: 1.5;">
+                                    ⏰ This code is valid for <strong>5 minutes</strong>. Never share your OTP with anyone.
+                                </p>
+                            </div>
+
+                            <p style="color: #64748b; font-size: 14px; line-height: 1.6; margin: 0;">
+                                If you did not request this OTP, please ignore this email or secure your account.
+                            </p>
+                        </td>
+                    </tr>
+                    <!-- Footer -->
+                    <tr>
+                        <td style="background-color: #f8fafc; padding: 24px 40px; text-align: center; border-top: 1px solid #f1f5f9;">
+                            <p style="color: #94a3b8; font-size: 12px; margin: 0;">© 2026 NestNode Accommodation Platform. All rights reserved.</p>
+                        </td>
+                    </tr>
+                </table>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>"""
+
         email_payload = {
             'to': email,
             'subject': subject,
-            'text': message,
-            'html': f'<p>Your OTP for logging into NestNode is: <strong>{otp_code}</strong></p><p>This code will expire in 5 minutes.</p>',
+            'text': plain_message,
+            'html': html_message,
             'otp': otp_code,
             'expiry_minutes': 5,
             'app_name': 'NestNode'
@@ -1526,23 +1584,71 @@ def send_otp(request):
                 if resp.status_code == 200:
                     logger.info(f"OTP sent to {email} via external service")
                     return Response({"message": "OTP sent successfully to your email."})
-                else:
-                    logger.error(f"External email service failed: {resp.status_code} {resp.text}")
-                    return Response({"error": "Failed to send email via external service."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
             except Exception as ext_e:
                 logger.error(f"Error calling external email service: {ext_e}")
-                # Fall back to Django SMTP if configured
+
         try:
-            send_mail(subject, message, settings.EMAIL_HOST_USER, [email])
-            logger.info(f"OTP sent to {email} via Django SMTP")
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.EMAIL_HOST_USER,
+                recipient_list=[email],
+                html_message=html_message
+            )
+            logger.info(f"OTP email sent to {email} via Django SMTP")
             return Response({"message": "OTP sent successfully to your email."})
         except Exception as mail_e:
             logger.error(f"Failed to send OTP email via SMTP: {mail_e}")
             return Response({"error": f"Failed to send email: {str(mail_e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-            
+
     except Exception as e:
         logger.error(f"OTP generation error: {e}")
         return Response({"error": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def reset_password_with_otp(request):
+    """
+    Validates OTP and resets user password in the database.
+    Body: { "email": "user@example.com", "otp": "123456", "new_password": "myNewPassword" }
+    """
+    try:
+        email = request.data.get('email', '').strip()
+        otp = request.data.get('otp', '').strip()
+        new_password = request.data.get('new_password', '').strip()
+
+        if not email or not otp or not new_password:
+            return Response({"error": "Email, OTP, and new password are required."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if len(new_password) < 6:
+            return Response({"error": "New password must be at least 6 characters long."}, status=status.HTTP_400_BAD_REQUEST)
+
+        user = User.objects.filter(email=email).first()
+        if not user:
+            return Response({"error": "No account found with this email address."}, status=status.HTTP_404_NOT_FOUND)
+
+        if not user.otp_code or user.otp_code != otp:
+            return Response({"error": "Invalid OTP code. Please check your email."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if user.otp_expiry and user.otp_expiry < timezone.now():
+            return Response({"error": "OTP has expired. Please request a new code."}, status=status.HTTP_400_BAD_REQUEST)
+
+        # Update password in database
+        user.set_password(new_password)
+        user.otp_code = None
+        user.otp_expiry = None
+        user.save()
+
+        logger.info(f"Password reset successfully in database for user: {email}")
+        return Response({
+            "success": True,
+            "message": "Password reset successfully in database! You can now log in with your new password."
+        }, status=status.HTTP_200_OK)
+
+    except Exception as e:
+        logger.error(f"Password reset error: {e}", exc_info=True)
+        return Response({"error": f"Server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
 @api_view(['POST'])

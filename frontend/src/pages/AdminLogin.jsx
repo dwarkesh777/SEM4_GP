@@ -9,11 +9,13 @@ import { Mail, Lock, ArrowRight, ShieldCheck, Home } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 
 const AdminLogin = () => {
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
     const [loading, setLoading] = useState(false);
+    const [showForgotModal, setShowForgotModal] = useState(false);
     const { adminLogin } = useAuth();
     const navigate = useNavigate();
 
@@ -89,6 +91,13 @@ const AdminLogin = () => {
                             <div className="space-y-2">
                                 <div className="flex items-center justify-between ml-1">
                                     <Label htmlFor="password" title="password" className="font-bold text-slate-700">Password</Label>
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowForgotModal(true)}
+                                        className="text-xs font-bold text-primary hover:underline cursor-pointer"
+                                    >
+                                        Forgot password?
+                                    </button>
                                 </div>
                                 <div className="relative group">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
@@ -123,6 +132,12 @@ const AdminLogin = () => {
                     </CardFooter>
                 </Card>
             </motion.div>
+
+            <ForgotPasswordModal
+                isOpen={showForgotModal}
+                onClose={() => setShowForgotModal(false)}
+                initialEmail={email}
+            />
         </div>
     );
 };

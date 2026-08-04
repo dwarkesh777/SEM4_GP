@@ -9,6 +9,7 @@ import { Code2, Mail, Lock, ArrowRight, Terminal, Cpu } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import Navbar from "@/components/Navbar";
+import ForgotPasswordModal from "@/components/ForgotPasswordModal";
 
 const DeveloperLogin = () => {
     const [email, setEmail] = useState("");
@@ -17,6 +18,7 @@ const DeveloperLogin = () => {
     const [loginMethod, setLoginMethod] = useState("password");
     const [otpSent, setOtpSent] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [showForgotModal, setShowForgotModal] = useState(false);
     const { login, sendOTP, loginWithOTP } = useAuth();
     const navigate = useNavigate();
 
@@ -161,9 +163,13 @@ const DeveloperLogin = () => {
                                                 <Label htmlFor="dev-password" className="font-bold text-slate-700">
                                                     Password
                                                 </Label>
-                                                <Link to="#" className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowForgotModal(true)}
+                                                    className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline cursor-pointer"
+                                                >
                                                     Forgot password?
-                                                </Link>
+                                                </button>
                                             </div>
                                             <div className="relative group">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-emerald-500 transition-colors" />
@@ -272,6 +278,12 @@ const DeveloperLogin = () => {
                     </motion.div>
                 </div>
             </div>
+
+            <ForgotPasswordModal
+                isOpen={showForgotModal}
+                onClose={() => setShowForgotModal(false)}
+                initialEmail={email}
+            />
         </div>
         </div>
     );

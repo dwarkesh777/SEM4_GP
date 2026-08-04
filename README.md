@@ -1,6 +1,4 @@
-# 🏠 NestNode – Hostel & PG Booking Platform
-
-
+# 🏠 NestNode – Modern Hostel & PG Booking Platform
 
 <p align="center">
   <b>Find, Compare & Book the Perfect Hostel or PG with Ease.</b>
@@ -10,177 +8,161 @@
 
 ## 📖 Overview
 
-**NestNode** is a modern Hostel & PG Booking Platform that helps students and working professionals discover, compare, and book accommodations online.
-
-The platform allows users to search properties, view detailed information, book rooms securely, make online payments, and manage bookings through an intuitive dashboard.
+**NestNode** is a full-stack, enterprise-grade Hostel & PG Accommodation Booking Platform designed for students, working professionals, and property owners. It features multi-role portals (Student, Owner, Developer, Admin), AI-driven property recommendations, secure Razorpay online payments, and complete property management tools.
 
 ---
 
-# ✨ Features
+## ✨ Core Features
 
-- 🔐 User Authentication (Login & Signup)
-- 🏠 Browse Hostels & PGs
-- 🔍 Advanced Search & Filters
-- 📍 Google Maps Location
-- ❤️ Wishlist / Favorites
-- 🖼️ Property Gallery
-- 📅 Online Room Booking
-- 💳 Razorpay Payment Gateway
-- 📊 User Dashboard
-- 👨‍💼 Owner Dashboard
-- ⭐ Ratings & Reviews
-- 📱 Responsive Design
-- 🔔 Real-Time Notifications
-- 📈 Booking Management
+### 🔐 Multi-Role Authentication & Security
+- **Role-based Access**: Dedicated portals for Students, Property Owners, Developers, and Admins.
+- **JWT Security**: Token-based authentication with auto-refresh mechanism.
+- **✉️ OTP Email Password Reset**: 6-digit OTP verification with rich, responsive HTML emails for instant, secure database password resets.
 
----
+### 🏠 Student & Guest Portal
+- **Advanced Search & Filtering**: Search by location, city, room type, budget, and gender preferences.
+- **🧠 KNN Similar Property Recommendations**: Machine learning KNN (K-Nearest Neighbors) model combined with Jaccard text similarity to rank and recommend similar stays based on price, rating, city, and amenities.
+- **❤️ Wishlist Management**: One-click bookmarking of favorite properties.
+- **⭐ Ratings & Reviews**: Transparent tenant reviews and star ratings.
+- **💳 Online Room Booking**: Instant room booking integrated with **Razorpay Payment Gateway**.
 
-# 🛠️ Tech Stack
+### 👨‍💼 Property Owner Portal
+- **Dashboard Overview**: Metrics overview tracking active listings, total bookings, earnings, and student enquiries.
+- **📸 Live Camera Photo Upload**: Integrated webcam scanner for taking owner profile photos directly uploaded to **Cloudinary**.
+- **📊 100% Profile Progress Bar**: Real-time progress bar guiding owners to complete mandatory business and contact details.
+- **🛡️ Identity Verification**: PAN, Aadhar, Bank Account, and IFSC verification for earning the **Verified Owner** badge.
+- **🛏️ Bed & Room Inventory**: Manage room types, total beds, available beds, and active bookings.
 
-## Frontend
-
-- React.js
-- JavaScript
-- Vite
-- Tailwind CSS
-- shadcn/ui
-- React Router DOM
-- React Query
-- Framer Motion
-- Mongodb
-- Google Maps API
-- Capacitor (Android App)
-- Plotly.js
-- Recharts
+### 👨‍💻 Developer Portal
+- **API Documentation**: Interactive documentation for developers integrating with NestNode public APIs.
+- **Developer Info & System Status**: Live system metrics, health checks, and API specifications.
 
 ---
 
-## Backend
+## 🛠️ Tech Stack
 
-- Django
-- Django REST Framework
-- JWT Authentication
-- MongoDB
-- PyMongo
-- Cloudinary (Image Storage)
-- Django CORS Headers
-- Gunicorn
-- WhiteNoise
-- Python
+### Frontend
+- **Framework**: React.js 18 + Vite
+- **Styling**: Tailwind CSS + Vanilla CSS + shadcn/ui
+- **Icons**: Lucide React
+- **Animations**: Framer Motion
+- **State & Routing**: React Router DOM v6
+- **Notifications**: Sonner + Toast
 
----
-
-## 💳 Payment Gateway
-
-This project integrates **Razorpay** for secure online payments.
-
-Features:
-
-- Secure Checkout
-- Booking Payment
-- Payment Verification
-- Online Transaction Support
+### Backend
+- **Framework**: Django REST Framework (Python 3.12+)
+- **Database**: SQLite / MongoDB / PostgreSQL
+- **ML / Recommendations**: Scikit-Learn (NearestNeighbors KNN), NumPy
+- **Image Storage**: Cloudinary REST API
+- **Email Service**: Django SMTP / Express SMTP Relay with custom HTML templates
+- **Payment Processing**: Razorpay API
 
 ---
 
-# 🏗️ Class Diagram
+## 🏗️ Architecture & Class Diagram
 
 ![Class Diagram](./nest_node_class_diagram.png)
 
 ---
 
-# 📂 Project Structure
+## 📂 Project Structure
 
 ```
 NestNode
 │
-├── src/                 # React Frontend
-├── backend/             # Django Backend
-├── public/
-├── android/             # Capacitor Android App
-├── Admin/
+├── frontend/                # Vite + React Frontend Application
+│   ├── src/
+│   │   ├── components/      # Reusable UI components (ForgotPasswordModal, Navbar, SimilarProperties, etc.)
+│   │   ├── pages/           # Student, Owner, Developer, Admin views
+│   │   ├── context/         # AuthContext & global state
+│   │   └── lib/             # API client & utility helpers
+│   └── package.json
+│
+├── backend/                 # Django REST Framework Backend
+│   ├── api/                 # API views, models, serializers, and URLs
+│   │   ├── models.py        # User, Property, Room, Booking, Review, Verification models
+│   │   ├── views.py         # Auth, OTP, KNN Recommendations, Payments, Property APIs
+│   │   └── urls.py          # REST API routing endpoints
+│   ├── manage.py
+│   └── requirements.txt
+│
 └── README.md
 ```
 
 ---
 
-# 🚀 Installation
+## 🚀 Getting Started
 
-## Clone Repository
+### 1. Clone Repository
 
 ```bash
 git clone https://github.com/dwarkesh777/SEM4_GP.git
+cd SEM4_GP
 ```
 
----
-
-## Frontend
+### 2. Frontend Setup
 
 ```bash
+cd frontend
 npm install
 npm run dev
 ```
+> Frontend server will start on `http://localhost:5173`.
 
----
-
-## Backend
+### 3. Backend Setup
 
 ```bash
 cd backend
 
+# Create & activate virtual environment (optional)
+python -m venv venv
+# On Windows: venv\Scripts\activate
+# On macOS/Linux: source venv/bin/activate
+
 pip install -r requirements.txt
-
 python manage.py migrate
-
 python manage.py runserver
 ```
+> Backend server will start on `http://localhost:8000`.
 
 ---
 
-# 🌐 Environment Variables
+## 🌐 Environment Variables
 
-Create a `.env` file and configure:
-
+### Backend (`backend/.env`):
 ```env
-MONGODB_URI=your_mongodb_uri
+SECRET_KEY=your_django_secret_key
+DEBUG=True
 
-CLOUDINARY_CLOUD_NAME=
+# Database & Storage
+CLOUDINARY_CLOUD_NAME=your_cloudinary_name
+CLOUDINARY_API_KEY=your_cloudinary_key
+CLOUDINARY_API_SECRET=your_cloudinary_secret
 
-CLOUDINARY_API_KEY=
+# Razorpay Payments
+RAZORPAY_KEY_ID=your_razorpay_key_id
+RAZORPAY_KEY_SECRET=your_razorpay_key_secret
 
-CLOUDINARY_API_SECRET=
+# SMTP Email Configuration
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_HOST_USER=your_email@gmail.com
+EMAIL_HOST_PASSWORD=your_app_password
+```
 
-RAZORPAY_KEY_ID=
-
-RAZORPAY_KEY_SECRET=
-
-JWT_SECRET=
-
-GOOGLE_MAPS_API_KEY=
+### Frontend (`frontend/.env`):
+```env
+VITE_API_URL=http://localhost:8000
 ```
 
 ---
 
+## ⭐ Support & Contribution
 
-
-# 🎯 Future Enhancements
-
-- AI Room Recommendation
-- Chat Between Owner & User
-- Hostel Comparison
-- Email Notifications
-- Mobile Application
-- Analytics Dashboard
-- Multi-language Support
-
-
-
-# ⭐ Support
-
-If you like this project, don't forget to ⭐ the repository.
+If you find this repository helpful, please consider giving it a ⭐ star!
 
 ---
 
 ## 📄 License
 
-This project is developed for educational and portfolio purposes.
+Developed for educational and portfolio purposes. All rights reserved.

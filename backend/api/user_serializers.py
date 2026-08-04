@@ -8,7 +8,7 @@ class UserSerializer(serializers.ModelSerializer):
     face_photo = serializers.CharField(max_length=None, required=False, allow_blank=True, allow_null=True)
     class Meta:
         model = User
-        fields = ('id', 'email', 'full_name', 'is_owner', 'date_joined', 'face_photo', 'business_name', 'phone_number')
+        fields = ('id', 'email', 'full_name', 'is_owner', 'date_joined', 'face_photo', 'business_name', 'phone_number', 'pan_number', 'aadhar_number', 'bank_account', 'ifsc_code')
         read_only_fields = ('id', 'date_joined')
 
     def update(self, instance, validated_data):

@@ -37,7 +37,7 @@ const ShowAllProperties = ({ showAll, onShowAll, propertiesCount, onBackToHome }
                 </div>
             )}
             
-            {!showAll && propertiesCount >= 6 && (
+            {!showAll && propertiesCount >= 1 && (
                 <div className="p-1 rounded-[2.5rem] bg-slate-100/80 backdrop-blur-sm border border-white">
                     <Button 
                         size="lg" 

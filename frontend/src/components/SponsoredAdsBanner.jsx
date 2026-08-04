@@ -152,9 +152,9 @@ const SponsoredAdsBanner = () => {
     const visibleAds = getVisibleAds();
 
     return (
-        <section className="w-full my-8">
+        <section className="w-full my-6 px-4 sm:px-6 md:px-10 lg:px-12 max-w-7xl mx-auto">
             <div 
-                className="bg-gradient-to-r from-indigo-600/10 via-indigo-600/5 to-purple-600/10 border border-indigo-500/20 rounded-[2rem] p-6 sm:p-8 backdrop-blur-md relative overflow-hidden shadow-xl shadow-indigo-500/5"
+                className="bg-gradient-to-r from-indigo-600/10 via-indigo-600/5 to-purple-600/10 border border-indigo-500/20 rounded-[2rem] p-3 sm:p-4 md:p-5 backdrop-blur-md relative overflow-hidden shadow-xl shadow-indigo-500/5"
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >

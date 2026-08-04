@@ -138,6 +138,91 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
         }
     }, [view, refetchBookings]);
 
+    const [verifyForm, setVerifyForm] = useState({
+        pan_number: user?.pan_number || profileData?.pan_number || "",
+        aadhar_number: user?.aadhar_number || profileData?.aadhar_number || "",
+        bank_account: user?.bank_account || profileData?.bank_account || "",
+        ifsc_code: user?.ifsc_code || profileData?.ifsc_code || ""
+    });
+    const [savingVerification, setSavingVerification] = useState(false);
+    const [isEditingVerification, setIsEditingVerification] = useState(false);
+
+    useEffect(() => {
+        setVerifyForm({
+            pan_number: profileData?.pan_number || user?.pan_number || "",
+            aadhar_number: profileData?.aadhar_number || user?.aadhar_number || "",
+            bank_account: profileData?.bank_account || user?.bank_account || "",
+            ifsc_code: profileData?.ifsc_code || user?.ifsc_code || ""
+        });
+    }, [profileData, user]);
+
+    const isVerified = Boolean(
+        verifyForm.pan_number?.trim() &&
+        verifyForm.aadhar_number?.trim() &&
+        verifyForm.bank_account?.trim() &&
+        verifyForm.ifsc_code?.trim()
+    );
+
+    const handleSaveVerification = async () => {
+        const { pan_number, aadhar_number, bank_account, ifsc_code } = verifyForm;
+        
+        if (!pan_number?.trim() || !aadhar_number?.trim() || !bank_account?.trim() || !ifsc_code?.trim()) {
+            toast({
+                title: "All Fields Mandatory",
+                description: "PAN Number, Aadhar Number, Bank Account, and IFSC Code are all required to complete verification.",
+                variant: "destructive"
+            });
+            return;
+        }
+
+        setSavingVerification(true);
+        try {
+            const res = await fetch(`${API_URL}/api/auth/profile/`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                },
+                body: JSON.stringify({
+                    pan_number: pan_number.trim(),
+                    aadhar_number: aadhar_number.trim(),
+                    bank_account: bank_account.trim(),
+                    ifsc_code: ifsc_code.trim()
+                })
+            });
+
+            if (res.ok) {
+                const updatedData = await res.json();
+                if (setProfileData) {
+                    setProfileData(updatedData);
+                }
+                try {
+                    const currentUser = JSON.parse(localStorage.getItem("user") || "{}");
+                    localStorage.setItem("user", JSON.stringify({ ...currentUser, ...updatedData }));
+                } catch (e) {}
+
+                toast({
+                    title: "Verification Details Saved! 🎉",
+                    description: "All details saved successfully to database. Account is now VERIFIED!",
+                });
+            } else {
+                toast({
+                    title: "Save Failed",
+                    description: "Could not save details to database. Please check connection and try again.",
+                    variant: "destructive"
+                });
+            }
+        } catch (err) {
+            toast({
+                title: "Error",
+                description: "Network error occurred while saving details.",
+                variant: "destructive"
+            });
+        } finally {
+            setSavingVerification(false);
+        }
+    };
+
     const navItems = [
         { id: "home", label: "Overview", icon: LayoutDashboard },
         { id: "listings", label: "My Properties", icon: Building2, count: properties.length },
@@ -147,7 +232,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
         { id: "analytics", label: "Analytics", icon: BarChart3 },
         { id: "management", label: "Management", icon: Users },
         { id: "profile", label: "Owner Profile", icon: User },
-        { id: "verify", label: "Verification", icon: ShieldCheck, badge: "Verified" },
+        { id: "verify", label: "Verification", icon: ShieldCheck, badge: isVerified ? "VERIFIED" : "PENDING" },
     ];
 
     const stats = [
@@ -1914,19 +1999,51 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
         if (view === "verify") {
             return (
                 <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div>
-                        <h1 className="text-3xl font-black text-slate-900 font-heading">Get Verified</h1>
-                        <p className="text-slate-500">Verify your identity to build trust with potential tenants</p>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h1 className="text-3xl font-black text-slate-900 font-heading">Get Verified</h1>
+                            <p className="text-slate-500">Verify your identity to build trust with potential tenants</p>
+                        </div>
+                        {isVerified ? (
+                            <Badge className="bg-emerald-100 text-emerald-800 border-emerald-200 px-3.5 py-1.5 text-xs font-black gap-1.5 self-start sm:self-auto uppercase tracking-wider">
+                                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
+                                Verified Owner
+                            </Badge>
+                        ) : (
+                            <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200 px-3.5 py-1.5 text-xs font-black gap-1.5 self-start sm:self-auto uppercase tracking-wider">
+                                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                                Verification Pending
+                            </Badge>
+                        )}
                     </div>
 
-                    <Card className="rounded-[32px] border-emerald-100 bg-emerald-50/40 overflow-hidden">
-                        <CardContent className="p-8 flex items-center gap-6">
-                            <div className="w-16 h-16 rounded-3xl bg-white flex items-center justify-center shadow-md shadow-emerald-200/50">
-                                <ShieldCheck className="w-8 h-8 text-emerald-500" />
+                    {/* Status Banner */}
+                    <Card className={`rounded-[28px] overflow-hidden ${
+                        isVerified 
+                            ? "border-emerald-200 bg-emerald-50/60" 
+                            : "border-amber-200 bg-amber-50/60"
+                    }`}>
+                        <CardContent className="p-6 flex items-center gap-5">
+                            <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-sm shrink-0 ${
+                                isVerified 
+                                    ? "bg-white text-emerald-600 shadow-emerald-200" 
+                                    : "bg-white text-amber-600 shadow-amber-200"
+                            }`}>
+                                <ShieldCheck className="w-7 h-7" />
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold text-emerald-900">Verified Account</h3>
-                                <p className="text-emerald-700 font-medium">Your account is fully verified. You have earned the trusted owner badge!</p>
+                                <h3 className={`text-lg font-bold ${
+                                    isVerified ? "text-emerald-900" : "text-amber-900"
+                                }`}>
+                                    {isVerified ? "Verified Account" : "Verification Incomplete"}
+                                </h3>
+                                <p className={`text-sm font-medium ${
+                                    isVerified ? "text-emerald-700" : "text-amber-700"
+                                }`}>
+                                    {isVerified 
+                                        ? "Your account is fully verified. All mandatory fields have been submitted and saved to the database."
+                                        : "All 4 fields (PAN, Aadhar, Bank Account, IFSC) are mandatory. Fill all fields below and click Save to earn your Verified Badge."}
+                                </p>
                             </div>
                         </CardContent>
                     </Card>
@@ -1940,13 +2057,37 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">PAN Number</Label>
-                                        <Input defaultValue="BVRPS4074R" className="h-12 rounded-xl border-slate-200" />
+                                        <Label className="font-bold text-slate-700 flex items-center gap-1">
+                                            PAN Number <span className="text-red-500 font-bold">*</span>
+                                        </Label>
+                                        <Input 
+                                            value={verifyForm.pan_number}
+                                            disabled={isVerified && !isEditingVerification}
+                                            onChange={(e) => setVerifyForm(prev => ({ ...prev, pan_number: e.target.value }))}
+                                            placeholder="e.g. BVRPS4074R" 
+                                            className={`h-12 rounded-xl font-mono text-sm uppercase ${
+                                                isVerified && !isEditingVerification
+                                                    ? "bg-slate-50 text-slate-700 border-slate-200 cursor-not-allowed font-semibold"
+                                                    : "border-slate-200"
+                                            }`} 
+                                        />
                                         <p className="text-[10px] font-medium text-slate-400 ml-1">10-character PAN number</p>
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Aadhar Number</Label>
-                                        <Input defaultValue="224160267925" className="h-12 rounded-xl border-slate-200" />
+                                        <Label className="font-bold text-slate-700 flex items-center gap-1">
+                                            Aadhar Number <span className="text-red-500 font-bold">*</span>
+                                        </Label>
+                                        <Input 
+                                            value={verifyForm.aadhar_number}
+                                            disabled={isVerified && !isEditingVerification}
+                                            onChange={(e) => setVerifyForm(prev => ({ ...prev, aadhar_number: e.target.value }))}
+                                            placeholder="e.g. 224160267925" 
+                                            className={`h-12 rounded-xl font-mono text-sm ${
+                                                isVerified && !isEditingVerification
+                                                    ? "bg-slate-50 text-slate-700 border-slate-200 cursor-not-allowed font-semibold"
+                                                    : "border-slate-200"
+                                            }`} 
+                                        />
                                         <p className="text-[10px] font-medium text-slate-400 ml-1">12-digit Aadhar number</p>
                                     </div>
                                 </div>
@@ -1961,14 +2102,73 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                 </h3>
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">Bank Account Number</Label>
-                                        <Input placeholder="Enter account number" className="h-12 rounded-xl border-slate-200" />
+                                        <Label className="font-bold text-slate-700 flex items-center gap-1">
+                                            Bank Account Number <span className="text-red-500 font-bold">*</span>
+                                        </Label>
+                                        <Input 
+                                            value={verifyForm.bank_account}
+                                            disabled={isVerified && !isEditingVerification}
+                                            onChange={(e) => setVerifyForm(prev => ({ ...prev, bank_account: e.target.value }))}
+                                            placeholder="Enter account number" 
+                                            className={`h-12 rounded-xl font-mono text-sm ${
+                                                isVerified && !isEditingVerification
+                                                    ? "bg-slate-50 text-slate-700 border-slate-200 cursor-not-allowed font-semibold"
+                                                    : "border-slate-200"
+                                            }`} 
+                                        />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label className="font-bold text-slate-700">IFSC Code</Label>
-                                        <Input placeholder="Enter IFSC" className="h-12 rounded-xl border-slate-200" />
+                                        <Label className="font-bold text-slate-700 flex items-center gap-1">
+                                            IFSC Code <span className="text-red-500 font-bold">*</span>
+                                        </Label>
+                                        <Input 
+                                            value={verifyForm.ifsc_code}
+                                            disabled={isVerified && !isEditingVerification}
+                                            onChange={(e) => setVerifyForm(prev => ({ ...prev, ifsc_code: e.target.value }))}
+                                            placeholder="e.g. SBIN0001234" 
+                                            className={`h-12 rounded-xl uppercase font-mono text-sm ${
+                                                isVerified && !isEditingVerification
+                                                    ? "bg-slate-50 text-slate-700 border-slate-200 cursor-not-allowed font-semibold"
+                                                    : "border-slate-200"
+                                            }`} 
+                                        />
                                     </div>
                                 </div>
+                            </div>
+
+                            <div className="border-t border-slate-100 pt-4 flex justify-end gap-3">
+                                {isVerified && !isEditingVerification ? (
+                                    <Button
+                                        onClick={() => setIsEditingVerification(true)}
+                                        className="h-12 px-8 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold gap-2 shadow-md active:scale-95 transition-all"
+                                    >
+                                        <Edit className="w-4 h-4 text-blue-400" />
+                                        Edit Details
+                                    </Button>
+                                ) : (
+                                    <>
+                                        {isVerified && isEditingVerification && (
+                                            <Button
+                                                variant="outline"
+                                                onClick={() => setIsEditingVerification(false)}
+                                                className="h-12 px-6 rounded-xl border-slate-200 text-slate-600 font-bold hover:bg-slate-100"
+                                            >
+                                                Cancel
+                                            </Button>
+                                        )}
+                                        <Button
+                                            onClick={async () => {
+                                                await handleSaveVerification();
+                                                setIsEditingVerification(false);
+                                            }}
+                                            disabled={savingVerification}
+                                            className="h-12 px-8 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold gap-2 shadow-lg shadow-blue-600/20 active:scale-95 transition-all"
+                                        >
+                                            <CheckCircle2 className="w-4 h-4" />
+                                            {savingVerification ? "Saving to Database..." : "Save & Update Verification"}
+                                        </Button>
+                                    </>
+                                )}
                             </div>
                         </Card>
 

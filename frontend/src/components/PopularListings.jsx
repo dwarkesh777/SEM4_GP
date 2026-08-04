@@ -110,7 +110,7 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
     return (
         <section id="listings" className="relative py-8 bg-transparent overflow-visible z-20">
 
-            <div className="container relative z-10">
+            <div className="w-full relative z-10">
                 <div className="flex flex-col md:flex-row md:items-end justify-between mb-10 gap-6">
                     <motion.div
                         initial={{ opacity: 0, x: -30 }}
@@ -242,11 +242,7 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
-                        className={`grid gap-8 ${
-                            showAll 
-                                ? "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3" 
-                                : "grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4"
-                        }`}
+                        className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8"
                     >
                         {properties?.map((property, index) => (
                             <motion.div key={property.id} variants={itemVariants}>

@@ -83,6 +83,12 @@ Features:
 
 ---
 
+# 🏗️ Class Diagram
+
+![Class Diagram](./nest_node_class_diagram.png)
+
+---
+
 # 📂 Project Structure
 
 ```

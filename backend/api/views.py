@@ -1709,7 +1709,9 @@ def get_similar_properties(request, property_id):
     Get similar properties using a KNN-based similarity score.
     """
     try:
-        current_property = Property.objects.select_related('owner').get(id=property_id)
+        current_property = Property.objects.select_related('owner').filter(id=property_id).first()
+        if not current_property:
+            return Response([], status=status.HTTP_200_OK)
 
         def normalize_text(value):
             return re.sub(r'[^a-z0-9]+', ' ', (value or '').lower()).strip()
@@ -1745,35 +1747,42 @@ def get_similar_properties(request, property_id):
                 return 0.0
             return len(left_tokens & right_tokens) / len(union)
 
+        # 1. Try verified properties first
         candidates = list(
             Property.objects.filter(is_verified=True)
             .exclude(id=property_id)
             .select_related('owner')
         )
 
+        # 2. Fall back to all properties if no verified properties exist
         if not candidates:
-            return Response([])
+            candidates = list(
+                Property.objects.exclude(id=property_id)
+                .select_related('owner')
+            )
+
+        if not candidates:
+            return Response([], status=status.HTTP_200_OK)
 
         current_tokens = token_set(current_property)
-        feature_rows = []
-
-        for candidate in candidates:
-            feature_rows.append([
-                float(candidate.price or 0),
-                float(candidate.rating or 0),
-                float(candidate.reviews_count or 0),
-                float(candidate.amenities.count()),
-                float(candidate.appliances.count()),
-                float(candidate.rooms.count()),
-                1.0 if candidate.type == current_property.type else 0.0,
-                1.0 if candidate.gender == current_property.gender else 0.0,
-                1.0 if normalize_text(candidate.city) == normalize_text(current_property.city) else 0.0,
-            ])
-
         ranked_candidates = []
 
         if NearestNeighbors is not None:
             try:
+                feature_rows = []
+                for candidate in candidates:
+                    feature_rows.append([
+                        float(candidate.price or 0),
+                        float(candidate.rating or 0),
+                        float(candidate.reviews_count or 0),
+                        float(candidate.amenities.count()),
+                        float(candidate.appliances.count()),
+                        float(candidate.rooms.count()),
+                        1.0 if candidate.type == current_property.type else 0.0,
+                        1.0 if candidate.gender == current_property.gender else 0.0,
+                        1.0 if normalize_text(candidate.city) == normalize_text(current_property.city) else 0.0,
+                    ])
+
                 knn = NearestNeighbors(n_neighbors=min(6, len(feature_rows)), metric='euclidean')
                 knn.fit(feature_rows)
 
@@ -1825,14 +1834,12 @@ def get_similar_properties(request, property_id):
         ranked_candidates.sort(key=lambda item: item[0], reverse=True)
         similar_properties = [candidate for _, candidate in ranked_candidates[:6]]
 
-        serializer = PropertySerializer(similar_properties, many=True)
-        return Response(serializer.data)
-        
-    except Property.DoesNotExist:
-        return Response({'error': 'Property not found'}, status=404)
+        serializer = PropertySerializer(similar_properties, many=True, context={'request': request})
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
     except Exception as e:
-        logger.error(f"Error fetching similar properties: {e}")
-        return Response({'error': 'Failed to fetch similar properties'}, status=500)
+        logger.error(f"Error fetching similar properties: {e}", exc_info=True)
+        return Response([], status=status.HTTP_200_OK)
 
 from rest_framework.views import APIView
 

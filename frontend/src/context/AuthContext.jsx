@@ -139,6 +139,7 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem("token");
         localStorage.removeItem("userRole");
         setUser(null);
+        window.location.href = "/";
     };
 
     const sendOTP = async (email) => {

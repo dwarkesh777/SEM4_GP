@@ -506,12 +506,6 @@ class PropertyViewSet(viewsets.ModelViewSet):
         property_obj.save()
         return Response({'status': 'Property rejected'})
 
-    @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
-    def pause(self, request, pk=None):
-        property_obj = self.get_object()
-        property_obj.is_verified = None
-        property_obj.save()
-        return Response({'status': 'Property paused'})
 
 
 class RegisterView(generics.CreateAPIView):

@@ -5,7 +5,7 @@ import { API_URL } from "@/lib/api";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Check, X, Building2, MapPin, Loader2, ShieldCheck, LogOut, ExternalLink, Search, Pause, Home } from "lucide-react";
+import { Check, X, Building2, MapPin, Loader2, ShieldCheck, LogOut, ExternalLink, Search, Trash2, Home } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
 const AdminDashboard = () => {
@@ -52,8 +52,10 @@ const AdminDashboard = () => {
         setActionLoading(id);
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch(`${API_URL}/api/properties/${id}/${action}/`, {
-                method: "POST",
+            const url = action === 'delete' ? `${API_URL}/api/properties/${id}/` : `${API_URL}/api/properties/${id}/${action}/`;
+            const method = action === 'delete' ? "DELETE" : "POST";
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
@@ -62,14 +64,17 @@ const AdminDashboard = () => {
 
             if (response.ok) {
                 toast.success(`Property ${action}d successfully`);
-                setProperties(prev => prev.map(p => {
-                    if (p.id === id) {
-                        if (action === 'approve') p.is_verified = true;
-                        if (action === 'reject') p.is_verified = false;
-                        if (action === 'pause') p.is_verified = null;
-                    }
-                    return p;
-                }));
+                if (action === 'delete') {
+                    setProperties(prev => prev.filter(p => p.id !== id));
+                } else {
+                    setProperties(prev => prev.map(p => {
+                        if (p.id === id) {
+                            if (action === 'approve') p.is_verified = true;
+                            if (action === 'reject') p.is_verified = false;
+                        }
+                        return p;
+                    }));
+                }
             } else {
                 toast.error(`Failed to ${action} property`);
             }
@@ -83,7 +88,7 @@ const AdminDashboard = () => {
 
     const handleLogout = () => {
         logout();
-        navigate("/admin/login");
+        navigate("/");
     };
 
     const filteredProperties = properties.filter(p => 
@@ -265,12 +270,12 @@ const AdminDashboard = () => {
 
                                                 <Button 
                                                     size="sm"
-                                                    onClick={(e) => handleAction(e, property.id, "pause")}
-                                                    disabled={actionLoading === property.id || property.is_verified === null}
-                                                    className="flex-1 rounded-xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-400 hover:to-indigo-500 transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-blue-500/30 hover:shadow-lg hover:shadow-blue-500/40 active:scale-95 hover:-translate-y-0.5 border-none"
+                                                    onClick={(e) => handleAction(e, property.id, "delete")}
+                                                    disabled={actionLoading === property.id}
+                                                    className="flex-1 rounded-xl bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-500 hover:to-gray-600 transition-all font-bold disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-gray-500/30 hover:shadow-lg hover:shadow-gray-500/40 active:scale-95 hover:-translate-y-0.5 border-none"
                                                 >
-                                                    {actionLoading === property.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Pause className="w-3 h-3 mr-1" />}
-                                                    Pause
+                                                    {actionLoading === property.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <Trash2 className="w-3 h-3 mr-1" />}
+                                                    Delete
                                                 </Button>
                                             </div>
                                         </div>

@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Mail, Lock, ArrowRight, ShieldCheck, Home } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import Navbar from "@/components/Navbar";
 
 const AdminLogin = () => {
     const [email, setEmail] = useState("");
@@ -48,6 +49,8 @@ const AdminLogin = () => {
             
             <div className="absolute inset-0 bg-gradient-to-b from-blue-50/80 to-transparent pointer-events-none z-0" />
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-primary/10 blur-[100px] rounded-full animate-pulse-glow z-0" />
+            
+            <Navbar />
 
             <motion.div
                 initial={{ opacity: 0, y: 20 }}

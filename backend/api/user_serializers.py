@@ -5,10 +5,25 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 User = get_user_model()
 
 class UserSerializer(serializers.ModelSerializer):
+    face_photo = serializers.CharField(max_length=None, required=False, allow_blank=True, allow_null=True)
     class Meta:
         model = User
         fields = ('id', 'email', 'full_name', 'is_owner', 'date_joined', 'face_photo', 'business_name', 'phone_number')
         read_only_fields = ('id', 'date_joined')
+
+    def update(self, instance, validated_data):
+        face_photo = validated_data.get('face_photo')
+        if face_photo and isinstance(face_photo, str) and face_photo.startswith('data:image'):
+            import cloudinary.uploader
+            import logging
+            logger = logging.getLogger(__name__)
+            try:
+                upload_data = cloudinary.uploader.upload(face_photo)
+                validated_data['face_photo'] = upload_data.get('secure_url') or upload_data.get('url')
+            except Exception as e:
+                logger.error(f"Error uploading face_photo to cloudinary: {e}")
+                validated_data.pop('face_photo', None)
+        return super().update(instance, validated_data)
 
 class RegisterSerializer(serializers.ModelSerializer):
     password = serializers.CharField(write_only=True)

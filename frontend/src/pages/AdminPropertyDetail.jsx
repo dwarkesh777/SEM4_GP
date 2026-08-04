@@ -4,7 +4,7 @@ import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/lib/api";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Building2, MapPin, User, Mail, Phone, Check, X, Pause, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Loader2, ArrowLeft, Building2, MapPin, User, Mail, Phone, Check, X, Trash2, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 
 const AdminPropertyDetail = () => {
     const { id } = useParams();
@@ -51,8 +51,10 @@ const AdminPropertyDetail = () => {
         setActionLoading(action);
         try {
             const token = localStorage.getItem("token");
-            const response = await fetch(`${API_URL}/api/properties/${id}/${action}/`, {
-                method: "POST",
+            const url = action === 'delete' ? `${API_URL}/api/properties/${id}/` : `${API_URL}/api/properties/${id}/${action}/`;
+            const method = action === 'delete' ? "DELETE" : "POST";
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     Authorization: `Bearer ${token}`,
                     "Content-Type": "application/json"
@@ -61,13 +63,16 @@ const AdminPropertyDetail = () => {
 
             if (response.ok) {
                 toast.success(`Property ${action}d successfully`);
-                setProperty(prev => {
-                    const newProp = { ...prev };
-                    if (action === 'approve') newProp.is_verified = true;
-                    if (action === 'reject') newProp.is_verified = false;
-                    if (action === 'pause') newProp.is_verified = null;
-                    return newProp;
-                });
+                if (action === 'delete') {
+                    navigate("/admin");
+                } else {
+                    setProperty(prev => {
+                        const newProp = { ...prev };
+                        if (action === 'approve') newProp.is_verified = true;
+                        if (action === 'reject') newProp.is_verified = false;
+                        return newProp;
+                    });
+                }
             } else {
                 toast.error(`Failed to ${action} property`);
             }
@@ -304,12 +309,12 @@ const AdminPropertyDetail = () => {
 
                             <Button 
                                 size="lg"
-                                onClick={() => handleAction("pause")}
-                                disabled={actionLoading === "pause" || property.is_verified === null}
-                                className="w-full rounded-2xl bg-gradient-to-r from-blue-500 to-indigo-600 text-white hover:from-blue-400 hover:to-indigo-500 transition-all font-bold disabled:opacity-50 shadow-lg shadow-blue-500/30 hover:shadow-xl hover:shadow-blue-500/40 active:scale-[0.98] hover:-translate-y-1 border-none h-14 text-lg"
+                                onClick={() => handleAction("delete")}
+                                disabled={actionLoading === "delete"}
+                                className="w-full rounded-2xl bg-gradient-to-r from-gray-600 to-gray-700 text-white hover:from-gray-500 hover:to-gray-600 transition-all font-bold disabled:opacity-50 shadow-lg shadow-gray-500/30 hover:shadow-xl hover:shadow-gray-500/40 active:scale-[0.98] hover:-translate-y-1 border-none h-14 text-lg"
                             >
-                                {actionLoading === "pause" ? <Loader2 className="w-6 h-6 animate-spin" /> : <Pause className="w-6 h-6 mr-2" />}
-                                Pause Property
+                                {actionLoading === "delete" ? <Loader2 className="w-6 h-6 animate-spin" /> : <Trash2 className="w-6 h-6 mr-2" />}
+                                Delete Property
                             </Button>
                         </div>
                     </div>

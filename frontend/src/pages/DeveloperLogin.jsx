@@ -80,94 +80,19 @@ const DeveloperLogin = () => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col">
+        <div className="min-h-screen bg-slate-50 flex flex-col">
             <Navbar />
             <div className="flex-1 flex pt-20">
-                {/* Left panel — terminal / code aesthetic */}
-            <div className="hidden lg:flex w-1/2 relative overflow-hidden flex-col justify-between p-12">
-                {/* Animated background */}
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950/40" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(16,185,129,0.15),transparent_60%)]" />
-                <div className="absolute top-24 left-16 w-80 h-80 bg-emerald-500/10 blur-[120px] rounded-full animate-pulse" />
-                <div className="absolute bottom-16 right-16 w-64 h-64 bg-cyan-500/10 blur-[100px] rounded-full" />
-
-                {/* Grid lines overlay */}
-                <div
-                    className="absolute inset-0 opacity-[0.04]"
-                    style={{
-                        backgroundImage: "linear-gradient(rgba(16,185,129,1) 1px, transparent 1px), linear-gradient(90deg, rgba(16,185,129,1) 1px, transparent 1px)",
-                        backgroundSize: "48px 48px"
-                    }}
-                />
-
-                {/* Logo */}
-                <Link to="/" className="relative z-10 flex items-center gap-2.5 group w-fit">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/15 backdrop-blur-md border border-emerald-500/30 shadow-lg group-hover:scale-105 transition-transform">
-                        <Code2 className="w-5 h-5 text-emerald-400" />
-                    </div>
-                    <span className="text-2xl tracking-tight font-heading text-white">
-                        <span className="font-medium">Nest</span>
-                        <span className="font-black text-emerald-400">Node</span>
-                    </span>
-                </Link>
-
-                {/* Terminal mock */}
-                <div className="relative z-10 max-w-md">
-                    <motion.div
-                        initial={{ opacity: 0, y: 24 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.9 }}
-                    >
-                        {/* Fake terminal window */}
-                        <div className="rounded-2xl border border-slate-700/60 bg-slate-900/80 backdrop-blur-md overflow-hidden shadow-2xl shadow-black/40 mb-8">
-                            <div className="flex items-center gap-1.5 px-4 py-3 border-b border-slate-700/60 bg-slate-800/60">
-                                <span className="w-3 h-3 rounded-full bg-red-500/80" />
-                                <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                                <span className="w-3 h-3 rounded-full bg-green-500/80" />
-                                <span className="ml-2 text-xs text-slate-500 font-mono">nestnode-api — bash</span>
-                            </div>
-                            <div className="p-5 font-mono text-sm space-y-2">
-                                <div className="flex gap-2">
-                                    <span className="text-emerald-400">$</span>
-                                    <span className="text-slate-300">curl https://nestnode.app/api/public/properties/list/</span>
-                                </div>
-                                <div className="flex gap-2">
-                                    <span className="text-slate-600">#</span>
-                                    <span className="text-slate-500">-H 'X-API-Key: dev_••••••••••••'</span>
-                                </div>
-                                <div className="mt-3 text-emerald-400 text-xs">
-                                    {"{"} "status": 200, "count": 42, "results": [...] {"}"}
-                                </div>
-                                <div className="flex items-center gap-1 mt-2">
-                                    <span className="text-emerald-400">$</span>
-                                    <span className="w-1.5 h-4 bg-emerald-400 animate-pulse rounded-sm" />
-                                </div>
-                            </div>
-                        </div>
-
-                        <h2 className="text-4xl font-black text-white font-heading leading-tight mb-4 tracking-tight">
-                            Build with{" "}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-cyan-400">
-                                NestNode APIs
-                            </span>
-                        </h2>
-                        <p className="text-slate-400 text-base leading-relaxed font-medium">
-                            Access hostel data, manage bookings, and integrate with our platform using our developer-grade REST API.
-                        </p>
-                    </motion.div>
-                </div>
-            </div>
-
-            {/* Right panel — login form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-hidden bg-slate-50">
+            {/* Login form */}
+            <div className="w-full flex items-center justify-center p-6 sm:p-12 relative overflow-hidden bg-slate-50">
                 {/* Subtle mobile bg */}
                 <div className="absolute inset-0 lg:hidden bg-gradient-to-br from-slate-50 to-emerald-50/30" />
 
                 <div className="w-full max-w-md relative z-10">
                     {/* Mobile logo */}
-                    <Link to="/" className="lg:hidden flex items-center gap-2 mb-10">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500 shadow-lg shadow-emerald-500/20">
-                            <Code2 className="w-5 h-5 text-white" />
+                    <Link to="/" className="flex items-center gap-2 mb-10 justify-center">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-emerald-500/15 backdrop-blur-md border border-emerald-500/30 shadow-lg">
+                            <Code2 className="w-5 h-5 text-emerald-600" />
                         </div>
                         <span className="text-2xl tracking-tight font-heading text-slate-900">
                             <span className="font-medium">Nest</span>
@@ -180,8 +105,8 @@ const DeveloperLogin = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5 }}
                     >
-                        <Card className="border-none shadow-2xl shadow-emerald-500/5 rounded-[2rem] overflow-hidden">
-                            <CardHeader className="space-y-1 pb-6 text-center bg-white pt-8">
+                        <Card className="border border-slate-100 bg-white/90 backdrop-blur-xl shadow-2xl shadow-emerald-500/5 rounded-[2rem] overflow-hidden">
+                            <CardHeader className="space-y-1 pb-6 text-center border-b border-slate-100 pt-8">
                                 <div className="mx-auto w-14 h-14 bg-gradient-to-br from-emerald-500 to-cyan-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-emerald-500/30">
                                     <Terminal className="w-7 h-7 text-white" />
                                 </div>
@@ -194,8 +119,8 @@ const DeveloperLogin = () => {
                             </CardHeader>
 
                             {/* Method toggle */}
-                            <div className="px-8 bg-white">
-                                <div className="flex p-1 bg-slate-100 rounded-2xl mb-4">
+                            <div className="px-8 pt-6">
+                                <div className="flex p-1 bg-slate-100 border border-slate-200 rounded-2xl mb-4">
                                     <button
                                         onClick={() => { setLoginMethod("password"); setOtpSent(false); }}
                                         className={`flex-1 py-2.5 text-sm font-bold rounded-xl transition-all ${loginMethod === "password" ? "bg-white text-emerald-600 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
@@ -211,7 +136,7 @@ const DeveloperLogin = () => {
                                 </div>
                             </div>
 
-                            <CardContent className="space-y-5 pt-2 bg-white px-8 pb-6">
+                            <CardContent className="space-y-5 pt-2 px-8 pb-6">
                                 {loginMethod === "password" ? (
                                     <form onSubmit={handlePasswordSubmit} className="space-y-4">
                                         <div className="space-y-2">
@@ -224,7 +149,7 @@ const DeveloperLogin = () => {
                                                     id="dev-email"
                                                     type="email"
                                                     placeholder="developer@example.com"
-                                                    className="pl-11 py-6 rounded-2xl border-slate-200 focus-visible:ring-emerald-500/20"
+                                                    className="pl-11 py-6 rounded-2xl bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
                                                     value={email}
                                                     onChange={(e) => setEmail(e.target.value)}
                                                     required
@@ -236,7 +161,7 @@ const DeveloperLogin = () => {
                                                 <Label htmlFor="dev-password" className="font-bold text-slate-700">
                                                     Password
                                                 </Label>
-                                                <Link to="#" className="text-xs font-bold text-emerald-600 hover:underline">
+                                                <Link to="#" className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline">
                                                     Forgot password?
                                                 </Link>
                                             </div>
@@ -246,7 +171,7 @@ const DeveloperLogin = () => {
                                                     id="dev-password"
                                                     type="password"
                                                     placeholder="••••••••"
-                                                    className="pl-11 py-6 rounded-2xl border-slate-200 focus-visible:ring-emerald-500/20"
+                                                    className="pl-11 py-6 rounded-2xl bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
                                                     value={password}
                                                     onChange={(e) => setPassword(e.target.value)}
                                                     required
@@ -274,7 +199,7 @@ const DeveloperLogin = () => {
                                                     id="dev-otp-email"
                                                     type="email"
                                                     placeholder="developer@example.com"
-                                                    className="pl-11 py-6 rounded-2xl border-slate-200 focus-visible:ring-emerald-500/20"
+                                                    className="pl-11 py-6 rounded-2xl bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
                                                     value={email}
                                                     onChange={(e) => setEmail(e.target.value)}
                                                     required
@@ -298,7 +223,7 @@ const DeveloperLogin = () => {
                                                         type="text"
                                                         placeholder="Enter 6-digit code"
                                                         maxLength={6}
-                                                        className="pl-11 py-6 rounded-2xl border-slate-200 font-mono tracking-widest focus-visible:ring-emerald-500/20"
+                                                        className="pl-11 py-6 rounded-2xl bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 font-mono tracking-widest focus-visible:ring-emerald-500/20 focus-visible:border-emerald-500"
                                                         value={otp}
                                                         onChange={(e) => setOtp(e.target.value)}
                                                         required
@@ -307,7 +232,7 @@ const DeveloperLogin = () => {
                                                 <button
                                                     type="button"
                                                     onClick={() => setOtpSent(false)}
-                                                    className="text-xs font-bold text-emerald-600 hover:underline ml-1"
+                                                    className="text-xs font-bold text-emerald-600 hover:text-emerald-700 hover:underline ml-1"
                                                 >
                                                     Change email address
                                                 </button>
@@ -330,7 +255,7 @@ const DeveloperLogin = () => {
                             <CardFooter className="flex flex-col space-y-4 bg-slate-50/70 p-8 pt-6 border-t border-slate-100">
                                 <div className="text-center text-sm font-medium text-slate-500">
                                     No developer account?{" "}
-                                    <Link to="/developer/signup" className="text-emerald-600 font-bold hover:underline">
+                                    <Link to="/developer/signup" className="text-emerald-600 font-bold hover:text-emerald-700 hover:underline transition-colors">
                                         Register here
                                     </Link>
                                 </div>

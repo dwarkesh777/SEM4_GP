@@ -82,79 +82,19 @@ const DeveloperSignup = () => {
     ];
 
     return (
-        <div className="min-h-screen bg-slate-950 flex flex-col">
+        <div className="min-h-screen bg-slate-50 flex flex-col">
             <Navbar />
             <div className="flex-1 flex pt-20">
-                {/* Left panel — dev branding */}
-            <div className="hidden lg:flex w-1/2 relative overflow-hidden flex-col justify-between p-12">
-                <div className="absolute inset-0 bg-gradient-to-br from-slate-950 via-slate-900 to-cyan-950/40" />
-                <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(6,182,212,0.12),transparent_60%)]" />
-                <div className="absolute top-32 right-12 w-72 h-72 bg-cyan-500/10 blur-[100px] rounded-full animate-pulse" />
-                <div className="absolute bottom-24 left-12 w-64 h-64 bg-emerald-500/10 blur-[90px] rounded-full" />
 
-                <div
-                    className="absolute inset-0 opacity-[0.04]"
-                    style={{
-                        backgroundImage: "linear-gradient(rgba(6,182,212,1) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,1) 1px, transparent 1px)",
-                        backgroundSize: "48px 48px"
-                    }}
-                />
-
-                {/* Logo */}
-                <Link to="/" className="relative z-10 flex items-center gap-2.5 group w-fit">
-                    <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-cyan-500/15 backdrop-blur-md border border-cyan-500/30 shadow-lg group-hover:scale-105 transition-transform">
-                        <Code2 className="w-5 h-5 text-cyan-400" />
-                    </div>
-                    <span className="text-2xl tracking-tight font-heading text-white">
-                        <span className="font-medium">Nest</span>
-                        <span className="font-black text-cyan-400">Node</span>
-                    </span>
-                </Link>
-
-                {/* Feature list */}
-                <div className="relative z-10 max-w-md">
-                    <motion.div
-                        initial={{ opacity: 0, y: 24 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.9 }}
-                    >
-                        <h2 className="text-4xl font-black text-white font-heading leading-tight mb-6 tracking-tight">
-                            Join the{" "}
-                            <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-emerald-400">
-                                developer
-                            </span>{" "}
-                            ecosystem
-                        </h2>
-
-                        <div className="space-y-4">
-                            {[
-                                { icon: "🔑", title: "Instant API Key", desc: "Get your API key immediately after registration." },
-                                { icon: "📡", title: "RESTful Endpoints", desc: "Access hostel listings, rooms, and booking data." },
-                                { icon: "⚡", title: "Real-time Updates", desc: "Receive booking webhooks and live availability." },
-                                { icon: "🛡️", title: "Secure & Scalable", desc: "Enterprise-grade authentication and rate limiting." },
-                            ].map((item) => (
-                                <div key={item.title} className="flex items-start gap-4 p-4 rounded-2xl bg-white/5 border border-white/8 backdrop-blur-sm">
-                                    <span className="text-2xl">{item.icon}</span>
-                                    <div>
-                                        <p className="font-bold text-white text-sm">{item.title}</p>
-                                        <p className="text-slate-400 text-sm mt-0.5">{item.desc}</p>
-                                    </div>
-                                </div>
-                            ))}
-                        </div>
-                    </motion.div>
-                </div>
-            </div>
-
-            {/* Right panel — signup form */}
-            <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 relative overflow-hidden bg-slate-50">
+            {/* Signup form */}
+            <div className="w-full flex items-center justify-center p-6 sm:p-12 relative overflow-hidden bg-slate-50">
                 <div className="absolute inset-0 lg:hidden bg-gradient-to-br from-slate-50 to-cyan-50/30" />
 
                 <div className="w-full max-w-md relative z-10">
                     {/* Mobile logo */}
-                    <Link to="/" className="lg:hidden flex items-center gap-2 mb-10">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-cyan-500 shadow-lg shadow-cyan-500/20">
-                            <Code2 className="w-5 h-5 text-white" />
+                    <Link to="/" className="flex items-center gap-2 mb-10 justify-center">
+                        <div className="flex items-center justify-center w-10 h-10 rounded-xl bg-cyan-500/15 backdrop-blur-md border border-cyan-500/30 shadow-lg">
+                            <Code2 className="w-5 h-5 text-cyan-600" />
                         </div>
                         <span className="text-2xl tracking-tight font-heading text-slate-900">
                             <span className="font-medium">Nest</span>
@@ -167,8 +107,8 @@ const DeveloperSignup = () => {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ duration: 0.5 }}
                     >
-                        <Card className="border-none shadow-2xl shadow-cyan-500/5 rounded-[2rem] overflow-hidden">
-                            <CardHeader className="space-y-1 pb-6 text-center bg-white pt-8">
+                        <Card className="border border-slate-100 bg-white/90 backdrop-blur-xl shadow-2xl shadow-cyan-500/5 rounded-[2rem] overflow-hidden">
+                            <CardHeader className="space-y-1 pb-6 text-center pt-8 border-b border-slate-100">
                                 <div className="mx-auto w-14 h-14 bg-gradient-to-br from-cyan-500 to-emerald-500 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-cyan-500/30">
                                     <Terminal className="w-7 h-7 text-white" />
                                 </div>
@@ -180,7 +120,7 @@ const DeveloperSignup = () => {
                                 </CardDescription>
                             </CardHeader>
 
-                            <CardContent className="space-y-4 pt-4 bg-white px-8 pb-6">
+                            <CardContent className="space-y-4 pt-6 px-8 pb-6">
                                 <form onSubmit={handleSubmit} className="space-y-4">
                                     {fields.map(({ id, label, icon: Icon, type, placeholder }) => (
                                         <div key={id} className="space-y-1">
@@ -193,7 +133,7 @@ const DeveloperSignup = () => {
                                                     id={`signup-${id}`}
                                                     type={type}
                                                     placeholder={placeholder}
-                                                    className={`pl-11 py-6 rounded-2xl border-slate-200 focus-visible:ring-cyan-500/20 ${errors[id] ? "border-red-400" : ""}`}
+                                                    className={`pl-11 py-6 rounded-2xl bg-white border-slate-200 text-slate-900 placeholder:text-slate-400 focus-visible:ring-cyan-500/20 focus-visible:border-cyan-500 ${errors[id] ? "border-red-400 focus-visible:ring-red-500/20 focus-visible:border-red-500" : ""}`}
                                                     value={formData[id]}
                                                     onChange={handleChange(id)}
                                                 />
@@ -207,11 +147,11 @@ const DeveloperSignup = () => {
                                     {/* Terms note */}
                                     <p className="text-xs text-slate-400 text-center pt-1">
                                         By registering you agree to our{" "}
-                                        <Link to="/terms" className="text-cyan-600 hover:underline font-semibold">
+                                        <Link to="/terms" className="text-cyan-600 hover:text-cyan-700 hover:underline font-semibold transition-colors">
                                             Terms of Service
                                         </Link>{" "}
                                         and{" "}
-                                        <Link to="/privacy" className="text-cyan-600 hover:underline font-semibold">
+                                        <Link to="/privacy" className="text-cyan-600 hover:text-cyan-700 hover:underline font-semibold transition-colors">
                                             Privacy Policy
                                         </Link>
                                         .
@@ -240,7 +180,7 @@ const DeveloperSignup = () => {
                             <CardFooter className="flex flex-col space-y-4 bg-slate-50/70 p-8 pt-6 border-t border-slate-100">
                                 <div className="text-center text-sm font-medium text-slate-500">
                                     Already have an account?{" "}
-                                    <Link to="/developer/login" className="text-cyan-600 font-bold hover:underline">
+                                    <Link to="/developer/login" className="text-cyan-600 font-bold hover:text-cyan-700 hover:underline transition-colors">
                                         Sign in here
                                     </Link>
                                 </div>

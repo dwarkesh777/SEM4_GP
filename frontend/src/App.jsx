@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "./context/AuthContext";
 import ScrollToTop from "./components/ScrollToTop";
+import WhatsAppChat from "./components/WhatsAppChat";
 
 // --- Lazy-loaded pages (code splitting) ---
 // Each page is bundled into its own JS chunk, downloaded only when navigated to.
@@ -146,6 +147,7 @@ const App = () => (
                             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                             <Route path="*" element={<NotFound />} />
                         </Routes>
+                        <WhatsAppChat />
                     </Suspense>
                 </BrowserRouter>
             </AuthProvider>

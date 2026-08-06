@@ -18,8 +18,8 @@ const TYPE_OPTIONS = [
 ];
 
 const SORT_OPTIONS = [
+    { label: "Latest First 🆕", value: "created_at_desc" },
     { label: "Top Rated ⭐", value: "rating_desc" },
-    { label: "Nearest First 📍", value: "distance_asc" },
     { label: "Price: Low → High 💰", value: "price_asc" },
     { label: "Price: High → Low 💎", value: "price_desc" },
 ];
@@ -45,7 +45,7 @@ const HorizontalFilterBar = ({ filters = {}, onFilterChange, onClearAll }) => {
 
     const currentGender = filters.gender?.[0] || "all";
     const currentType = filters.type?.[0] || "all";
-    const currentSort = filters.ordering || "rating_desc";
+    const currentSort = filters.ordering || "created_at_desc";
     const selectedAmenities = filters.amenities || [];
 
     const handleGenderSelect = (val) => {
@@ -85,7 +85,7 @@ const HorizontalFilterBar = ({ filters = {}, onFilterChange, onClearAll }) => {
         (currentGender !== "all" ? 1 : 0) +
         (currentType !== "all" ? 1 : 0) +
         selectedAmenities.length +
-        (currentSort !== "rating_desc" ? 1 : 0);
+        (currentSort !== "created_at_desc" ? 1 : 0);
 
     return (
         <div ref={containerRef} className={`w-full my-6 p-3 sm:p-4 bg-white/95 backdrop-blur-xl rounded-2xl sm:rounded-3xl border border-slate-200/80 shadow-lg shadow-slate-900/5 relative ${openDropdown ? "z-50" : "z-30"}`}>

@@ -147,8 +147,8 @@ const App = () => (
                             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                             <Route path="*" element={<NotFound />} />
                         </Routes>
-                        <WhatsAppChat />
                     </Suspense>
+                    <WhatsAppChat />
                 </BrowserRouter>
             </AuthProvider>
         </TooltipProvider>
@@ -156,4 +156,3 @@ const App = () => (
 );
 
 export default App;
-

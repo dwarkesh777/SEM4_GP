@@ -14,28 +14,18 @@ const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters
     if (searchQuery) url += `search=${encodeURIComponent(searchQuery)}&`;
     if (lat && lng) url += `lat=${lat}&lng=${lng}&`;
     
-    // Default to rating_desc ordering for top properties
-    if (!filters.ordering && (!lat || !lng)) {
-        url += `ordering=rating_desc&`;
-    }
-    
-    // Add limit parameter if specified
-    if (limit) {
-        url += `limit=${limit}&`;
-    }
-
     // Add advanced filters
     if (filters.gender?.length > 0) {
-        filters.gender.forEach(g => url += `gender=${g}&`);
+        filters.gender.forEach(g => url += `gender=${encodeURIComponent(g)}&`);
     }
     if (filters.type?.length > 0) {
-        filters.type.forEach(t => url += `type=${t}&`);
+        filters.type.forEach(t => url += `type=${encodeURIComponent(t)}&`);
     }
     if (filters.amenities?.length > 0) {
-        filters.amenities.forEach(a => url += `amenities=${a}&`);
+        filters.amenities.forEach(a => url += `amenities=${encodeURIComponent(a)}&`);
     }
     if (filters.ordering) {
-        url += `ordering=${filters.ordering}&`;
+        url += `ordering=${encodeURIComponent(filters.ordering)}&`;
     }
 
     const res = await fetch(url);
@@ -44,11 +34,55 @@ const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters
     
     let propertiesList = data.results || data;
     if (Array.isArray(propertiesList)) {
-        propertiesList = propertiesList.filter(p => {
-            const type = p.type?.toLowerCase();
-            return type === 'hostel' || type === 'pg';
-        });
+        // Filter by type if specified
+        if (filters.type?.length > 0) {
+            propertiesList = propertiesList.filter(p => 
+                filters.type.some(t => p.type?.toLowerCase() === t.toLowerCase())
+            );
+        } else {
+            propertiesList = propertiesList.filter(p => {
+                const type = p.type?.toLowerCase();
+                return type === 'hostel' || type === 'pg';
+            });
+        }
+
+        // Filter by gender if specified
+        if (filters.gender?.length > 0) {
+            propertiesList = propertiesList.filter(p =>
+                filters.gender.some(g => p.gender?.toLowerCase() === g.toLowerCase())
+            );
+        }
+
+        // Filter by amenities if specified
+        if (filters.amenities?.length > 0) {
+            propertiesList = propertiesList.filter(p => {
+                const propAmenities = (p.amenities || []).map(a => 
+                    (typeof a === 'string' ? a : a.name || '').toLowerCase()
+                );
+                return filters.amenities.every(a => propAmenities.includes(a.toLowerCase()));
+            });
+        }
+
+        // Apply sorting based on user selection
+        const sortMode = filters.ordering || 'created_at_desc';
+        if (sortMode === 'created_at_desc') {
+            propertiesList.sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+        } else if (sortMode === 'price_asc') {
+            propertiesList.sort((a, b) => (Number(a.price) || 0) - (Number(b.price) || 0));
+        } else if (sortMode === 'price_desc') {
+            propertiesList.sort((a, b) => (Number(b.price) || 0) - (Number(a.price) || 0));
+        } else if (sortMode === 'rating_desc') {
+            propertiesList.sort((a, b) => (Number(b.rating) || 0) - (Number(a.rating) || 0));
+        } else if (sortMode === 'distance_asc') {
+            propertiesList.sort((a, b) => (Number(a.distance) || 9999) - (Number(b.distance) || 9999));
+        }
     }
+
+    // Limit if requested (after sorting)
+    if (limit && Array.isArray(propertiesList)) {
+        propertiesList = propertiesList.slice(0, limit);
+    }
+
     return propertiesList;
 };
 

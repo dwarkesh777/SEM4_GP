@@ -38,10 +38,10 @@ const AMENITIES_CATEGORIES = [
 ];
 
 const SORT_OPTIONS = [
-    { label: "Nearest First", value: "distance_asc", icon: "📍" },
+    { label: "Latest First", value: "created_at_desc", icon: "🆕" },
+    { label: "Top Rated", value: "rating_desc", icon: "⭐" },
     { label: "Price: Low → High", value: "price_asc", icon: "💰" },
     { label: "Price: High → Low", value: "price_desc", icon: "💎" },
-    { label: "Top Rated", value: "rating_desc", icon: "⭐" },
 ];
 
 /* ─── Default Filters ─────────────────────────────────────────────────────── */
@@ -49,7 +49,7 @@ const DEFAULT_FILTERS = {
     gender: [],
     type: [],
     amenities: [],
-    ordering: "distance_asc",
+    ordering: "created_at_desc",
 };
 
 /* ─── Pill chip for selected values shown in button ─────────────────────── */
@@ -223,7 +223,7 @@ const FilterResults = ({ onFilterChange, onClearAll }) => {
         filters.gender.length +
         filters.type.length +
         filters.amenities.length +
-        (filters.ordering !== "distance_asc" ? 1 : 0);
+        (filters.ordering !== "created_at_desc" ? 1 : 0);
 
     const sortLabel = SORT_OPTIONS.find((o) => o.value === filters.ordering)?.label;
 

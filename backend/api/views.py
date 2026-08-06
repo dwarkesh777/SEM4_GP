@@ -69,13 +69,29 @@ def public_properties(request):
     if city:
         queryset = queryset.filter(city__icontains=city)
 
-    property_type = request.query_params.get('type')
-    if property_type:
-        queryset = queryset.filter(type__icontains=property_type)
+    # Multi-select property types
+    types = request.query_params.getlist('type')
+    if not types and request.query_params.get('type'):
+        types = [request.query_params.get('type')]
+    if types:
+        type_q = Q()
+        for t in types:
+            if t and t.lower() != 'all':
+                type_q |= Q(type__icontains=t)
+        if type_q:
+            queryset = queryset.filter(type_q)
 
-    gender = request.query_params.get('gender')
-    if gender:
-        queryset = queryset.filter(gender__icontains=gender)
+    # Multi-select gender
+    genders = request.query_params.getlist('gender')
+    if not genders and request.query_params.get('gender'):
+        genders = [request.query_params.get('gender')]
+    if genders:
+        gender_q = Q()
+        for g in genders:
+            if g and g.lower() != 'all':
+                gender_q |= Q(gender__icontains=g)
+        if gender_q:
+            queryset = queryset.filter(gender_q)
 
     min_price = request.query_params.get('min_price')
     if min_price:
@@ -91,6 +107,24 @@ def public_properties(request):
     # Convert to list
     properties = list(queryset)
     
+    # Sort in Python list by requested ordering
+    ordering = request.query_params.get('ordering', 'created_at_desc')
+    if ordering == 'created_at_desc':
+        def _get_sort_time(prop):
+            dt = getattr(prop, 'created_at', None)
+            if not dt:
+                return datetime.min.replace(tzinfo=timezone.utc)
+            if timezone.is_naive(dt):
+                return timezone.make_aware(dt, timezone.utc)
+            return dt
+        properties.sort(key=_get_sort_time, reverse=True)
+    elif ordering == 'price_asc':
+        properties.sort(key=lambda x: getattr(x, 'price', 0) or 0)
+    elif ordering == 'price_desc':
+        properties.sort(key=lambda x: getattr(x, 'price', 0) or 0, reverse=True)
+    elif ordering == 'rating_desc':
+        properties.sort(key=lambda x: getattr(x, 'rating', 0) or 0, reverse=True)
+
     college_lat = request.query_params.get('lat')
     college_lng = request.query_params.get('lng')
     if college_lat and college_lng:
@@ -117,7 +151,8 @@ def public_properties(request):
                         prop.distance = round(distance, 2)
                         filtered_results.append(prop)
             properties = filtered_results
-            properties.sort(key=lambda x: getattr(x, 'distance', float('inf')))
+            if ordering == 'distance_asc':
+                properties.sort(key=lambda x: getattr(x, 'distance', float('inf')))
             total_count = len(properties)
         except (ValueError, TypeError) as e:
             pass

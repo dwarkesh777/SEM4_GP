@@ -11,7 +11,7 @@ import FeatureTicker from "@/components/FeatureTicker";
 
 const Index = () => {
     const [searchQuery, setSearchQuery] = useState("");
-    const [filters, setFilters] = useState({});
+    const [filters, setFilters] = useState({ ordering: "created_at_desc" });
     const [showAll, setShowAll] = useState(() => {
         return sessionStorage.getItem('home_showAll') === 'true';
     });
@@ -54,7 +54,7 @@ const Index = () => {
     };
 
     const handleClearAll = () => {
-        setFilters({});
+        setFilters({ ordering: "created_at_desc" });
     };
 
     return (

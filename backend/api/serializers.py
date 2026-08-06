@@ -193,11 +193,19 @@ class PropertySerializer(serializers.ModelSerializer):
                 except Exception as e:
                     logger.error(f"Error creating room: {e}")
 
-        for img in uploaded_images:
-            try:
-                PropertyImage.objects.create(property=property_obj, image=img)
-            except Exception as e:
-                logger.error(f"Error saving gallery image to Cloudinary: {e}")
+        if uploaded_images:
+            from concurrent.futures import ThreadPoolExecutor
+
+            def save_single_image(img):
+                try:
+                    PropertyImage.objects.create(property=property_obj, image=img)
+                except Exception as e:
+                    logger.error(f"Error saving gallery image to Cloudinary: {e}")
+
+            # Upload up to 5 images simultaneously in parallel threads
+            max_threads = min(5, len(uploaded_images))
+            with ThreadPoolExecutor(max_workers=max_threads) as executor:
+                list(executor.map(save_single_image, uploaded_images))
 
         return property_obj
 

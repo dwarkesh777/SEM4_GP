@@ -60,7 +60,9 @@ def public_properties(request):
         queryset = queryset.filter(
             Q(name__icontains=search_query) |
             Q(city__icontains=search_query) |
-            Q(location__icontains=search_query)
+            Q(location__icontains=search_query) |
+            Q(address__icontains=search_query) |
+            Q(description__icontains=search_query)
         )
 
     city = request.query_params.get('city')
@@ -507,14 +509,23 @@ class PropertyViewSet(viewsets.ModelViewSet):
             # request.data (which would crash on file uploads due to BufferedRandom)
             property_instance = serializer.save(owner=self.request.user, is_verified=None)
 
-            try:
-                subject = 'Property Listed Successfully - NestNode'
-                message = f'Dear {self.request.user.full_name},\n\nThank you for choosing NestNode! Your property "{property_instance.name}" has been successfully listed on our platform.\n\nWe are grateful to have you as a partner. Our team will review the listing and it will be visible to students shortly.\n\nBest regards,\nTeam NestNode'
-                recipient_list = [self.request.user.email]
-                send_mail(subject, message, settings.EMAIL_HOST_USER, recipient_list)
-                logger.info(f"Notification email sent to {self.request.user.email} for property {property_instance.name}")
-            except Exception as e:
-                logger.error(f"Failed to send notification email: {e}")
+            # Send email notification asynchronously in a background thread to prevent blocking HTTP response
+            def send_email_async(user_name, user_email, prop_name):
+                try:
+                    subject = 'Property Listed Successfully - NestNode'
+                    message = f'Dear {user_name},\n\nThank you for choosing NestNode! Your property "{prop_name}" has been successfully listed on our platform.\n\nWe are grateful to have you as a partner. Our team will review the listing and it will be visible to students shortly.\n\nBest regards,\nTeam NestNode'
+                    recipient_list = [user_email]
+                    send_mail(subject, message, settings.EMAIL_HOST_USER, recipient_list)
+                    logger.info(f"Notification email sent to {user_email} for property {prop_name}")
+                except Exception as e:
+                    logger.error(f"Failed to send notification email: {e}")
+
+            import threading
+            threading.Thread(
+                target=send_email_async,
+                args=(self.request.user.full_name, self.request.user.email, property_instance.name),
+                daemon=True
+            ).start()
         else:
             from rest_framework.exceptions import AuthenticationFailed
             raise AuthenticationFailed("You must be logged in as an owner to list a property.")
@@ -1330,17 +1341,30 @@ def send_enquiry_notification_email(enquiry):
 
 class EnquiryViewSet(viewsets.ModelViewSet):
     serializer_class = EnquirySerializer
-    permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create']:
+            return [permissions.AllowAny()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
-        if self.request.user.is_owner:
-            return Enquiry.objects.filter(property__owner=self.request.user).order_by('-created_at')
-        return Enquiry.objects.filter(user=self.request.user).order_by('-created_at')
+        if self.request.user.is_authenticated:
+            if self.request.user.is_owner:
+                return Enquiry.objects.filter(property__owner=self.request.user).order_by('-created_at')
+            return Enquiry.objects.filter(user=self.request.user).order_by('-created_at')
+        return Enquiry.objects.none()
 
     def perform_create(self, serializer):
-        enquiry = serializer.save(user=self.request.user)
-        # Trigger notification email
-        send_enquiry_notification_email(enquiry)
+        user = self.request.user if self.request.user.is_authenticated else None
+        enquiry = serializer.save(user=user)
+        
+        # Trigger notification email asynchronously in a background thread to prevent blocking response
+        import threading
+        threading.Thread(
+            target=send_enquiry_notification_email,
+            args=(enquiry,),
+            daemon=True
+        ).start()
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

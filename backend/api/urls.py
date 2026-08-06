@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet, send_otp, verify_otp, reset_password_with_otp, ReviewViewSet, get_review_images, get_similar_properties, UserSignupView, OwnerSignupView, public_properties, create_external_booking, developer_api_info, public_property_detail, public_booking_detail, AdminSignupView, AdminLoginView
+from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet, send_otp, verify_otp, reset_password_with_otp, ReviewViewSet, get_review_images, get_similar_properties, UserSignupView, OwnerSignupView, public_properties, create_external_booking, developer_api_info, public_property_detail, public_booking_detail, AdminSignupView, AdminLoginView, admin_students_list, admin_owners_list, admin_analytics
 from .colleges_view import get_colleges
 
 router = DefaultRouter()
@@ -28,6 +28,9 @@ urlpatterns = [
     path('auth/send-otp/', send_otp, name='send_otp'),
     path('auth/verify-otp/', verify_otp, name='verify_otp'),
     path('auth/reset-password-otp/', reset_password_with_otp, name='reset_password_with_otp'),
+    path('admin/students/', admin_students_list, name='admin_students_list'),
+    path('admin/owners/', admin_owners_list, name='admin_owners_list'),
+    path('admin/analytics/', admin_analytics, name='admin_analytics'),
     path('public/properties/list/', public_properties, name='public_properties_list'),
     path('public/properties/detail/<uuid:property_id>/', public_property_detail, name='public_property_detail'),
     path('public/bookings/create/', create_external_booking, name='public_bookings_create'),

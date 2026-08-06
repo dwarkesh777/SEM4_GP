@@ -173,6 +173,65 @@ const AddProperty = () => {
         if (currentStep > 1) setCurrentStep(currentStep - 1);
     };
 
+// Fast client-side image compression helper to shrink 5MB-10MB camera images down to ~300KB JPEGs
+const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.82) => {
+    return new Promise((resolve) => {
+        if (!file || !file.type?.startsWith('image/')) {
+            resolve(file);
+            return;
+        }
+        if (file.size < 500 * 1024) {
+            resolve(file);
+            return;
+        }
+
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = (event) => {
+            const img = new Image();
+            img.src = event.target.result;
+            img.onload = () => {
+                let width = img.width;
+                let height = img.height;
+
+                if (width > maxWidth || height > maxHeight) {
+                    if (width > height) {
+                        height = Math.round((height * maxWidth) / width);
+                        width = maxWidth;
+                    } else {
+                        width = Math.round((width * maxHeight) / height);
+                        height = maxHeight;
+                    }
+                }
+
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob && blob.size < file.size) {
+                            const compressedFile = new File([blob], file.name, {
+                                type: 'image/jpeg',
+                                lastModified: Date.now(),
+                            });
+                            resolve(compressedFile);
+                        } else {
+                            resolve(file);
+                        }
+                    },
+                    'image/jpeg',
+                    quality
+                );
+            };
+            img.onerror = () => resolve(file);
+        };
+        reader.onerror = () => resolve(file);
+    });
+};
+
     const handleSubmit = async () => {
         // Validate required fields
         if (!formData.name?.trim()) {
@@ -213,6 +272,12 @@ const AddProperty = () => {
 
         setLoading(true);
         try {
+            // Compress images concurrently before sending
+            const compressedMainImage = mainImage ? await compressImage(mainImage) : null;
+            const compressedExtraImages = await Promise.all(
+                extraImages.map(img => compressImage(img))
+            );
+
             const submitData = new FormData();
 
             // Basic Fields — skip empty strings for numeric fields to avoid Django validation errors
@@ -233,9 +298,9 @@ const AddProperty = () => {
             submitData.append('rooms_json', JSON.stringify(formData.rooms));
 
             // Images & Video
-            if (mainImage) submitData.append('main_image', mainImage);
+            if (compressedMainImage) submitData.append('main_image', compressedMainImage);
             if (video) submitData.append('video', video);
-            extraImages.forEach(img => submitData.append('uploaded_images', img));
+            compressedExtraImages.forEach(img => submitData.append('uploaded_images', img));
 
             const response = await fetch(`${API_URL}/api/properties/`, {
                 method: "POST",

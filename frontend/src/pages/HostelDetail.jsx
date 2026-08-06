@@ -594,6 +594,15 @@ const HostelDetail = () => {
 
     const handleEnquiry = async (e) => {
         e.preventDefault();
+        if (!enquiryForm.name?.trim() || !enquiryForm.phone?.trim()) {
+            toast({
+                title: "Incomplete Details",
+                description: "Please fill in your name and contact phone number.",
+                variant: "destructive"
+            });
+            return;
+        }
+
         try {
             const token = localStorage.getItem('token');
             const res = await fetch(`${API_URL}/api/enquiries/`, {
@@ -606,23 +615,23 @@ const HostelDetail = () => {
                     property: id,
                     name: enquiryForm.name,
                     phone: enquiryForm.phone,
-                    message: enquiryForm.message,
+                    message: enquiryForm.message || "Enquiry regarding room availability.",
                 }),
             });
 
             if (res.ok) {
-                toast({ title: "Enquiry Sent!", description: "The owner will contact you soon." });
+                toast({ title: "Enquiry Sent! 🎉", description: "The property owner will contact you shortly." });
                 setEnquiryForm({ name: "", phone: "", message: "" });
             } else {
-                const errData = await res.json();
+                const errData = await res.json().catch(() => ({}));
                 toast({
                     title: "Error",
-                    description: errData.error || "Failed to send enquiry. Please log in first.",
+                    description: errData.detail || errData.error || "Failed to send enquiry. Please try again.",
                     variant: "destructive"
                 });
             }
         } catch (err) {
-            toast({ title: "Error", description: "Something went wrong.", variant: "destructive" });
+            toast({ title: "Error", description: "Something went wrong sending your enquiry.", variant: "destructive" });
         }
     };
 

@@ -322,7 +322,7 @@ const UserDashboard = () => {
                                     user?.full_name?.charAt(0) || <User className="w-5 h-5" />
                                 )}
                             </div>
-                            <div className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-white rounded-full"></div>
+
                         </div>
                         <div className="flex-1 min-w-0">
                             <p className="text-sm font-bold text-slate-900 truncate">{user?.full_name}</p>

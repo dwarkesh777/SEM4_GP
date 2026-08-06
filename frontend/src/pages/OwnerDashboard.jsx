@@ -366,13 +366,41 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
     const [addStudentForm, setAddStudentForm] = useState({ customer_name: "", customer_email: "", customer_phone: "", property_id: "", room_id: "" });
     const [searchQuery, setSearchQuery] = useState("");
 
+    // Helper to filter ads for current logged-in owner
+    const filterAdsForOwner = (allAds) => {
+        const currentOwnerId = user?.id || user?.email;
+        const ownerPropIds = new Set((properties || []).map(p => String(p.id)));
+
+        return (allAds || []).filter(ad => {
+            if (ad.ownerId && currentOwnerId) {
+                return String(ad.ownerId) === String(currentOwnerId);
+            }
+            if (ad.propertyId && ownerPropIds.size > 0) {
+                return ownerPropIds.has(String(ad.propertyId));
+            }
+            return false;
+        });
+    };
+
     const [adsList, setAdsList] = useState(() => {
         try {
-            return JSON.parse(localStorage.getItem("owner_ads_campaigns") || "[]");
+            const allStored = JSON.parse(localStorage.getItem("owner_ads_campaigns") || "[]");
+            return filterAdsForOwner(allStored);
         } catch {
             return [];
         }
     });
+
+    // Re-filter whenever properties or user changes
+    useEffect(() => {
+        try {
+            const allStored = JSON.parse(localStorage.getItem("owner_ads_campaigns") || "[]");
+            setAdsList(filterAdsForOwner(allStored));
+        } catch {
+            setAdsList([]);
+        }
+    }, [user, properties]);
+
     const [isCreatingAd, setIsCreatingAd] = useState(false);
     const [adForm, setAdForm] = useState({
         propertyId: "",
@@ -397,6 +425,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
 
         const newAd = {
             id: `ad-${Date.now()}`,
+            ownerId: user?.id || user?.email,
             propertyId: selectedProperty.id,
             propertyName: selectedProperty.name,
             location: selectedProperty.location || selectedProperty.city || "Ahmedabad",
@@ -417,31 +446,48 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
             createdAt: new Date().toISOString()
         };
 
-        const updated = [newAd, ...adsList];
-        setAdsList(updated);
-        localStorage.setItem("owner_ads_campaigns", JSON.stringify(updated));
+        try {
+            const allStored = JSON.parse(localStorage.getItem("owner_ads_campaigns") || "[]");
+            const updatedAll = [newAd, ...allStored];
+            localStorage.setItem("owner_ads_campaigns", JSON.stringify(updatedAll));
+
+            setAdsList(filterAdsForOwner(updatedAll));
+        } catch {
+            setAdsList([newAd]);
+        }
+
         setIsCreatingAd(false);
         toast({ title: "Ad Campaign Published! 🎉", description: "Your property is now live as a Sponsored Listing on the Home Page." });
     };
 
     const handleToggleAdStatus = (adId) => {
-        const updated = adsList.map(ad => {
-            if (ad.id === adId) {
-                const nextStatus = ad.status === "Active" ? "Paused" : "Active";
-                return { ...ad, status: nextStatus };
-            }
-            return ad;
-        });
-        setAdsList(updated);
-        localStorage.setItem("owner_ads_campaigns", JSON.stringify(updated));
-        toast({ title: "Ad Campaign Updated", description: "Campaign status toggled successfully." });
+        try {
+            const allStored = JSON.parse(localStorage.getItem("owner_ads_campaigns") || "[]");
+            const updatedAll = allStored.map(ad => {
+                if (ad.id === adId) {
+                    const nextStatus = ad.status === "Active" ? "Paused" : "Active";
+                    return { ...ad, status: nextStatus };
+                }
+                return ad;
+            });
+            localStorage.setItem("owner_ads_campaigns", JSON.stringify(updatedAll));
+            setAdsList(filterAdsForOwner(updatedAll));
+            toast({ title: "Ad Campaign Updated", description: "Campaign status toggled successfully." });
+        } catch {
+            toast({ title: "Error", description: "Could not update campaign status.", variant: "destructive" });
+        }
     };
 
     const handleDeleteAd = (adId) => {
-        const updated = adsList.filter(ad => ad.id !== adId);
-        setAdsList(updated);
-        localStorage.setItem("owner_ads_campaigns", JSON.stringify(updated));
-        toast({ title: "Campaign Deleted", description: "Ad campaign removed." });
+        try {
+            const allStored = JSON.parse(localStorage.getItem("owner_ads_campaigns") || "[]");
+            const updatedAll = allStored.filter(ad => ad.id !== adId);
+            localStorage.setItem("owner_ads_campaigns", JSON.stringify(updatedAll));
+            setAdsList(filterAdsForOwner(updatedAll));
+            toast({ title: "Campaign Deleted", description: "Ad campaign removed." });
+        } catch {
+            toast({ title: "Error", description: "Could not delete campaign.", variant: "destructive" });
+        }
     };
 
     const handleAddStudent = async () => {
@@ -694,7 +740,7 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                 </div>
 
                 {/* Ads Analytics Overview Cards */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
                     <Card className="border-slate-100 shadow-sm rounded-2xl">
                         <CardContent className="p-5 flex items-center gap-4">
                             <div className="w-12 h-12 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-black">
@@ -703,18 +749,6 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                             <div>
                                 <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Active Ads</p>
                                 <h3 className="text-2xl font-black text-slate-900 mt-0.5">{activeCount} / {adsList.length}</h3>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-slate-100 shadow-sm rounded-2xl">
-                        <CardContent className="p-5 flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-black">
-                                <Eye className="w-6 h-6" />
-                            </div>
-                            <div>
-                                <p className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Impressions</p>
-                                <h3 className="text-2xl font-black text-slate-900 mt-0.5">{totalImpressions.toLocaleString()}</h3>
                             </div>
                         </CardContent>
                     </Card>
@@ -920,15 +954,14 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                     <th className="px-6 py-4 font-bold">Promoted Property</th>
                                     <th className="px-6 py-4 font-bold">Headline & Badge</th>
                                     <th className="px-6 py-4 font-bold">Status</th>
-                                    <th className="px-6 py-4 font-bold text-center">Impressions</th>
                                     <th className="px-6 py-4 font-bold text-center">Clicks</th>
-                                    <th className="px-6 py-4 font-bold text-right">Actions</th>
+                                    <th className="px-6 py-4 font-bold text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
                                 {adsList.length === 0 ? (
                                     <tr>
-                                        <td colSpan="6" className="px-6 py-12 text-center text-slate-400 font-medium">
+                                        <td colSpan="5" className="px-6 py-12 text-center text-slate-400 font-medium">
                                             <Megaphone className="w-10 h-10 mx-auto mb-2 text-slate-300 stroke-[1.5]" />
                                             No active ad campaigns yet. Click **"Create New Ad Campaign"** to promote your property on the Home Page!
                                         </td>
@@ -959,19 +992,16 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                                                 <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${ad.status === "Active"
                                                         ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
                                                         : "bg-slate-100 text-slate-600 border border-slate-200"
-                                                    }`}>
+                                                     }`}>
                                                     <span className={`w-2 h-2 rounded-full ${ad.status === "Active" ? "bg-emerald-500 animate-pulse" : "bg-slate-400"}`} />
                                                     {ad.status}
                                                 </span>
                                             </td>
-                                            <td className="px-6 py-4 text-center font-mono font-bold text-slate-700">
-                                                {(ad.impressions || 150).toLocaleString()}
-                                            </td>
                                             <td className="px-6 py-4 text-center font-mono font-bold text-amber-600">
                                                 {(ad.clicks || 0).toLocaleString()}
                                             </td>
-                                            <td className="px-6 py-4 text-right">
-                                                <div className="flex items-center justify-end gap-2">
+                                            <td className="px-6 py-4 text-center">
+                                                <div className="flex items-center justify-center gap-2">
                                                     <button
                                                         onClick={() => handleToggleAdStatus(ad.id)}
                                                         className="p-2 rounded-lg text-slate-500 hover:text-amber-600 hover:bg-amber-50 transition-colors"

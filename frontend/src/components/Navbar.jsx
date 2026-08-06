@@ -68,8 +68,7 @@ const Navbar = () => {
                             <User className="w-4 h-4 text-primary" />
                         )}
                     </div>
-                    {/* Online dot */}
-                    <span className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-white shadow-sm" />
+
                 </motion.button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-64 p-3 rounded-3xl mt-3 shadow-2xl shadow-slate-900/15 border border-white/60 bg-white/95 backdrop-blur-xl" align="end">
@@ -140,7 +139,7 @@ const Navbar = () => {
     return (
         <>
             {/* Floating Navbar */}
-            <div className="fixed top-4 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+            <div className="fixed top-6 sm:top-8 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
                 <motion.div
                     initial={{ width: "52px", opacity: 0, y: -40 }}
                     animate={{ 

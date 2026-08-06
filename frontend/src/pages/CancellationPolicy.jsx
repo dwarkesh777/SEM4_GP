@@ -1,103 +1,39 @@
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
-import { motion } from "framer-motion";
-import { RefreshCcw, Clock, AlertCircle, FileText } from "lucide-react";
+import React from "react";
+import PolicyPage from "./PolicyPage";
+import { ShieldCheck } from "lucide-react";
+
+const cancellationContent = [
+    {
+        heading: "1. Standard Cancellation Policy",
+        paragraphs: [
+            "Students and tenants can cancel their booking up to 15 days before the scheduled move-in date to receive a 100% full refund of their advance security deposit.",
+            "Cancellations requested within 7 to 14 days of move-in are subject to a nominal 10% processing fee."
+        ]
+    },
+    {
+        heading: "2. Late Cancellations",
+        paragraphs: [
+            "Cancellations requested less than 7 days prior to the move-in date may incur a penalty up to 50% of the first month's security deposit, as the room was held exclusively for you.",
+            "In exceptional medical or emergency circumstances, proof can be submitted to our support team for a full fee waiver review."
+        ]
+    },
+    {
+        heading: "3. Refund Processing Timeline",
+        paragraphs: [
+            "Approved refunds are automatically credited back to your original payment method (Bank Account / UPI / Card) within 5 to 7 business days.",
+            "You will receive instant SMS and email tracking notifications once the refund payout is initiated by NestNode."
+        ]
+    }
+];
 
 const CancellationPolicy = () => {
     return (
-        <div className="min-h-screen bg-transparent">
-            <Navbar />
-            <main>
-                <section className="bg-transparent pt-24 pb-16 border-b border-slate-200">
-                    <div className="container max-w-5xl">
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="flex items-center gap-4 mb-6"
-                        >
-                            <div className="w-12 h-12 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center text-primary">
-                                <RefreshCcw className="w-6 h-6" />
-                            </div>
-                            <h1 className="text-3xl md:text-4xl font-extrabold tracking-tight">Cancellation Policy</h1>
-                        </motion.div>
-                        <p className="text-muted-foreground text-lg max-w-2xl">
-                            Our guidelines for bookings, refunds, and security deposits to ensure
-                            a fair experience for both residents and owners.
-                        </p>
-                    </div>
-                </section>
-
-                <section className="container max-w-5xl py-20">
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-                        <div className="lg:col-span-2 space-y-12">
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                whileInView={{ opacity: 1 }}
-                            >
-                                <h2 className="text-2xl font-bold mb-6 flex items-center gap-2">
-                                    <Clock className="w-6 h-6 text-primary" />
-                                    Standard Refund Terms
-                                </h2>
-                                <div className="space-y-4">
-                                    {[
-                                        { label: "Full Refund", time: "Within 24 Hours", detail: "If check-in is at least 7 days away from the booking time.", color: "bg-white/40 backdrop-blur-sm border-slate-200" },
-                                        { label: "50% Refund", time: "15 Days Prior", detail: "Eligible for a partial refund of the security deposit balance.", color: "bg-white/40 backdrop-blur-sm border-slate-200" },
-                                        { label: "No Refund", time: "Under 7 Days", detail: "Cancellations within a week of check-in are typically non-refundable.", color: "bg-white/20 backdrop-blur-sm border-slate-200" },
-                                    ].map((policy, i) => (
-                                        <div key={i} className={`p-6 rounded-2xl border ${policy.color}`}>
-                                            <div className="flex justify-between items-baseline mb-2">
-                                                <span className="font-bold text-lg">{policy.label}</span>
-                                                <span className="text-sm font-bold uppercase tracking-wider opacity-60">{policy.time}</span>
-                                            </div>
-                                            <p className="text-muted-foreground">{policy.detail}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </motion.div>
-
-                            <motion.div
-                                initial={{ opacity: 0 }}
-                                whileInView={{ opacity: 1 }}
-                                className="bg-white/40 backdrop-blur-sm p-10 rounded-3xl border border-slate-200 shadow-sm"
-                            >
-                                <h3 className="text-xl font-bold mb-6">Security Deposits</h3>
-                                <p className="text-muted-foreground leading-relaxed mb-6">
-                                    Security deposits are handled directly between the tenant and the owner.
-                                    NestNode does not hold or process security deposits.
-                                </p>
-                                <div className="flex items-start gap-4 p-4 bg-orange-50/50 rounded-2xl border border-orange-100">
-                                    <AlertCircle className="w-6 h-6 text-orange-500 mt-1 shrink-0" />
-                                    <p className="text-sm text-orange-800 font-medium">
-                                        We strongly recommend obtaining a digital receipt for any deposit paid
-                                        and discussing physical refund terms before check-in.
-                                    </p>
-                                </div>
-                            </motion.div>
-                        </div>
-
-                        <div className="space-y-8">
-                            <div className="sticky top-24 p-8 bg-white/40 backdrop-blur-sm rounded-[2rem] border border-slate-200">
-                                <h4 className="font-bold mb-4 flex items-center gap-2">
-                                    <FileText className="w-5 h-5" />
-                                    Quick Summary
-                                </h4>
-                                <ul className="text-sm space-y-4 text-muted-foreground">
-                                    <li>• Direct owner-tenant refunds</li>
-                                    <li>• 24h grace period for full refund</li>
-                                    <li>• Security deposits not held by us</li>
-                                    <li>• Mediation available for disputes</li>
-                                </ul>
-                                <hr className="my-6 border-border" />
-                                <button className="w-full py-4 text-primary font-bold hover:underline">
-                                    Contact Support
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </section>
-            </main>
-            <Footer />
-        </div>
+        <PolicyPage
+            title="Cancellation Policy"
+            lastUpdated="January 2026"
+            content={cancellationContent}
+            icon={ShieldCheck}
+        />
     );
 };
 

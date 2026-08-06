@@ -24,10 +24,10 @@ const Footer = () => {
       />
 
       <div className="container max-w-7xl mx-auto px-4 z-10 relative">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 items-start">
           
           {/* Left section: Info & Contact Cards */}
-          <div className="lg:col-span-5 space-y-6 text-left">
+          <div className="lg:col-span-6 space-y-6 text-left">
             <div className="flex items-center gap-3">
               <div className="w-11 h-11 rounded-2xl bg-blue-600 flex items-center justify-center shadow-lg shadow-blue-600/20">
                 <Home className="w-5 h-5 text-white" />
@@ -49,7 +49,7 @@ const Footer = () => {
                 </div>
                 <div>
                   <p className="text-[9px] font-black uppercase text-slate-400 tracking-wider">CALL US - 9AM-9PM</p>
-                  <p className="text-sm font-black text-slate-800">+91 63528 96141</p>
+                  <p className="text-sm font-black text-slate-800">+91 78599 88312</p>
                 </div>
               </div>
               <div className="flex items-center gap-3.5">
@@ -82,7 +82,7 @@ const Footer = () => {
           </div>
 
           {/* Right Links Grid */}
-          <div className="lg:col-span-7 grid grid-cols-2 md:grid-cols-3 gap-8 text-left">
+          <div className="lg:col-span-6 flex flex-wrap sm:flex-nowrap gap-16 lg:gap-24 text-left">
             {/* Column 1 */}
             <div className="space-y-4">
               <div className="space-y-1">
@@ -96,22 +96,8 @@ const Footer = () => {
               </ul>
             </div>
 
-            {/* Column 2 */}
+            {/* Column 2 - LEGAL */}
             <div className="space-y-4">
-              <div className="space-y-1">
-                <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">STAY WITH US</h4>
-                <div className="w-5 h-0.5 bg-blue-600 rounded-full" />
-              </div>
-              <ul className="space-y-3 text-sm font-bold text-slate-500">
-                <li><Link to="/#listings" className="hover:text-blue-600 transition-colors">All properties</Link></li>
-                <li><Link to="/#listings" className="hover:text-blue-600 transition-colors">Hostels</Link></li>
-                <li><Link to="/#listings" className="hover:text-blue-600 transition-colors">PGs</Link></li>
-                <li><Link to="/#listings" className="hover:text-blue-600 transition-colors">Apartments</Link></li>
-              </ul>
-            </div>
-
-            {/* Column 3 */}
-            <div className="space-y-4 col-span-2 md:col-span-1">
               <div className="space-y-1">
                 <h4 className="text-xs font-black uppercase tracking-wider text-slate-800">LEGAL</h4>
                 <div className="w-5 h-0.5 bg-blue-600 rounded-full" />

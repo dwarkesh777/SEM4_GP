@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Phone, Mail, Home, Instagram, Facebook, Linkedin } from "lucide-react";
+import { Phone, Mail, Home, Instagram, Facebook, Linkedin, ExternalLink } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -93,6 +93,16 @@ const Footer = () => {
                 <li><Link to="/about" className="hover:text-blue-600 transition-colors">Our Story</Link></li>
                 <li><Link to="/contact" className="hover:text-blue-600 transition-colors">Contact</Link></li>
                 <li><Link to="/faq" className="hover:text-blue-600 transition-colors">FAQ</Link></li>
+                <li>
+                  <a
+                    href="https://nestnode-docs.vercel.app/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-blue-600 transition-colors flex items-center gap-1.5"
+                  >
+                    Documentation <ExternalLink className="w-3 h-3 text-slate-400" />
+                  </a>
+                </li>
               </ul>
             </div>
 

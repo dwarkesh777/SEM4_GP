@@ -5,13 +5,14 @@ import { Phone, Mail, MapPin, Send, CheckCircle2, MessageSquare } from "lucide-r
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 
 const Contact = () => {
     const { toast } = useToast();
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({ name: "", email: "", message: "" });
 
-    const handleSubmit = (e) => {
+    const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.name || !formData.email || !formData.message) {
             toast({
@@ -23,14 +24,35 @@ const Contact = () => {
         }
 
         setLoading(true);
-        setTimeout(() => {
-            setLoading(false);
-            toast({
-                title: "Message Sent Successfully! 🎉",
-                description: "Thank you for reaching out. Our support team will get back to you within 24 hours.",
+        try {
+            const response = await fetch(`${API_URL}/api/public/contact/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(formData)
             });
-            setFormData({ name: "", email: "", message: "" });
-        }, 600);
+
+            if (response.ok) {
+                toast({
+                    title: "Message Sent Successfully! 🎉",
+                    description: "Thank you for reaching out. Our support team will get back to you within 24 hours.",
+                });
+                setFormData({ name: "", email: "", message: "" });
+            } else {
+                toast({
+                    title: "Error Sending Message",
+                    description: "Please try again later.",
+                    variant: "destructive"
+                });
+            }
+        } catch (error) {
+            toast({
+                title: "Error Sending Message",
+                description: "There was a network error. Please try again later.",
+                variant: "destructive"
+            });
+        } finally {
+            setLoading(false);
+        }
     };
 
     return (

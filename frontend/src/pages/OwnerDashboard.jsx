@@ -71,6 +71,8 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
     });
 
     const [showCameraModal, setShowCameraModal] = useState(false);
+    const [paymentConfirmBooking, setPaymentConfirmBooking] = useState(null);
+    const [removeUserConfirmId, setRemoveUserConfirmId] = useState(null);
     const videoRef = useRef(null);
     const canvasRef = useRef(null);
 
@@ -617,8 +619,14 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
         setActionLoading(null);
     };
 
-    const handleMarkPaid = async (booking) => {
-        if (!confirm("Mark this booking as paid for the current cycle? This will advance the next due date by one month.")) return;
+    const handleMarkPaid = (booking) => {
+        setPaymentConfirmBooking(booking);
+    };
+
+    const confirmMarkPaid = async () => {
+        if (!paymentConfirmBooking) return;
+        const booking = paymentConfirmBooking;
+        setPaymentConfirmBooking(null);
 
         // Advance the payment date by exactly 1 month from the current payment date
         const currentPaymentDate = new Date(booking.payment_date || booking.created_at);
@@ -655,8 +663,15 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
         setActionLoading(null);
     };
 
-    const handleRemoveUser = async (bookingId) => {
-        if (!confirm("Are you sure you want to remove this user and cancel their booking? This will increase the available bed count.")) return;
+    const handleRemoveUser = (bookingId) => {
+        setRemoveUserConfirmId(bookingId);
+    };
+
+    const confirmRemoveUser = async () => {
+        if (!removeUserConfirmId) return;
+        const bookingId = removeUserConfirmId;
+        setRemoveUserConfirmId(null);
+        
         setActionLoading(`remove-${bookingId}`);
         try {
             const res = await fetch(`${API_URL}/api/bookings/${bookingId}/cancel/`, {
@@ -2787,8 +2802,64 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
                 </div>
 
                 {/* Main Content Body */}
-                <main className="p-6 md:p-8 w-full flex-1 flex flex-col justify-between">
+                <main className="p-6 md:p-8 w-full flex-1 flex flex-col justify-between relative">
                     {renderContent()}
+
+                    {/* Global Modals */}
+                    {paymentConfirmBooking && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+                            <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-4">
+                                <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                                    <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                                        <CheckCircle2 className="w-5 h-5 text-emerald-600" />
+                                        Confirm Payment
+                                    </h3>
+                                    <button type="button" onClick={() => setPaymentConfirmBooking(null)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <p className="text-slate-600 font-medium pb-2">
+                                    Mark this booking as paid for the current cycle? This will advance the next due date by one month.
+                                </p>
+                                <div className="flex gap-3 justify-end pt-2">
+                                    <Button type="button" onClick={() => setPaymentConfirmBooking(null)} className="h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl px-6 shadow-none">
+                                        Cancel
+                                    </Button>
+                                    <Button type="button" onClick={confirmMarkPaid} className="h-11 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl px-6 shadow-lg shadow-emerald-500/20">
+                                        Confirm Payment
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Remove User Confirmation Modal */}
+                    {removeUserConfirmId && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+                            <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-100 space-y-4">
+                                <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                                    <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                                        <Trash2 className="w-5 h-5 text-red-600" />
+                                        Remove User
+                                    </h3>
+                                    <button type="button" onClick={() => setRemoveUserConfirmId(null)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                                <p className="text-slate-600 font-medium pb-2">
+                                    Are you sure you want to remove this user and cancel their booking? This will increase the available bed count.
+                                </p>
+                                <div className="flex gap-3 justify-end pt-2">
+                                    <Button type="button" onClick={() => setRemoveUserConfirmId(null)} className="h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl px-6 shadow-none">
+                                        Cancel
+                                    </Button>
+                                    <Button type="button" onClick={confirmRemoveUser} className="h-11 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl px-6 shadow-lg shadow-red-500/20">
+                                        Confirm Removal
+                                    </Button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
                 </main>
             </div>
         </div>

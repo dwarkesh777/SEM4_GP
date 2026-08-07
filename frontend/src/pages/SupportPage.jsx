@@ -15,6 +15,8 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import SupportButton from '@/components/SupportButton';
 
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
+
 const SupportPage = () => {
     const [formData, setFormData] = useState({
         name: '',
@@ -29,12 +31,28 @@ const SupportPage = () => {
         e.preventDefault();
         setIsSubmitting(true);
         
-        // Simulate API call
-        setTimeout(() => {
+        try {
+            const response = await fetch(`${API_URL}/api/public/contact/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: formData.name,
+                    email: formData.email,
+                    message: `[${formData.subject || 'Support Request'}] Phone: ${formData.phone}\n\n${formData.message}`
+                })
+            });
+
+            if (response.ok) {
+                alert('Support request submitted successfully! We will contact you within 2 hours at bed.buddy777@gmail.com or call you at +91 78599 88312.');
+                setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
+            } else {
+                alert('Failed to send request. Please try again later.');
+            }
+        } catch (error) {
+            alert('Network error. Please try again later.');
+        } finally {
             setIsSubmitting(false);
-            alert('Support request submitted successfully! We will contact you within 2 hours at bed.buddy777@gmail.com or call you at +91 78599 88312.');
-            setFormData({ name: '', email: '', phone: '', subject: '', message: '' });
-        }, 2000);
+        }
     };
 
     const supportChannels = [

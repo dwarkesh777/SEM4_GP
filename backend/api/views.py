@@ -1995,3 +1995,38 @@ def admin_analytics(request):
         'total_owners': total_owners,
         'total_revenue': total_revenue
     })
+
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def contact_us(request):
+    """
+    Handles the contact us form submission and sends an email to the admin.
+    """
+    try:
+        name = request.data.get('name', '').strip()
+        email = request.data.get('email', '').strip()
+        message = request.data.get('message', '').strip()
+
+        if not name or not email or not message:
+            return Response({"error": "All fields are required"}, status=status.HTTP_400_BAD_REQUEST)
+
+        subject = f"New Contact Request from {name}"
+        plain_message = f"Name: {name}\nEmail: {email}\n\nMessage:\n{message}"
+
+        # Send email to admin
+        try:
+            send_mail(
+                subject=subject,
+                message=plain_message,
+                from_email=settings.EMAIL_HOST_USER if getattr(settings, 'EMAIL_HOST_USER', None) else 'no-reply@nestnode.com',
+                recipient_list=['mrdwarkesh65@gmail.com'],
+                fail_silently=False,
+            )
+            return Response({"message": "Message sent successfully!"})
+        except Exception as mail_e:
+            logger.error(f"Failed to send contact email via SMTP: {mail_e}")
+            return Response({"error": f"Failed to send email: {str(mail_e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+    except Exception as e:
+        logger.error(f"Contact us error: {e}")
+        return Response({"error": f"Internal server error: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

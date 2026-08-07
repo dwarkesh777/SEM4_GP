@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet, send_otp, verify_otp, reset_password_with_otp, ReviewViewSet, get_review_images, get_similar_properties, UserSignupView, OwnerSignupView, public_properties, create_external_booking, developer_api_info, public_property_detail, public_booking_detail, AdminSignupView, AdminLoginView, admin_students_list, admin_owners_list, admin_analytics, DeveloperSignupView, DeveloperLoginView
+from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet, send_otp, verify_otp, reset_password_with_otp, ReviewViewSet, get_review_images, get_similar_properties, UserSignupView, OwnerSignupView, public_properties, create_external_booking, developer_api_info, public_property_detail, public_booking_detail, AdminSignupView, AdminLoginView, admin_students_list, admin_owners_list, admin_analytics, DeveloperSignupView, DeveloperLoginView, contact_us
 from .colleges_view import get_colleges
 
 router = DefaultRouter()
@@ -37,6 +37,7 @@ urlpatterns = [
     path('public/properties/detail/<uuid:property_id>/', public_property_detail, name='public_property_detail'),
     path('public/bookings/create/', create_external_booking, name='public_bookings_create'),
     path('public/bookings/detail/<uuid:booking_id>/', public_booking_detail, name='public_booking_detail'),
+    path('public/contact/', contact_us, name='contact_us'),
     path('developer/info/', developer_api_info, name='developer_api_info'),
     path('payment/create-order/', create_razorpay_order, name='create_razorpay_order'),
     path('payment/verify/', verify_razorpay_payment, name='verify_razorpay_payment'),

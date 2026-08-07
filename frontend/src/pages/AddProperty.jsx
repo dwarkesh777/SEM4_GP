@@ -60,6 +60,7 @@ const AddProperty = () => {
     const navigate = useNavigate();
     const [currentStep, setCurrentStep] = useState(1);
     const [loading, setLoading] = useState(false);
+    const [showTermsModal, setShowTermsModal] = useState(false);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -232,7 +233,7 @@ const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.82) 
     });
 };
 
-    const handleSubmit = async () => {
+    const handlePreSubmit = async () => {
         // Validate required fields
         if (!formData.name?.trim()) {
             toast.error("Property Name is required in Step 1.");
@@ -268,8 +269,14 @@ const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.82) 
             toast.error("Short Description is required in Step 2.");
             setCurrentStep(2);
             return;
+            return;
         }
 
+        setShowTermsModal(true);
+    };
+
+    const handleSubmit = async () => {
+        setShowTermsModal(false);
         setLoading(true);
         try {
             // Compress images concurrently before sending
@@ -949,7 +956,7 @@ const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.82) 
                                 </Button>
                             ) : (
                                 <Button
-                                    onClick={handleSubmit}
+                                    onClick={handlePreSubmit}
                                     disabled={loading}
                                     className="h-20 px-16 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black gap-4 shadow-2xl shadow-primary/30 transition-all active:scale-95"
                                 >
@@ -961,6 +968,42 @@ const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.82) 
                     </div>
                 </div>
             </div>
+
+            {/* Terms and Conditions Modal */}
+            {showTermsModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4 animate-in fade-in">
+                    <div className="bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border border-slate-100 space-y-4">
+                        <div className="flex justify-between items-center pb-3 border-b border-slate-100">
+                            <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                                <Info className="w-5 h-5 text-blue-600" />
+                                Terms & Conditions
+                            </h3>
+                            <button type="button" onClick={() => setShowTermsModal(false)} className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-colors">
+                                <X className="w-4 h-4" />
+                            </button>
+                        </div>
+                        <div className="max-h-64 overflow-y-auto text-sm text-slate-600 font-medium pr-2 space-y-3">
+                            <p>By proceeding to add this property, you agree to the following terms and conditions:</p>
+                            <ul className="list-disc pl-5 space-y-1">
+                                <li>All information provided is accurate and truthful.</li>
+                                <li>You have the legal right to list and rent this property.</li>
+                                <li>You agree to honor any confirmed bookings made through the platform.</li>
+                                <li>The platform reserves the right to remove any listing that violates our policies.</li>
+                                <li>You are responsible for maintaining the property in a safe and habitable condition.</li>
+                            </ul>
+                            <p>Failure to comply may result in the suspension or termination of your account.</p>
+                        </div>
+                        <div className="flex flex-col sm:flex-row gap-3 pt-4 border-t border-slate-100">
+                            <Button type="button" onClick={() => setShowTermsModal(false)} className="flex-1 h-11 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl shadow-none">
+                                Cancel
+                            </Button>
+                            <Button type="button" onClick={handleSubmit} className="flex-1 h-11 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20 gap-2">
+                                <CheckCircle2 className="w-4 h-4" /> I Accept
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

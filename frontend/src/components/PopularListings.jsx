@@ -88,7 +88,6 @@ const fetchProperties = async (searchQuery = "", lat = null, lng = null, filters
 
 const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {}, showAll, setShowAll, onResetCity, onFilterChange, onClearAll }) => {
     const [isGalleryOpen, setIsGalleryOpen] = useState(false);
-    const [hoveredPropertyId, setHoveredPropertyId] = useState(null);
     
     const { data: properties, isLoading, error, refetch } = useQuery({
         queryKey: ["properties", searchQuery, collegeCoords, filters, showAll],
@@ -277,30 +276,13 @@ const PopularListings = ({ searchQuery = "", collegeCoords = null, filters = {},
                         variants={containerVariants}
                         initial="hidden"
                         animate="visible"
-                        onMouseLeave={() => setHoveredPropertyId(null)}
                         className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 sm:gap-8"
                     >
-                        {properties?.map((property, index) => {
-                            const isOtherHovered = hoveredPropertyId !== null && hoveredPropertyId !== property.id;
-                            return (
-                                <motion.div
-                                    key={property.id}
-                                    variants={itemVariants}
-                                    animate={{
-                                        filter: isOtherHovered ? "blur(5px)" : "blur(0px)",
-                                        opacity: isOtherHovered ? 0.55 : 1,
-                                        scale: isOtherHovered ? 0.97 : 1
-                                    }}
-                                    transition={{ duration: 0.35, ease: "easeOut" }}
-                                >
-                                    <PropertyCard
-                                        {...property}
-                                        index={index}
-                                        onHoverState={(isHovered) => setHoveredPropertyId(isHovered ? property.id : null)}
-                                    />
-                                </motion.div>
-                            );
-                        })}
+                        {properties?.map((property, index) => (
+                            <motion.div key={property.id} variants={itemVariants}>
+                                <PropertyCard {...property} index={index} />
+                            </motion.div>
+                        ))}
                     </motion.div>
                 )}
 

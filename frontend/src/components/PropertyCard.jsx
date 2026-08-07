@@ -5,7 +5,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 const PropertyCard = ({
-    id, main_image, name, location, type, gender, price, rating, index, distance, onHoverState
+    id, main_image, name, location, type, gender, price, rating, index, distance
 }) => {
     const navigate = useNavigate();
     const [isHovered, setIsHovered] = useState(false);
@@ -30,16 +30,10 @@ const PropertyCard = ({
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: index * 0.1, ease: [0.25, 1, 0.5, 1] }}
-            onMouseEnter={() => {
-                setIsHovered(true);
-                if (onHoverState) onHoverState(true);
-            }}
-            onMouseLeave={() => {
-                setIsHovered(false);
-                if (onHoverState) onHoverState(false);
-            }}
+            onMouseEnter={() => setIsHovered(true)}
+            onMouseLeave={() => setIsHovered(false)}
             onClick={() => handleExplore()}
-            className="group relative cursor-pointer h-[500px] w-full rounded-[2rem] overflow-hidden bg-slate-900 border border-slate-100/50 shadow-lg shadow-slate-950/5 hover:shadow-2xl flex flex-col justify-between p-6 select-none transition-all duration-500"
+            className="group relative cursor-pointer h-[500px] w-full rounded-[2rem] overflow-hidden bg-slate-900 border border-slate-100/50 shadow-lg shadow-slate-950/5 flex flex-col justify-between p-6 select-none"
         >
             {/* ── Background Image Layer ── */}
             <div className="absolute inset-0 z-0">
@@ -52,30 +46,22 @@ const PropertyCard = ({
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-950/90 via-slate-950/40 to-slate-950/20" />
             </div>
 
-            {/* ── Top Badges Row (Fades out on Hover) ── */}
-            <div className="relative z-10 flex flex-col items-start gap-2.5 w-full transition-all duration-300 group-hover:opacity-0 group-hover:-translate-y-2 group-hover:pointer-events-none">
-                <div className="flex justify-between items-start w-full">
-                    <div className="flex items-center gap-2">
-                        <span className="px-3.5 py-1.5 rounded-full bg-white text-slate-800 text-[11px] font-extrabold uppercase tracking-wide shadow-sm">
-                            {type}
-                        </span>
-                        <span className="px-3.5 py-1.5 rounded-full bg-white/20 text-white text-[11px] font-extrabold uppercase tracking-wide backdrop-blur-md">
-                            {gender}
-                        </span>
-                    </div>
-                    {distance !== undefined && distance !== null && (
-                        <span className="px-3.5 py-1.5 rounded-full bg-indigo-500/90 text-white text-[11px] font-extrabold uppercase tracking-wide backdrop-blur-md shadow-sm border border-indigo-400/30 flex items-center gap-1.5 whitespace-nowrap">
-                            <MapPin className="w-3.5 h-3.5" />
-                            {distance} km
-                        </span>
-                    )}
+            {/* ── Top Badges Row ── */}
+            <div className="relative z-10 flex justify-between items-start w-full">
+                <div className="flex items-center gap-2">
+                    <span className="px-3.5 py-1.5 rounded-full bg-white text-slate-800 text-[11px] font-extrabold uppercase tracking-wide shadow-sm">
+                        {type}
+                    </span>
+                    <span className="px-3.5 py-1.5 rounded-full bg-white/20 text-white text-[11px] font-extrabold uppercase tracking-wide backdrop-blur-md">
+                        {gender}
+                    </span>
                 </div>
-
-                {/* Viewing Now Badge */}
-                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-400/30 backdrop-blur-md text-[11px] font-bold tracking-tight">
-                    <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse shrink-0" />
-                    <span>{activeViews} viewing now</span>
-                </div>
+                {distance !== undefined && distance !== null && (
+                    <span className="px-3.5 py-1.5 rounded-full bg-indigo-500/90 text-white text-[11px] font-extrabold uppercase tracking-wide backdrop-blur-md shadow-sm border border-indigo-400/30 flex items-center gap-1.5 whitespace-nowrap">
+                        <MapPin className="w-3.5 h-3.5" />
+                        {distance} km
+                    </span>
+                )}
             </div>
 
             {/* ── Bottom Content Panel ── */}

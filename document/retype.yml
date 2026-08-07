@@ -1,8 +1,5 @@
-input: .
-output: .retype
-site:
-  title: NestNode Docs
-  url: https://nestnode-docs.local
+url: https://nestnode-docs.vercel.app
+title: NestNode Docs
 branding:
   title: NestNode
   label: v1.0.0

@@ -1,0 +1,14 @@
+input: .
+output: .retype
+site:
+  title: NestNode Docs
+  url: https://nestnode-docs.local
+branding:
+  title: NestNode
+  label: v1.0.0
+footer:
+  copyright: "&copy; 2026 NestNode Platform. All rights reserved."
+links:
+  - text: GitHub Repository
+    link: https://github.com/dwarkesh777/SEM4_GP
+    icon: mark-github

@@ -1,0 +1,13 @@
+{
+  "name": "nestnode-docs",
+  "version": "1.0.0",
+  "description": "Retype Documentation Site for NestNode",
+  "main": "index.md",
+  "scripts": {
+    "build": "npx retypeapp build",
+    "start": "npx retypeapp start"
+  },
+  "dependencies": {
+    "retypeapp": "^4.6.0"
+  }
+}

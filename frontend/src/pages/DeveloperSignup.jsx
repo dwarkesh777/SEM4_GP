@@ -8,6 +8,7 @@ import { Code2, Mail, Lock, User, ArrowRight, Terminal, Cpu, Loader2 } from "luc
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { API_URL } from "@/lib/api";
+import { useAuth } from "@/context/AuthContext";
 import Navbar from "@/components/Navbar";
 
 const DeveloperSignup = () => {
@@ -19,6 +20,7 @@ const DeveloperSignup = () => {
     });
     const [errors, setErrors] = useState({});
     const [loading, setLoading] = useState(false);
+    const { developerSignup } = useAuth();
     const navigate = useNavigate();
 
     const validate = () => {
@@ -43,29 +45,12 @@ const DeveloperSignup = () => {
         if (!validate()) return;
         setLoading(true);
         try {
-            const res = await fetch(`${API_URL}/api/auth/register/`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    full_name: formData.fullName,
-                    email: formData.email,
-                    password: formData.password,
-                    is_owner: false,
-                }),
-            });
-            const data = await res.json();
-            if (res.ok) {
+            const result = await developerSignup(formData.email, formData.password, formData.fullName);
+            if (result.success) {
                 toast.success("Developer account created! Please log in.");
                 navigate("/developer/login");
             } else {
-                const msg =
-                    data.email?.[0] ||
-                    data.detail ||
-                    data.error ||
-                    "Registration failed.";
-                toast.error(
-                    msg.includes("already exists") ? "This email is already registered." : msg
-                );
+                toast.error(result.error);
             }
         } catch {
             toast.error("Network error: Backend server is unreachable.");

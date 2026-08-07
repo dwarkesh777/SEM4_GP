@@ -1,7 +1,6 @@
 import { useState } from "react";
 import Navbar from "@/components/Navbar";
 import SearchByCollege from "@/components/SearchByCollege";
-import FilterResults from "@/components/FilterResults";
 import PopularListings from "@/components/PopularListings";
 import Footer from "@/components/Footer";
 import { motion } from "framer-motion";
@@ -35,23 +34,17 @@ const CollegeSearch = () => {
     return (
         <div className="min-h-screen bg-transparent">
             <Navbar />
-            <main className="pt-16">
+            <main className="pt-0">
                 <SearchByCollege onCollegeSearch={handleCollegeSearch} />
                 <div className="bg-transparent">
-                    <div className="w-full px-0 py-2 lg:flex lg:gap-2 lg:items-start">
-                        <div className="mb-4 lg:mb-0 lg:w-72 xl:w-80 lg:shrink-0 lg:sticky lg:top-24 lg:self-start">
-                            <FilterResults
-                                onFilterChange={handleFilterChange}
-                                onClearAll={handleClearAll}
-                            />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <PopularListings
-                                collegeCoords={collegeCoords}
-                                filters={filters}
-                                showAll={true}
-                            />
-                        </div>
+                    <div className="w-full px-4 sm:px-6 lg:px-10 py-4">
+                        <PopularListings
+                            collegeCoords={collegeCoords}
+                            filters={filters}
+                            showAll={true}
+                            onFilterChange={handleFilterChange}
+                            onClearAll={handleClearAll}
+                        />
                     </div>
                 </div>
             </main>

@@ -877,16 +877,8 @@ const HostelDetail = () => {
                                                     </div>
                                                 </div>
 
-                                                <div className="flex items-center justify-between sm:justify-end gap-10">
-                                                    <div className="text-right">
-                                                        <div className="flex items-baseline gap-1">
-                                                            <span className="text-2xl font-black text-primary tracking-tighter">₹{room.price?.toLocaleString()}</span>
-                                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">/mo</span>
-                                                        </div>
-                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">All-Inclusive Rent</p>
-                                                    </div>
-
-                                                    <div className="flex flex-col sm:flex-row items-center gap-3 min-w-[120px]">
+                                                <div className="flex items-center justify-between sm:justify-end gap-6 sm:gap-8">
+                                                    <div className="flex flex-col sm:flex-row items-center gap-3">
                                                         {room.available_beds !== 0 ? (
                                                             <>
                                                                 <div className="w-full sm:w-auto px-4 py-2 rounded-full bg-emerald-50 text-emerald-600 font-black text-[10px] uppercase tracking-tighter flex items-center justify-center gap-2 border border-emerald-100 whitespace-nowrap">
@@ -912,6 +904,14 @@ const HostelDetail = () => {
                                                                 </Button>
                                                             </>
                                                         )}
+                                                    </div>
+
+                                                    <div className="text-right">
+                                                        <div className="flex items-baseline gap-1">
+                                                            <span className="text-2xl font-black text-primary tracking-tighter">₹{room.price?.toLocaleString()}</span>
+                                                            <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">/mo</span>
+                                                        </div>
+                                                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">All-Inclusive Rent</p>
                                                     </div>
                                                 </div>
                                             </div>
@@ -1157,9 +1157,6 @@ const HostelDetail = () => {
                                                 <span className="text-4xl font-black text-primary tracking-tighter">₹{property.price?.toLocaleString()}</span>
                                                 <span className="text-sm font-black text-slate-400 uppercase tracking-widest">Starting /mo</span>
                                             </div>
-                                            {property.originalPrice && (
-                                                <span className="text-sm text-slate-400 line-through font-bold">₹{property.originalPrice.toLocaleString()} - Market Rate</span>
-                                            )}
                                         </div>
 
                                         <form onSubmit={handleEnquiry} className="space-y-6">

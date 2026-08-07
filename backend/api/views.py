@@ -6,7 +6,7 @@ from rest_framework import viewsets, generics, permissions, parsers, status
 from rest_framework.response import Response
 from .models import Property, Booking, Room, Enquiry, Wishlist, User, Review, Amenity, Appliance, PropertyImage
 from .serializers import PropertySerializer, BookingSerializer, EnquirySerializer, WishlistSerializer, ReviewSerializer
-from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer, UserSignupSerializer, OwnerSignupSerializer, AdminSignupSerializer, AdminTokenObtainPairSerializer
+from .user_serializers import UserSerializer, RegisterSerializer, OwnerTokenObtainPairSerializer, UserTokenObtainPairSerializer, UserSignupSerializer, OwnerSignupSerializer, AdminSignupSerializer, AdminTokenObtainPairSerializer, DeveloperSignupSerializer, DeveloperTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
 from django.core.mail import send_mail
 import requests
@@ -625,6 +625,15 @@ class AdminSignupView(generics.CreateAPIView):
 
 class AdminLoginView(TokenObtainPairView):
     serializer_class = AdminTokenObtainPairSerializer
+
+
+class DeveloperSignupView(generics.CreateAPIView):
+    serializer_class = DeveloperSignupSerializer
+    permission_classes = [permissions.AllowAny]
+
+
+class DeveloperLoginView(TokenObtainPairView):
+    serializer_class = DeveloperTokenObtainPairSerializer
 
 
 # ─── RAZORPAY PAYMENT VIEWS ───────────────────────────────────────────────────

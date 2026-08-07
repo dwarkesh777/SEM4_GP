@@ -1,7 +1,7 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
-from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet, send_otp, verify_otp, reset_password_with_otp, ReviewViewSet, get_review_images, get_similar_properties, UserSignupView, OwnerSignupView, public_properties, create_external_booking, developer_api_info, public_property_detail, public_booking_detail, AdminSignupView, AdminLoginView, admin_students_list, admin_owners_list, admin_analytics
+from .views import PropertyViewSet, RegisterView, UserProfileView, OwnerLoginView, UserLoginView, create_razorpay_order, verify_razorpay_payment, BookingViewSet, EnquiryViewSet, WishlistViewSet, send_otp, verify_otp, reset_password_with_otp, ReviewViewSet, get_review_images, get_similar_properties, UserSignupView, OwnerSignupView, public_properties, create_external_booking, developer_api_info, public_property_detail, public_booking_detail, AdminSignupView, AdminLoginView, admin_students_list, admin_owners_list, admin_analytics, DeveloperSignupView, DeveloperLoginView
 from .colleges_view import get_colleges
 
 router = DefaultRouter()
@@ -24,6 +24,8 @@ urlpatterns = [
     path('auth/login/', UserLoginView.as_view(), name='token_obtain_pair'),
     path('auth/owner/login/', OwnerLoginView.as_view(), name='owner_token_obtain_pair'),
     path('auth/admin/login/', AdminLoginView.as_view(), name='admin_token_obtain_pair'),
+    path('auth/developer/signup/', DeveloperSignupView.as_view(), name='signup_developer'),
+    path('auth/developer/login/', DeveloperLoginView.as_view(), name='developer_token_obtain_pair'),
     path('auth/token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('auth/send-otp/', send_otp, name='send_otp'),
     path('auth/verify-otp/', verify_otp, name='verify_otp'),

@@ -9,7 +9,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            'id', 'email', 'full_name', 'is_owner', 'date_joined',
+            'id', 'email', 'full_name', 'is_owner', 'is_staff', 'is_superuser', 'is_developer', 'date_joined',
             'face_photo', 'business_name', 'business_type', 'address', 'city',
             'state', 'pincode', 'bio', 'phone_number',
             'pan_number', 'aadhar_number', 'bank_account', 'ifsc_code'
@@ -58,6 +58,17 @@ class UserTokenObtainPairSerializer(TokenObtainPairSerializer):
         data = super().validate(attrs)
         if self.user.is_owner:
             raise serializers.ValidationError("This is an Owner account.")
+        if self.user.is_developer:
+            raise serializers.ValidationError("This is a Developer account.")
+        if self.user.is_staff or self.user.is_superuser:
+            raise serializers.ValidationError("This is an Admin/Developer account.")
+        return data
+
+class DeveloperTokenObtainPairSerializer(TokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super().validate(attrs)
+        if not self.user.is_developer:
+            raise serializers.ValidationError("This account does not have developer privileges.")
         return data
 
 class OwnerTokenObtainPairSerializer(TokenObtainPairSerializer):
@@ -101,6 +112,22 @@ class OwnerSignupSerializer(serializers.ModelSerializer):
             business_name=validated_data.get('business_name'),
             face_photo=validated_data.get('face_photo'),
             is_owner=True
+        )
+        return user
+
+class DeveloperSignupSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ('id', 'email', 'full_name', 'password', 'is_developer')
+
+    def create(self, validated_data):
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            password=validated_data['password'],
+            full_name=validated_data['full_name'],
+            is_developer=True
         )
         return user
 

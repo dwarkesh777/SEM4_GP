@@ -94,7 +94,21 @@ const Navbar = () => {
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator className="my-2 bg-slate-100" />
 
-                {user.is_owner ? (
+                {user.is_staff || user.is_superuser ? (
+                    <DropdownMenuItem onClick={() => navigate("/admin/dashboard")} className="p-3 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                        <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
+                            <LayoutDashboard className="w-4 h-4 text-blue-500" />
+                        </div>
+                        <span className="font-bold text-slate-700">Admin Dashboard</span>
+                    </DropdownMenuItem>
+                ) : user.is_developer ? (
+                    <DropdownMenuItem onClick={() => navigate("/developer/dashboard")} className="p-3 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                        <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center shrink-0">
+                            <LayoutDashboard className="w-4 h-4 text-cyan-500" />
+                        </div>
+                        <span className="font-bold text-slate-700">Developer Dashboard</span>
+                    </DropdownMenuItem>
+                ) : user.is_owner ? (
                     <>
                         <DropdownMenuItem onClick={() => navigate("/dashboard")} className="p-3 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
                             <div className="w-8 h-8 rounded-full bg-blue-50 flex items-center justify-center shrink-0">
@@ -118,12 +132,14 @@ const Navbar = () => {
                     </DropdownMenuItem>
                 )}
 
-                <DropdownMenuItem onClick={() => navigate("/dashboard", { state: { activeTab: "profile" } })} className="p-3 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
-                    <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                        <Settings className="w-4 h-4 text-slate-500" />
-                    </div>
-                    <span className="font-bold text-slate-700">Settings</span>
-                </DropdownMenuItem>
+                {!(user.is_staff || user.is_superuser || user.is_developer) && (
+                    <DropdownMenuItem onClick={() => navigate("/dashboard", { state: { activeTab: "profile" } })} className="p-3 rounded-2xl cursor-pointer hover:bg-slate-50 transition-colors gap-3 mb-1">
+                        <div className="w-8 h-8 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
+                            <Settings className="w-4 h-4 text-slate-500" />
+                        </div>
+                        <span className="font-bold text-slate-700">Settings</span>
+                    </DropdownMenuItem>
+                )}
 
                 <DropdownMenuSeparator className="my-2 bg-slate-100" />
                 <DropdownMenuItem onClick={logout} className="p-3 rounded-2xl cursor-pointer hover:bg-orange-50 transition-colors gap-3 text-orange-600 group">

@@ -19,14 +19,14 @@ const DeveloperLogin = () => {
     const [otpSent, setOtpSent] = useState(false);
     const [loading, setLoading] = useState(false);
     const [showForgotModal, setShowForgotModal] = useState(false);
-    const { login, sendOTP, loginWithOTP } = useAuth();
+    const { developerLogin, sendOTP, loginWithOTP } = useAuth();
     const navigate = useNavigate();
 
     const handlePasswordSubmit = async (e) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const result = await login(email, password);
+            const result = await developerLogin(email, password);
             if (result.success) {
                 localStorage.setItem("userRole", "developer");
                 toast.success("Welcome to the Developer Portal!");

@@ -27,6 +27,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active = models.BooleanField(default=True)
     is_staff = models.BooleanField(default=False)
     is_owner = models.BooleanField(default=False)
+    is_developer = models.BooleanField(default=False)
     face_photo = models.URLField(max_length=500, null=True, blank=True)
     business_name = models.CharField(max_length=255, null=True, blank=True)
     business_type = models.CharField(max_length=100, null=True, blank=True)

@@ -253,8 +253,65 @@ export const AuthProvider = ({ children }) => {
         }
     };
 
+    const developerLogin = async (email, password) => {
+        try {
+            const response = await fetch(`${API_URL}/api/auth/developer/login/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                localStorage.setItem("token", data.access);
+                const userResponse = await fetch(`${API_URL}/api/auth/profile/`, {
+                    headers: { Authorization: `Bearer ${data.access}` }
+                });
+                const userData = await userResponse.json();
+                setUser(userData);
+                return { success: true };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                return {
+                    success: false,
+                    error: errorData.detail || errorData.error || "Invalid developer credentials."
+                };
+            }
+        } catch (error) {
+            console.error("Developer login failed:", error);
+            return {
+                success: false,
+                error: `Cannot connect to server at ${API_URL}.`
+            };
+        }
+    };
+
+    const developerSignup = async (email, password, fullName) => {
+        try {
+            const response = await fetch(`${API_URL}/api/auth/developer/signup/`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email, password, full_name: fullName })
+            });
+            if (response.ok) {
+                return { success: true };
+            } else {
+                const errorData = await response.json().catch(() => ({}));
+                let errorMessage = "Registration failed.";
+                if (errorData.email) {
+                    errorMessage = Array.isArray(errorData.email) ? errorData.email[0] : errorData.email;
+                } else if (errorData.detail) {
+                    errorMessage = errorData.detail;
+                }
+                return { success: false, error: errorMessage };
+            }
+        } catch (error) {
+            console.error("Developer signup failed:", error);
+            return { success: false, error: `Cannot connect to server at ${API_URL}.` };
+        }
+    };
+
     return (
-        <AuthContext.Provider value={{ user, login, ownerLogin, adminLogin, signup, adminSignup, logout, loading, sendOTP, loginWithOTP }}>
+        <AuthContext.Provider value={{ user, login, ownerLogin, adminLogin, developerLogin, signup, adminSignup, developerSignup, logout, loading, sendOTP, loginWithOTP }}>
             {children}
         </AuthContext.Provider>
     );

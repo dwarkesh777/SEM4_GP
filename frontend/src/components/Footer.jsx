@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Phone, Mail, Home, Instagram, Facebook, Linkedin, ExternalLink } from "lucide-react";
+import { Phone, Mail, Home, ExternalLink } from "lucide-react";
 
 const Footer = () => {
   return (
@@ -63,22 +63,7 @@ const Footer = () => {
               </div>
             </div>
 
-            {/* Social pills */}
-            <div className="flex gap-2.5 pt-2">
-              {[
-                { icon: Instagram, name: "IG" },
-                { icon: Facebook, name: "FB" },
-                { icon: Linkedin, name: "IN" },
-                { icon: () => <span className="font-black text-xs">X</span>, name: "X" }
-              ].map((social, i) => (
-                <div
-                  key={i}
-                  className="w-10 h-10 rounded-xl bg-white border border-slate-200 flex items-center justify-center hover:bg-blue-600 hover:text-white transition-all cursor-pointer text-slate-500 shadow-sm"
-                >
-                  <social.icon className="w-4 h-4" />
-                </div>
-              ))}
-            </div>
+
           </div>
 
           {/* Right Links Grid */}

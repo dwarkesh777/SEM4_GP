@@ -576,6 +576,21 @@ class PropertyViewSet(viewsets.ModelViewSet):
         property_obj = self.get_object()
         property_obj.is_verified = True
         property_obj.save()
+        
+        if property_obj.owner and property_obj.owner.email:
+            try:
+                subject = f"Property Approved: {property_obj.name}"
+                message = f"Hello {property_obj.owner.full_name or 'Owner'},\n\nGreat news! Your property '{property_obj.name}' has been approved by our admin team and is now live on our platform.\n\nThank you for partnering with us!\n\nBest Regards,\nNestNode Team"
+                send_mail(
+                    subject,
+                    message,
+                    getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@nestnode.com'),
+                    [property_obj.owner.email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to send approval email: {str(e)}")
+
         return Response({'status': 'Property approved'})
 
     @action(detail=True, methods=['post'], permission_classes=[permissions.IsAdminUser])
@@ -583,7 +598,43 @@ class PropertyViewSet(viewsets.ModelViewSet):
         property_obj = self.get_object()
         property_obj.is_verified = False
         property_obj.save()
+        
+        if property_obj.owner and property_obj.owner.email:
+            try:
+                subject = f"Property Rejected: {property_obj.name}"
+                message = f"Hello {property_obj.owner.full_name or 'Owner'},\n\nWe regret to inform you that your property '{property_obj.name}' has been rejected by our admin team and will not be listed.\n\nPlease contact our support team if you believe this was a mistake or if you need further clarification.\n\nBest Regards,\nNestNode Team"
+                send_mail(
+                    subject,
+                    message,
+                    getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@nestnode.com'),
+                    [property_obj.owner.email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to send rejection email: {str(e)}")
+
         return Response({'status': 'Property rejected'})
+
+    def perform_destroy(self, instance):
+        owner_email = instance.owner.email if instance.owner else None
+        owner_name = instance.owner.full_name if instance.owner else 'Owner'
+        property_name = instance.name
+        
+        super().perform_destroy(instance)
+        
+        if owner_email:
+            try:
+                subject = f"Property Deleted: {property_name}"
+                message = f"Hello {owner_name},\n\nThis is a notification that your property '{property_name}' has been deleted from our platform by an administrator.\n\nIf you have any questions, please reach out to support.\n\nBest Regards,\nNestNode Team"
+                send_mail(
+                    subject,
+                    message,
+                    getattr(settings, 'DEFAULT_FROM_EMAIL', 'noreply@nestnode.com'),
+                    [owner_email],
+                    fail_silently=True,
+                )
+            except Exception as e:
+                logger.error(f"Failed to send deletion email: {str(e)}")
 
 
 
@@ -1962,6 +2013,16 @@ def admin_owners_list(request):
     
     owners = User.objects.filter(is_owner=True).order_by('-date_joined')
     serializer = UserSerializer(owners, many=True)
+    return Response(serializer.data)
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def admin_developers_list(request):
+    if not request.user.is_staff:
+        return Response({'error': 'Unauthorized'}, status=403)
+    
+    developers = User.objects.filter(is_developer=True).order_by('-date_joined')
+    serializer = UserSerializer(developers, many=True)
     return Response(serializer.data)
 
 @api_view(['GET'])

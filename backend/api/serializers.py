@@ -119,6 +119,9 @@ class PropertySerializer(serializers.ModelSerializer):
     # price is required but use EmptyStringIntField so blank string gives a clear error
     price = EmptyStringIntField()
     owner = serializers.ReadOnlyField(source='owner.email')
+    owner_name = serializers.ReadOnlyField(source='owner.full_name')
+    owner_photo = serializers.ReadOnlyField(source='owner.face_photo')
+    owner_phone = serializers.ReadOnlyField(source='owner.phone_number')
     distance = serializers.SerializerMethodField()
 
     # NOTE: uploaded_images intentionally NOT declared as a DRF field.
@@ -131,7 +134,7 @@ class PropertySerializer(serializers.ModelSerializer):
             'id', 'main_image', 'images', 'video', 'name', 'city', 'location',
             'latitude', 'longitude', 'type', 'gender', 'rating', 'reviews',
             'price', 'originalPrice', 'amenities', 'appliances',
-            'description', 'rooms', 'reviews_list', 'address', 'phone', 'email', 'owner',
+            'description', 'rooms', 'reviews_list', 'address', 'phone', 'email', 'owner', 'owner_name', 'owner_photo', 'owner_phone',
             'distance', 'is_verified', 'created_at',
         ]
 

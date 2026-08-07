@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Check, X, Building2, MapPin, Loader2, LogOut, ExternalLink, Search, 
   Trash2, Home, Users, UserCheck, Shield, Mail, Phone, Calendar, 
-  ChevronRight, BadgeCheck, FileText, LayoutDashboard, Layers
+  ChevronRight, BadgeCheck, FileText, LayoutDashboard, Layers, Code2
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ const AdminDashboard = () => {
     const [properties, setProperties] = useState([]);
     const [students, setStudents] = useState([]);
     const [owners, setOwners] = useState([]);
+    const [developers, setDevelopers] = useState([]);
 
     // Loading States
     const [loading, setLoading] = useState(true);
@@ -39,6 +40,7 @@ const AdminDashboard = () => {
         fetchAllProperties();
         fetchStudents();
         fetchOwners();
+        fetchDevelopers();
     }, [user, navigate]);
 
     const fetchAllProperties = async () => {
@@ -71,6 +73,24 @@ const AdminDashboard = () => {
             }
         } catch (error) {
             console.error("Error fetching students:", error);
+        } finally {
+            setTabLoading(false);
+        }
+    };
+
+    const fetchDevelopers = async () => {
+        setTabLoading(true);
+        try {
+            const token = localStorage.getItem("token");
+            const response = await fetch(`${API_URL}/api/admin/developers/`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (response.ok) {
+                const data = await response.json();
+                setDevelopers(data);
+            }
+        } catch (error) {
+            console.error("Error fetching developers:", error);
         } finally {
             setTabLoading(false);
         }
@@ -163,6 +183,11 @@ const AdminDashboard = () => {
         o.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         o.business_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         o.city?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+
+    const filteredDevelopers = developers.filter(d =>
+        d.full_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        d.email?.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
     if (loading) {
@@ -261,6 +286,26 @@ const AdminDashboard = () => {
                                 activeTab === "owners" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
                             }`}>
                                 {owners.length}
+                            </span>
+                        </button>
+
+                        {/* Developers Tab */}
+                        <button
+                            onClick={() => { setActiveTab("developers"); setSearchQuery(""); }}
+                            className={`w-full flex items-center justify-between px-4 py-3.5 rounded-2xl font-bold text-sm transition-all duration-200 ${
+                                activeTab === "developers"
+                                    ? "bg-blue-600 text-white shadow-lg shadow-blue-600/25 scale-[1.02]"
+                                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
+                            }`}
+                        >
+                            <div className="flex items-center gap-3">
+                                <Code2 className="w-5 h-5" />
+                                <span>Developers</span>
+                            </div>
+                            <span className={`text-xs px-2.5 py-0.5 rounded-full font-black ${
+                                activeTab === "developers" ? "bg-white/20 text-white" : "bg-slate-100 text-slate-600"
+                            }`}>
+                                {developers.length}
                             </span>
                         </button>
                     </nav>
@@ -599,6 +644,69 @@ const AdminDashboard = () => {
                                             <span className="font-bold text-blue-600">
                                                 {properties.filter(p => p.owner === ow.email || p.owner_name === ow.full_name).length} Properties
                                             </span>
+                                        </div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* TAB 4: DEVELOPERS DIRECTORY */}
+                {activeTab === "developers" && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                            <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center gap-4">
+                                <div className="w-12 h-12 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-black">
+                                    <Code2 className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold text-slate-400 uppercase">Developers</p>
+                                    <h3 className="text-2xl font-black text-slate-900">{developers.length}</h3>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {filteredDevelopers.length === 0 ? (
+                                <div className="col-span-full py-16 text-center bg-white rounded-2xl border border-slate-200">
+                                    <Code2 className="w-10 h-10 text-slate-400 mx-auto mb-2" />
+                                    <h4 className="text-lg font-bold text-slate-800">No Developers Found</h4>
+                                    <p className="text-sm text-slate-500">No developer matching your search term.</p>
+                                </div>
+                            ) : (
+                                filteredDevelopers.map((dev) => (
+                                    <div 
+                                        key={dev.id} 
+                                        className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:shadow-md transition-shadow relative"
+                                    >
+                                        <div className="flex items-center gap-4 mb-4">
+                                            <div className="w-14 h-14 rounded-full bg-indigo-100 border-2 border-indigo-200 text-indigo-700 flex items-center justify-center font-black text-xl shrink-0 overflow-hidden">
+                                                {dev.face_photo ? (
+                                                    <img src={dev.face_photo} alt={dev.full_name} className="w-full h-full object-cover" />
+                                                ) : (
+                                                    dev.full_name?.[0]?.toUpperCase() || "D"
+                                                )}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <h4 className="font-extrabold text-base text-slate-900 truncate">{dev.full_name || "Developer"}</h4>
+                                                <Badge className="bg-indigo-100 text-indigo-700 font-bold text-[10px] uppercase mt-0.5">API Developer</Badge>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2 text-xs border-t border-slate-100 pt-3">
+                                            <div className="flex items-center gap-2 text-slate-600">
+                                                <Mail className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                                                <span className="truncate">{dev.email}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-slate-600">
+                                                <Phone className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                                                <span>{dev.phone_number || "Not provided"}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2 text-slate-500 pt-1">
+                                                <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                                <span>Joined {dev.date_joined ? new Date(dev.date_joined).toLocaleDateString() : 'Recently'}</span>
+                                            </div>
                                         </div>
                                     </div>
                                 ))

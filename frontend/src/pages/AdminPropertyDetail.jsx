@@ -126,7 +126,7 @@ const AdminPropertyDetail = () => {
                 
                 {/* Navbar */}
                 <div className="relative z-20 px-6 py-6 flex items-center justify-between">
-                    <Button variant="ghost" onClick={() => navigate("/admin/dashboard")} className="text-white hover:bg-white/20 rounded-full px-6 backdrop-blur-md border border-white/20">
+                    <Button onClick={() => navigate("/admin/dashboard")} className="bg-slate-900/70 hover:bg-slate-900 text-white rounded-full px-6 backdrop-blur-md shadow-md">
                         <ArrowLeft className="w-4 h-4 mr-2" /> Back to Dashboard
                     </Button>
                     {getStatusBadge(property.is_verified)}
@@ -142,7 +142,7 @@ const AdminPropertyDetail = () => {
                             <MapPin className="w-5 h-5 mr-2 text-primary" /> {property.address}, {property.city}
                         </p>
                     </div>
-                    <a href={`/hostel/${property.id}`} target="_blank" rel="noreferrer" className="hidden md:flex items-center text-primary bg-white/10 hover:bg-white/20 px-4 py-2 rounded-xl backdrop-blur-md transition-colors border border-white/10">
+                    <a href={`/hostel/${property.id}`} target="_blank" rel="noreferrer" className="hidden md:flex items-center bg-white text-slate-900 hover:bg-slate-50 px-4 py-2 rounded-xl transition-colors font-bold shadow-md">
                         View Public Page <ExternalLink className="w-4 h-4 ml-2" />
                     </a>
                 </div>
@@ -238,6 +238,31 @@ const AdminPropertyDetail = () => {
                             {(!property.amenities?.length && !property.appliances?.length) && (
                                 <span className="text-slate-500 italic">No amenities or appliances listed.</span>
                             )}
+                        </div>
+                    </section>
+
+                    {/* Owner Information (Below Amenities) */}
+                    <section className="pt-6">
+                        <h3 className="text-2xl font-bold mb-4 text-slate-900 border-b border-slate-200 pb-3">Property Owner</h3>
+                        <div className="flex items-center gap-5 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                            <div className="w-16 h-16 rounded-full bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-2xl text-slate-400 shrink-0 overflow-hidden">
+                                {property.owner_photo ? (
+                                    <img src={property.owner_photo} alt={property.owner_name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <User className="w-8 h-8" />
+                                )}
+                            </div>
+                            <div>
+                                <h4 className="font-bold text-lg text-slate-900">{property.owner_name || "Unknown"}</h4>
+                                <div className="flex items-center gap-4 mt-1">
+                                    <a href={`mailto:${property.owner}`} className="text-sm text-slate-500 hover:text-primary flex items-center gap-1.5 transition-colors">
+                                        <Mail className="w-3.5 h-3.5" /> {property.owner || "N/A"}
+                                    </a>
+                                    <a href={`tel:${property.owner_phone}`} className="text-sm text-slate-500 hover:text-primary flex items-center gap-1.5 transition-colors">
+                                        <Phone className="w-3.5 h-3.5" /> {property.owner_phone || "N/A"}
+                                    </a>
+                                </div>
+                            </div>
                         </div>
                     </section>
                 </div>

@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { 
   Check, X, Building2, MapPin, Loader2, LogOut, ExternalLink, Search, 
   Trash2, Home, Users, UserCheck, Shield, Mail, Phone, Calendar, 
-  ChevronRight, BadgeCheck, FileText, LayoutDashboard, Layers, Code2
+  ChevronRight, BadgeCheck, FileText, LayoutDashboard, Layers, Code2, User
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -32,11 +32,23 @@ const AdminDashboard = () => {
     const [searchQuery, setSearchQuery] = useState("");
     const [actionLoading, setActionLoading] = useState(null);
 
+    // Profile State
+    const [isEditing, setIsEditing] = useState(false);
+    const [profileData, setProfileData] = useState({
+        full_name: "", email: "", phone_number: "", face_photo: ""
+    });
+
     useEffect(() => {
         if (!user) {
             navigate("/admin/login");
             return;
         }
+        setProfileData({
+            full_name: user.full_name || "",
+            email: user.email || "",
+            phone_number: user.phone_number || "",
+            face_photo: user.face_photo || ""
+        });
         fetchAllProperties();
         fetchStudents();
         fetchOwners();
@@ -154,9 +166,28 @@ const AdminDashboard = () => {
         }
     };
 
-    const handleLogout = () => {
-        logout();
-        navigate("/");
+    const handleProfileUpdate = async (e) => {
+        e.preventDefault();
+        try {
+            const token = localStorage.getItem("token");
+            const res = await fetch(`${API_URL}/api/auth/profile/`, {
+                method: "PATCH",
+                headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                },
+                body: JSON.stringify(profileData)
+            });
+
+            if (res.ok) {
+                toast.success("Profile details saved successfully.");
+                setIsEditing(false);
+            } else {
+                toast.error("Could not save profile details to database.");
+            }
+        } catch (error) {
+            toast.error("Failed to update profile.");
+        }
     };
 
     const getStatusBadge = (isVerified) => {
@@ -318,14 +349,32 @@ const AdminDashboard = () => {
                         Systems Operational
                     </div>
 
-                    <Button 
-                        variant="outline" 
-                        onClick={handleLogout}
-                        className="w-full justify-start rounded-xl text-slate-600 border-slate-200 hover:bg-red-50 hover:text-red-600 hover:border-red-200 font-bold transition-all"
+                    <button
+                        onClick={() => setActiveTab("profile")}
+                        className="w-full flex items-center justify-between px-3.5 py-3 rounded-xl hover:bg-slate-100 text-slate-600 hover:text-slate-900 transition-colors"
                     >
-                        <LogOut className="w-4 h-4 mr-2" />
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center overflow-hidden">
+                                {profileData.face_photo ? (
+                                    <img src={profileData.face_photo} alt={user?.full_name} className="w-full h-full object-cover" />
+                                ) : (
+                                    <User className="w-4 h-4" />
+                                )}
+                            </div>
+                            <div className="text-left flex flex-col">
+                                <span className="text-sm font-bold truncate max-w-[120px]">{user?.full_name || "Admin"}</span>
+                                <span className="text-[10px] text-slate-500 truncate max-w-[120px]">{user?.email}</span>
+                            </div>
+                        </div>
+                    </button>
+
+                    <button
+                        onClick={logout}
+                        className="w-full flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-xl border border-slate-200 text-slate-600 hover:bg-red-50 hover:text-red-600 hover:border-red-200 transition-colors text-sm font-bold"
+                    >
+                        <LogOut className="w-4 h-4" />
                         Logout
-                    </Button>
+                    </button>
                 </div>
             </aside>
 
@@ -711,6 +760,75 @@ const AdminDashboard = () => {
                                     </div>
                                 ))
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* TAB 5: ADMIN PROFILE */}
+                {activeTab === "profile" && (
+                    <div className="space-y-6">
+                        <div className="bg-white p-6 md:p-8 rounded-3xl shadow-sm border border-slate-200">
+                            <div className="flex flex-col md:flex-row gap-8 items-start">
+                                <div className="w-32 h-32 rounded-3xl bg-blue-50 border border-blue-100 flex items-center justify-center text-blue-500 shadow-sm shrink-0 overflow-hidden relative group">
+                                    {profileData.face_photo ? (
+                                        <img src={profileData.face_photo} alt={user?.full_name} className="w-full h-full object-cover" />
+                                    ) : (
+                                        <User className="w-12 h-12" />
+                                    )}
+                                </div>
+                                <div className="flex-1 space-y-6">
+                                    <div className="flex items-center justify-between">
+                                        <div>
+                                            <h2 className="text-2xl font-black text-slate-900">{profileData.full_name || "Admin"}</h2>
+                                            <p className="text-slate-500 font-medium">Administrator Profile</p>
+                                        </div>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setIsEditing(!isEditing)}
+                                            className="font-bold border-slate-200 text-slate-700"
+                                        >
+                                            {isEditing ? "Cancel" : "Edit Profile"}
+                                        </Button>
+                                    </div>
+
+                                    <form onSubmit={handleProfileUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-700 uppercase">Full Name</label>
+                                            <Input
+                                                className="bg-slate-50 border-slate-200 h-12 font-medium focus-visible:ring-blue-500"
+                                                value={profileData.full_name}
+                                                onChange={(e) => setProfileData({ ...profileData, full_name: e.target.value })}
+                                                disabled={!isEditing}
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-700 uppercase">Email Address</label>
+                                            <Input
+                                                className="bg-slate-50 border-slate-200 h-12 font-medium"
+                                                value={profileData.email}
+                                                disabled={true} // Email should usually not be edited directly here
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-sm font-bold text-slate-700 uppercase">Phone Number</label>
+                                            <Input
+                                                className="bg-slate-50 border-slate-200 h-12 font-medium focus-visible:ring-blue-500"
+                                                value={profileData.phone_number}
+                                                onChange={(e) => setProfileData({ ...profileData, phone_number: e.target.value })}
+                                                disabled={!isEditing}
+                                            />
+                                        </div>
+                                        {isEditing && (
+                                            <div className="col-span-full pt-4">
+                                                <Button type="submit" className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-12 px-8 w-full sm:w-auto">
+                                                    Save Changes
+                                                </Button>
+                                            </div>
+                                        )}
+                                    </form>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 )}

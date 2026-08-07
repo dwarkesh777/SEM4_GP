@@ -15,6 +15,7 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import LanguageSelector from "@/components/LanguageSelector";
 
 const navLinks = [
     { label: "Hostels & PGs", href: "/#listings" },
@@ -168,14 +169,16 @@ const Navbar = () => {
                         opacity: { duration: 0.4 },
                         y: { type: "spring", stiffness: 100, damping: 20 }
                     }}
-                    className={`pointer-events-auto flex items-center px-2 py-2 rounded-full transition-colors duration-300 overflow-hidden ${
+                    className={`pointer-events-auto flex items-center px-2.5 py-1.5 rounded-full transition-colors duration-300 ${
+                        isExpanded ? "overflow-visible" : "overflow-hidden"
+                    } ${
                         isScrolled
-                            ? "bg-white/90 backdrop-blur-xl shadow-xl shadow-slate-900/12 border border-white/80"
-                            : "bg-white/80 backdrop-blur-lg shadow-lg shadow-slate-900/8 border border-white/60"
+                            ? "bg-white/95 backdrop-blur-xl shadow-xl shadow-slate-900/12 border border-white/80"
+                            : "bg-white/90 backdrop-blur-lg shadow-lg shadow-slate-900/8 border border-white/60"
                     }`}
-                    style={{ maxWidth: "860px", height: "52px" }}
+                    style={{ maxWidth: "1160px", height: "54px" }}
                 >
-                    {/* Logo (always visible, dictates the 52px height/width) */}
+                    {/* Logo (always visible, dictates the 54px height/width) */}
                     <Link
                         to="/"
                         className="flex items-center shrink-0"
@@ -195,32 +198,32 @@ const Navbar = () => {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: isExpanded ? 1 : 0 }}
                         transition={{ duration: 0.3, delay: isExpanded ? 0.2 : 0 }}
-                        className="flex items-center flex-1 min-w-[280px] md:min-w-[700px] pl-2 gap-2"
+                        className="flex items-center flex-1 min-w-0 pl-2 gap-2 sm:gap-3"
                         style={{ pointerEvents: isExpanded ? "auto" : "none" }}
                     >
                         {/* Title */}
-                        <Link to="/" className="min-w-0 hidden sm:block mr-1">
-                            <span className="block text-lg tracking-tight font-heading leading-none text-slate-900">
+                        <Link to="/" className="min-w-0 hidden sm:block mr-1 shrink-0">
+                            <span className="block text-lg tracking-tight font-heading leading-none text-slate-900 whitespace-nowrap">
                                 <span className="font-medium">Nest</span>
                                 <span className="font-black text-gradient">Node</span>
                             </span>
                         </Link>
 
                         {/* Divider */}
-                        <div className="hidden lg:block w-px h-5 bg-slate-200 mx-1" />
+                        <div className="hidden lg:block w-px h-5 bg-slate-200 mx-1 shrink-0" />
 
                         {/* Desktop Nav Links — pill group */}
-                        <div className="hidden lg:flex items-center gap-0.5 flex-1">
+                        <div className="hidden lg:flex items-center gap-1 flex-1">
                             {navLinks.map((link) => {
                                 const active = isLinkActive(link.href);
                                 return (
                                     <Link
                                         key={link.label}
                                         to={link.href}
-                                        className={`relative px-4 py-2 rounded-full text-sm font-semibold transition-all duration-200 ${
+                                        className={`relative px-3.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap transition-all duration-200 ${
                                             active
                                                 ? "text-slate-900"
-                                                : "text-slate-500 hover:text-slate-800"
+                                                : "text-slate-600 hover:text-slate-900"
                                         }`}
                                     >
                                         {active && (
@@ -237,7 +240,7 @@ const Navbar = () => {
 
                             <DropdownMenu>
                                 <DropdownMenuTrigger asChild>
-                                    <button className="flex items-center gap-1 px-4 py-2 rounded-full text-sm font-semibold text-slate-500 hover:text-slate-800 transition-colors">
+                                    <button className="flex items-center gap-1 px-3.5 py-1.5 rounded-full text-sm font-semibold whitespace-nowrap text-slate-600 hover:text-slate-900 transition-colors">
                                         For Owners
                                         <ChevronDown className="w-3.5 h-3.5 opacity-60" />
                                     </button>
@@ -257,13 +260,16 @@ const Navbar = () => {
                         </div>
 
                         {/* Right Actions */}
-                        <div className="hidden md:flex items-center gap-1.5 ml-auto">
+                        <div className="hidden md:flex items-center gap-2 ml-auto shrink-0">
+                            {/* Language Selector */}
+                            <LanguageSelector />
+
                             {/* Support circle button */}
                             <motion.button
                                 whileHover={{ scale: 1.08 }}
                                 whileTap={{ scale: 0.95 }}
                                 onClick={() => navigate("/support")}
-                                className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-primary hover:bg-primary/8 transition-colors border border-slate-200/80"
+                                className="w-9 h-9 rounded-full flex items-center justify-center text-slate-500 hover:text-primary hover:bg-primary/8 transition-colors border border-slate-200/80 shrink-0"
                                 aria-label="Support"
                             >
                                 <Headphones className="w-4 h-4" />
@@ -276,7 +282,7 @@ const Navbar = () => {
                                     whileHover={{ scale: 1.04 }}
                                     whileTap={{ scale: 0.96 }}
                                     onClick={() => navigate("/login")}
-                                    className="px-5 h-9 rounded-full font-bold text-sm bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/15 transition-colors"
+                                    className="px-5 h-9 rounded-full font-bold text-sm bg-slate-900 text-white hover:bg-slate-800 shadow-lg shadow-slate-900/15 transition-colors whitespace-nowrap shrink-0"
                                 >
                                     Log in
                                 </motion.button>
@@ -284,7 +290,10 @@ const Navbar = () => {
                         </div>
 
                         {/* Mobile Right Actions */}
-                        <div className="flex md:hidden items-center gap-1.5 ml-auto">
+                        <div className="flex md:hidden items-center gap-1.5 ml-auto shrink-0">
+                            {/* Language Selector */}
+                            <LanguageSelector />
+
                             <motion.button
                                 whileHover={{ scale: 1.08 }}
                                 whileTap={{ scale: 0.95 }}
@@ -366,6 +375,11 @@ const Navbar = () => {
                                             <ChevronRight className="w-5 h-5 opacity-40" />
                                         </Link>
                                     ))}
+                                </div>
+
+                                <div className="flex items-center justify-between px-2 py-1 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <span className="text-xs font-bold text-slate-600">Language</span>
+                                    <LanguageSelector variant="dropdown" />
                                 </div>
 
                                 <div className="rounded-2xl border border-slate-100 bg-slate-50/80 p-3">

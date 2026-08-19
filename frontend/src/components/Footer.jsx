@@ -99,7 +99,16 @@ const Footer = () => {
               </div>
               <ul className="space-y-3 text-sm font-bold text-slate-500">
                 <li><Link to="/terms" className="hover:text-blue-600 transition-colors">Terms & Conditions</Link></li>
-                <li><Link to="/privacy" className="hover:text-blue-600 transition-colors">Privacy Policy</Link></li>
+                <li>
+                  <a 
+                    href="https://privacy-nestnode.vercel.app/" 
+                    target="_blank" 
+                    rel="noopener noreferrer" 
+                    className="hover:text-blue-600 transition-colors"
+                  >
+                    Privacy Policy
+                  </a>
+                </li>
                 <li><Link to="/refund" className="hover:text-blue-600 transition-colors">Refund Policy</Link></li>
                 <li><Link to="/booking-policy" className="hover:text-blue-600 transition-colors">Booking Policy</Link></li>
                 <li><Link to="/equality" className="hover:text-blue-600 transition-colors">Non-discrimination</Link></li>

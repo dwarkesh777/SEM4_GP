@@ -86,12 +86,9 @@ const AddProperty = () => {
     const [mainImagePreview, setMainImagePreview] = useState(null);
     const [extraImages, setExtraImages] = useState([]);
     const [extraImagesPreviews, setExtraImagesPreviews] = useState([]);
-    const [video, setVideo] = useState(null);
-    const [videoPreview, setVideoPreview] = useState(null);
 
     const fileInputRef = useRef(null);
     const extraFilesInputRef = useRef(null);
-    const videoInputRef = useRef(null);
 
     if (!user?.is_owner) {
         return (
@@ -133,14 +130,6 @@ const AddProperty = () => {
         if (file) {
             setMainImage(file);
             setMainImagePreview(URL.createObjectURL(file));
-        }
-    };
-
-    const handleVideoChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setVideo(file);
-            setVideoPreview(URL.createObjectURL(file));
         }
     };
 
@@ -304,9 +293,8 @@ const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.82) 
             // Rooms as JSON string
             submitData.append('rooms_json', JSON.stringify(formData.rooms));
 
-            // Images & Video
+            // Images
             if (compressedMainImage) submitData.append('main_image', compressedMainImage);
-            if (video) submitData.append('video', video);
             compressedExtraImages.forEach(img => submitData.append('uploaded_images', img));
 
             const response = await fetch(`${API_URL}/api/properties/`, {
@@ -728,43 +716,6 @@ const compressImage = (file, maxWidth = 1920, maxHeight = 1920, quality = 0.82) 
                                                 ) : (
                                                     <div className="relative aspect-[21/9] rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white">
                                                         <img src={mainImagePreview} className="w-full h-full object-cover" alt="Preview" />
-                                                    </div>
-                                                )}
-                                            </div>
-
-                                            <div className="space-y-6 pt-10 border-t border-slate-100">
-                                                <div className="flex items-center justify-between">
-                                                    <h3 className="text-xl font-black text-slate-900">Virtual Tour / Video</h3>
-                                                    {video && (
-                                                        <Button variant="ghost" className="text-orange-600 font-bold" onClick={() => { setVideo(null); setVideoPreview(null); }}>
-                                                            Remove Video
-                                                        </Button>
-                                                    )}
-                                                </div>
-
-                                                {!videoPreview ? (
-                                                    <div
-                                                        onClick={() => videoInputRef.current.click()}
-                                                        className="aspect-video rounded-[2.5rem] border-4 border-dashed border-slate-100 bg-white flex flex-col items-center justify-center gap-4 cursor-pointer hover:bg-slate-50 transition-all hover:border-accent/20 group"
-                                                    >
-                                                        <div className="w-20 h-20 bg-accent/5 rounded-3xl flex items-center justify-center group-hover:scale-110 transition-transform duration-500">
-                                                            <Video className="w-8 h-8 text-accent" />
-                                                        </div>
-                                                        <div className="text-center">
-                                                            <p className="text-xl font-black text-slate-900">Upload Property Video</p>
-                                                            <p className="text-slate-400 font-bold mt-1 uppercase tracking-widest text-[10px]">MP4, WEBM or OGG (Max 20MB) • Optional</p>
-                                                        </div>
-                                                        <input
-                                                            type="file"
-                                                            ref={videoInputRef}
-                                                            className="hidden"
-                                                            accept="video/*"
-                                                            onChange={handleVideoChange}
-                                                        />
-                                                    </div>
-                                                ) : (
-                                                    <div className="relative aspect-video rounded-[2.5rem] overflow-hidden shadow-2xl border-4 border-white bg-black">
-                                                        <video src={videoPreview} className="w-full h-full object-cover" controls />
                                                     </div>
                                                 )}
                                             </div>

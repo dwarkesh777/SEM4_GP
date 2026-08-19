@@ -176,7 +176,7 @@ const OwnerSignup = () => {
             const data = await res.json();
             if (res.ok) {
                 toast.success("Business account created! Please login.");
-                navigate("/owner/login");
+                navigate("/login?role=owner");
             } else {
                 const msg = data.email?.[0] || data.detail || data.error || "Registration failed.";
                 toast.error(msg.includes("already exists") ? "This email is already registered." : msg);
@@ -237,7 +237,7 @@ const OwnerSignup = () => {
                     <CardFooter className="bg-slate-50/50 p-8 pt-6 flex justify-center border-t border-slate-100">
                         <div className="text-sm font-medium text-slate-500">
                             Already a partner?{" "}
-                            <Link to="/owner/login" className="text-indigo-600 font-bold hover:underline transition-all">Log in here</Link>
+                            <Link to="/login?role=owner" className="text-indigo-600 font-bold hover:underline transition-all">Log in here</Link>
                         </div>
                     </CardFooter>
                 </Card>

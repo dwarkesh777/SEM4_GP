@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">NestNode</string>
+    <string name="title_activity_main">NestNode</string>
+    <string name="package_name">com.nestnode.sds</string>
+    <string name="custom_url_scheme">com.nestnode.sds</string>
+</resources>

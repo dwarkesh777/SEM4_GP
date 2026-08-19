@@ -45,9 +45,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
-import Navbar from "@/components/Navbar";
+import { useNavigate, Link } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
+import LanguageSelector from "@/components/LanguageSelector";
 import { API_URL } from "@/lib/api";
 
 const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate, isLoading, logout, properties = [], bookings = [], enquiries = [], refetchBookings }) => {
@@ -2682,8 +2682,6 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
 
     return (
         <div className="min-h-screen bg-slate-50/50 flex">
-            <Navbar />
-
             {/* Mobile Sidebar Overlay Backdrop */}
             <AnimatePresence>
                 {sidebarOpen && (
@@ -2789,17 +2787,76 @@ const OwnerDashboard = ({ user, profileData, setProfileData, handleProfileUpdate
             </aside>
 
             {/* Main Content Workspace */}
-            <div className="flex-1 flex flex-col min-w-0 pt-24">
-                {/* Mobile Menu Button */}
-                <div className="lg:hidden p-4 pb-0">
-                    <button
-                        onClick={() => setSidebarOpen(true)}
-                        className="p-2.5 rounded-xl bg-white border border-slate-200 text-slate-700 shadow-sm flex items-center gap-2 font-bold text-sm"
-                    >
-                        <Menu className="w-5 h-5 text-blue-600" />
-                        <span>Menu</span>
-                    </button>
-                </div>
+            <div className="flex-1 flex flex-col min-w-0">
+                {/* Integrated Top Navigation Bar for Owner Dashboard */}
+                <header className="sticky top-0 z-30 bg-white/95 backdrop-blur-md border-b border-slate-200/80 px-4 sm:px-6 md:px-8 py-3.5 flex items-center justify-between shadow-sm">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setSidebarOpen(true)}
+                            className="lg:hidden p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                            aria-label="Open Sidebar"
+                        >
+                            <Menu className="w-5 h-5 text-blue-600" />
+                        </button>
+
+                        <div className="flex items-center gap-2">
+                            <Link
+                                to="/"
+                                className="px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-700 hover:text-blue-600 hover:bg-blue-50 transition-all flex items-center gap-1.5 border border-slate-200/70"
+                            >
+                                <Globe className="w-3.5 h-3.5 text-blue-600" />
+                                <span>Home Website</span>
+                            </Link>
+                            <Link
+                                to="/#listings"
+                                className="px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all hidden sm:inline-flex"
+                            >
+                                Hostels & PGs
+                            </Link>
+                            <Link
+                                to="/college-search"
+                                className="px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all hidden md:inline-flex"
+                            >
+                                Search by College
+                            </Link>
+                            <Link
+                                to="/developer/login"
+                                className="px-3.5 py-1.5 rounded-full text-xs font-bold text-slate-600 hover:text-blue-600 hover:bg-blue-50 transition-all hidden lg:inline-flex"
+                            >
+                                Developer
+                            </Link>
+                        </div>
+                    </div>
+
+                    {/* Right Controls: Language Selector, Support & Profile */}
+                    <div className="flex items-center gap-3">
+                        <LanguageSelector />
+
+                        <Link
+                            to="/support"
+                            className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors border border-slate-200/60"
+                            title="Help & Support"
+                        >
+                            <Phone className="w-4 h-4" />
+                        </Link>
+
+                        <button
+                            onClick={() => setView("profile")}
+                            className="flex items-center gap-2.5 pl-2 pr-3 py-1 rounded-full bg-slate-100 hover:bg-slate-200 border border-slate-200/70 transition-all"
+                        >
+                            <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-bold text-xs flex items-center justify-center overflow-hidden">
+                                {profileData?.face_photo ? (
+                                    <img src={profileData.face_photo} alt={user?.full_name} className="w-full h-full object-cover" />
+                                ) : (
+                                    user?.full_name?.charAt(0) || "O"
+                                )}
+                            </div>
+                            <span className="text-xs font-bold text-slate-800 max-w-[120px] truncate hidden sm:inline-block">
+                                {user?.full_name || "Owner"}
+                            </span>
+                        </button>
+                    </div>
+                </header>
 
                 {/* Main Content Body */}
                 <main className="p-6 md:p-8 w-full flex-1 flex flex-col justify-between relative">

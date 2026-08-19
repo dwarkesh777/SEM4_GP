@@ -89,10 +89,10 @@ const OwnerSignupPage = () => {
 
             if (response.ok) {
                 toast({
-                    title: "Registration Successful",
-                    description: "Welcome to NestNode! Your owner account has been created.",
+                    title: "Signup Successful",
+                    description: "Your partner account has been created. Please log in.",
                 });
-                navigate('/owner/login');
+                navigate('/login?role=owner');
             } else {
                 throw new Error(data.error || data.detail || 'Signup failed');
             }
@@ -264,8 +264,8 @@ const OwnerSignupPage = () => {
                         </div>
 
                         <div className="mt-6 text-center">
-                            <Link to="/owner/login" className="font-medium text-primary hover:text-primary/80 transition-colors">
-                                Sign in to dashboard
+                            <Link to="/login?role=owner" className="font-medium text-primary hover:text-primary/80 transition-colors">
+                                Sign in as Owner
                             </Link>
                         </div>
                     </div>

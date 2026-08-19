@@ -24,10 +24,10 @@ const AdminSignup = () => {
         try {
             const result = await adminSignup(email, password, fullName);
             if (result.success) {
-                toast.success("Admin account created successfully!");
-                navigate("/admin/login");
+                toast.success("Admin account created! Please sign in.");
+                navigate("/login?role=admin");
             } else {
-                toast.error(result.error || "Signup failed. Please try again.");
+                toast.error(result.error || "Failed to create admin account.");
             }
         } catch (error) {
             console.error("Admin signup error:", error);
@@ -60,17 +60,17 @@ const AdminSignup = () => {
                 className="w-full max-w-md relative z-10"
             >
                 <Card className="border border-slate-200 shadow-2xl shadow-slate-200/50 rounded-[2rem] overflow-hidden bg-white/80 backdrop-blur-xl">
-                    <CardHeader className="space-y-1 pb-6 text-center">
+                    <CardHeader className="space-y-1 pb-8 text-center">
                         <div className="mx-auto w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 border border-primary/20 shadow-sm">
                             <Home className="w-8 h-8 text-primary" />
                         </div>
-                        <CardTitle className="text-3xl font-black text-slate-900 font-heading tracking-tight">Admin Setup</CardTitle>
+                        <CardTitle className="text-3xl font-black text-slate-900 font-heading tracking-tight">Admin Portal</CardTitle>
                         <CardDescription className="text-slate-500 font-medium">
-                            Create a new administrator account.
+                            Create your administrative access account.
                         </CardDescription>
                     </CardHeader>
 
-                    <CardContent className="space-y-4 pt-2 px-8">
+                    <CardContent className="space-y-6 pt-2 px-8">
                         <form onSubmit={handleSignupSubmit} className="space-y-4">
                             <div className="space-y-2">
                                 <Label htmlFor="fullName" className="font-bold text-slate-700 ml-1">Full Name</Label>
@@ -103,7 +103,7 @@ const AdminSignup = () => {
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="password" title="password" className="font-bold text-slate-700 ml-1">Password</Label>
+                                <Label htmlFor="password" title="password" className="font-bold text-slate-700 ml-1">Master Password</Label>
                                 <div className="relative group">
                                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 group-focus-within:text-primary transition-colors" />
                                     <Input
@@ -114,25 +114,24 @@ const AdminSignup = () => {
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
-                                        minLength={8}
                                     />
                                 </div>
                             </div>
                             <Button
                                 type="submit"
-                                className="w-full py-7 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-lg shadow-primary/30 transition-all active:scale-[0.98] mt-4"
+                                className="w-full py-7 rounded-2xl bg-primary hover:bg-primary/90 text-white font-black text-lg shadow-lg shadow-primary/30 transition-all active:scale-[0.98] mt-6"
                                 disabled={loading}
                             >
-                                {loading ? "Creating Account..." : "Create Account"}
+                                {loading ? "Creating..." : "Create Admin Account"}
                                 {!loading && <ArrowRight className="ml-2 w-5 h-5" />}
                             </Button>
                         </form>
                     </CardContent>
                     <CardFooter className="flex flex-col space-y-4 bg-slate-50/80 p-8 pt-6 border-t border-slate-100">
                         <div className="text-center text-sm font-medium text-slate-500">
-                            Already an admin?{" "}
-                            <Link to="/admin/login" className="text-primary font-bold hover:underline">
-                                Login Here
+                            Already have an admin account?{" "}
+                            <Link to="/login?role=admin" className="text-primary font-bold hover:underline">
+                                Log in
                             </Link>
                         </div>
                     </CardFooter>

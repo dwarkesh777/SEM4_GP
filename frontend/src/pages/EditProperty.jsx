@@ -87,12 +87,9 @@ const EditProperty = () => {
     const [mainImagePreview, setMainImagePreview] = useState(null);
     const [extraImages, setExtraImages] = useState([]);
     const [extraImagesPreviews, setExtraImagesPreviews] = useState([]);
-    const [video, setVideo] = useState(null);
-    const [videoPreview, setVideoPreview] = useState(null);
 
     const fileInputRef = useRef(null);
     const extraFilesInputRef = useRef(null);
-    const videoInputRef = useRef(null);
 
     const getImageUrl = (item) => {
         if (!item) return "";
@@ -140,7 +137,6 @@ const EditProperty = () => {
             
             setMainImagePreview(data.main_image || null);
             setExtraImagesPreviews(data.images || []);
-            setVideoPreview(data.video || null);
         } catch (error) {
             toast.error("Failed to load property data");
             console.error("Error fetching property:", error);
@@ -166,14 +162,6 @@ const EditProperty = () => {
         setExtraImages(prev => [...prev, ...files]);
         const previews = files.map(file => URL.createObjectURL(file));
         setExtraImagesPreviews(prev => [...prev, ...previews]);
-    };
-
-    const handleVideoUpload = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setVideo(file);
-            setVideoPreview(URL.createObjectURL(file));
-        }
     };
 
     const removeExtraImage = (index) => {
@@ -303,10 +291,6 @@ const EditProperty = () => {
             if (mainImage) {
                 submitData.append('main_image', mainImage);
                 console.log("Added main image file:", mainImage);
-            }
-            if (video) {
-                submitData.append('video', video);
-                console.log("Added video file:", video);
             }
             if (extraImages && extraImages.length > 0) {
                 extraImages.forEach(img => submitData.append('uploaded_images', img));
@@ -717,42 +701,6 @@ const EditProperty = () => {
                                             onChange={handleExtraImagesUpload}
                                             className="hidden"
                                         />
-                                    </div>
-
-                                    <div className="space-y-4">
-                                        <Label>Property Video (Optional)</Label>
-                                        <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 text-center">
-                                            {videoPreview ? (
-                                                <div className="space-y-4">
-                                                    <video src={getImageUrl(videoPreview)} className="w-32 h-32 rounded-lg mx-auto" controls />
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        onClick={() => videoInputRef.current?.click()}
-                                                    >
-                                                        Change Video
-                                                    </Button>
-                                                </div>
-                                            ) : (
-                                                <div className="space-y-4">
-                                                    <Video className="w-12 h-12 text-slate-400 mx-auto" />
-                                                    <Button
-                                                        type="button"
-                                                        variant="outline"
-                                                        onClick={() => videoInputRef.current?.click()}
-                                                    >
-                                                        Upload Video
-                                                    </Button>
-                                                </div>
-                                            )}
-                                            <input
-                                                ref={videoInputRef}
-                                                type="file"
-                                                accept="video/*"
-                                                onChange={handleVideoUpload}
-                                                className="hidden"
-                                            />
-                                        </div>
                                     </div>
                                 </div>
                             </motion.div>

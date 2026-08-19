@@ -11,7 +11,9 @@ import {
     Wifi,
     Car,
     Dumbbell,
-    Loader2
+    Loader2,
+    Sparkles,
+    ArrowRight
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -24,19 +26,18 @@ const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 const SimilarProperties = ({ propertyId, currentPropertyType, currentPropertyGender }) => {
     const [similarProperties, setSimilarProperties] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState(null);
 
-    // Memoize cache key
     const cacheKey = useMemo(() => `similar_${propertyId}`, [propertyId]);
 
     useEffect(() => {
+        if (!propertyId) return;
         fetchSimilarProperties();
     }, [propertyId, cacheKey]);
 
     const fetchSimilarProperties = async () => {
         // Check cache first
         const cached = similarPropertiesCache.get(cacheKey);
-        if (cached && Date.now() - cached.timestamp < CACHE_DURATION) {
+        if (cached && Date.now() - cached.timestamp < CACHE_DURATION && cached.data?.length > 0) {
             setSimilarProperties(cached.data);
             setLoading(false);
             return;
@@ -44,54 +45,69 @@ const SimilarProperties = ({ propertyId, currentPropertyType, currentPropertyGen
 
         try {
             setLoading(true);
-            setError(null);
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 8000); // 8s timeout
 
-            // Try primary similar API, then fallback to public properties list
-            let response;
-            const endpoints = [
-                `${API_URL}/api/properties/${propertyId}/similar/`,
-                `${API_URL}/api/public/properties/list/`
-            ];
+            // 1. Try dedicated similar endpoint
+            let list = [];
+            try {
+                const res = await fetch(`${API_URL}/api/properties/${propertyId}/similar/`);
+                if (res.ok) {
+                    const data = await res.json();
+                    list = Array.isArray(data) ? data : (data?.results || data?.properties || []);
+                }
+            } catch (e) {
+                console.warn("Primary similar endpoint failed, using fallback:", e);
+            }
 
-            for (const endpoint of endpoints) {
+            // 2. If list is empty, fetch public properties list with API key
+            if (!list || list.length === 0) {
                 try {
-                    response = await fetch(endpoint, {
-                        signal: controller.signal,
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-                    
-                    if (response.ok) {
-                        break;
+                    const pubRes = await fetch(`${API_URL}/api/public/properties/list/?appid=nestnode-readonly-key-2026`);
+                    if (pubRes.ok) {
+                        const pubData = await pubRes.json();
+                        list = Array.isArray(pubData) ? pubData : (pubData?.results || pubData?.properties || []);
                     }
-                } catch (err) {
-                    continue;
+                } catch (e) {
+                    console.warn("Public properties fallback failed:", e);
                 }
             }
-            
-            clearTimeout(timeoutId);
-            
-            if (response && response.ok) {
-                const data = await response.json();
-                let rawList = Array.isArray(data) ? data : (data?.properties || data?.data || []);
-                
-                // Filter out current property and limit to 6
-                let filteredData = rawList
-                    .filter(p => String(p.id) !== String(propertyId))
-                    .slice(0, 6);
-                
+
+            // 3. If still empty, try general properties endpoint
+            if (!list || list.length === 0) {
+                try {
+                    const genRes = await fetch(`${API_URL}/api/properties/`);
+                    if (genRes.ok) {
+                        const genData = await genRes.json();
+                        list = Array.isArray(genData) ? genData : (genData?.results || genData?.properties || []);
+                    }
+                } catch (e) {
+                    console.warn("General properties endpoint failed:", e);
+                }
+            }
+
+            // Filter out current property
+            let filtered = (list || []).filter(p => String(p.id) !== String(propertyId));
+
+            // Sort by relevance (matching type and gender first)
+            filtered.sort((a, b) => {
+                let scoreA = 0;
+                let scoreB = 0;
+                if (currentPropertyType && a.type?.toLowerCase() === currentPropertyType?.toLowerCase()) scoreA += 3;
+                if (currentPropertyType && b.type?.toLowerCase() === currentPropertyType?.toLowerCase()) scoreB += 3;
+                if (currentPropertyGender && a.gender?.toLowerCase() === currentPropertyGender?.toLowerCase()) scoreA += 2;
+                if (currentPropertyGender && b.gender?.toLowerCase() === currentPropertyGender?.toLowerCase()) scoreB += 2;
+                return scoreB - scoreA;
+            });
+
+            const finalResults = filtered.slice(0, 6);
+
+            if (finalResults.length > 0) {
                 similarPropertiesCache.set(cacheKey, {
-                    data: filteredData,
+                    data: finalResults,
                     timestamp: Date.now()
                 });
-                
-                setSimilarProperties(filteredData);
-            } else {
-                setSimilarProperties([]);
             }
+
+            setSimilarProperties(finalResults);
         } catch (err) {
             console.error('Error fetching similar properties:', err);
             setSimilarProperties([]);
@@ -101,22 +117,24 @@ const SimilarProperties = ({ propertyId, currentPropertyType, currentPropertyGen
     };
 
     const getAmenityIcon = (amenity) => {
-        const icons = {
-            'wifi': <Wifi className="w-4 h-4" />,
-            'parking': <Car className="w-4 h-4" />,
-            'gym': <Dumbbell className="w-4 h-4" />,
-        };
-        return icons[amenity.toLowerCase()] || <Home className="w-4 h-4" />;
+        const name = (typeof amenity === 'string' ? amenity : amenity?.name || '').toLowerCase();
+        if (name.includes('wifi')) return <Wifi className="w-3.5 h-3.5" />;
+        if (name.includes('parking')) return <Car className="w-3.5 h-3.5" />;
+        if (name.includes('gym')) return <Dumbbell className="w-3.5 h-3.5" />;
+        return <Home className="w-3.5 h-3.5" />;
     };
 
     if (loading) {
         return (
-            <div className="mt-16">
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">Similar Properties</h2>
-                <div className="flex items-center justify-center py-12">
-                    <div className="flex flex-col items-center gap-4">
-                        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
-                        <p className="text-slate-500 font-medium">Finding similar properties...</p>
+            <div className="mt-16 pt-8 border-t border-slate-100">
+                <div className="flex items-center gap-2 mb-6">
+                    <Sparkles className="w-5 h-5 text-primary" />
+                    <h2 className="text-2xl font-black text-slate-900 font-heading tracking-tight">Similar Properties</h2>
+                </div>
+                <div className="flex items-center justify-center py-16 bg-slate-50/50 rounded-3xl border border-slate-100">
+                    <div className="flex flex-col items-center gap-3">
+                        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                        <p className="text-slate-500 font-medium text-sm">Finding best matching properties for you...</p>
                     </div>
                 </div>
             </div>
@@ -124,154 +142,131 @@ const SimilarProperties = ({ propertyId, currentPropertyType, currentPropertyGen
     }
 
     if (!similarProperties || similarProperties.length === 0) {
-        return (
-            <div className="mt-16">
-                <h2 className="text-2xl font-bold text-slate-900 mb-6">Similar Properties</h2>
-                <div className="text-center py-12">
-                    <div className="max-w-md mx-auto">
-                        <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <Home className="w-8 h-8 text-blue-500" />
-                        </div>
-                        <p className="text-slate-700 font-medium mb-2">No similar properties found</p>
-                        <p className="text-slate-500 text-sm mb-4">We couldn't find properties matching your criteria. Try browsing all properties.</p>
-                        <Button 
-                            onClick={() => window.location.href = '/'}
-                            className="mt-2"
-                        >
-                            Browse All Properties
-                        </Button>
-                    </div>
-                </div>
-            </div>
-        );
+        return null;
     }
 
     return (
-        <div className="mt-16">
+        <div className="mt-16 pt-8 border-t border-slate-100">
             <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.6 }}
+                transition={{ duration: 0.5 }}
             >
-                <div className="flex items-center justify-between mb-6">
-                    <h2 className="text-2xl font-bold text-slate-900">Similar Properties</h2>
-                    <p className="text-slate-500">Based on price range and preferences</p>
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <div className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-primary" />
+                            <h2 className="text-2xl sm:text-3xl font-black text-slate-900 font-heading tracking-tight">
+                                Similar Properties
+                            </h2>
+                        </div>
+                        <p className="text-slate-500 text-sm font-medium mt-1">
+                            Recommended hostels & PGs based on price and preferences
+                        </p>
+                    </div>
+
+                    <Link to="/#listings">
+                        <Button variant="ghost" className="font-bold text-primary hover:text-primary hover:bg-primary/10 gap-1 text-sm rounded-full">
+                            <span>Browse All</span>
+                            <ArrowRight className="w-4 h-4" />
+                        </Button>
+                    </Link>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {similarProperties.map((property, index) => (
-                        <motion.div
-                            key={property.id}
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: index * 0.1 }}
-                        >
-                            <Link to={`/hostel/${property.id}`}>
-                                <Card className="group hover:shadow-xl transition-all duration-300 border-slate-100 overflow-hidden">
-                                    {/* Property Image */}
-                                    <div className="relative h-48 overflow-hidden">
-                                        <img
-                                            src={property.main_image || '/placeholder-property.jpg'}
-                                            alt={property.name}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                        <div className="absolute top-4 left-4">
-                                            <Badge className="bg-blue-600 text-white px-3 py-1 text-xs font-bold">
-                                                {property.type}
-                                            </Badge>
-                                        </div>
-                                        <div className="absolute top-4 right-4">
-                                            <Badge className="bg-white/90 text-slate-800 px-3 py-1 text-xs font-bold">
-                                                {property.gender}
-                                            </Badge>
-                                        </div>
-                                    </div>
+                    {similarProperties.map((property, index) => {
+                        const imageSrc = property.main_image || property.images?.[0]?.image || "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=800";
+                        const price = property.price || 0;
+                        const rating = property.rating && Number(property.rating) > 0 ? Number(property.rating).toFixed(1) : "4.8";
+                        const reviews = Number(property.reviews_count ?? property.reviews ?? (property.reviews_list ? property.reviews_list.length : 0)) || 0;
 
-                                    <CardContent className="p-4">
-                                        {/* Property Name and Rating */}
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div className="flex-1">
-                                                <h3 className="font-bold text-slate-900 text-lg mb-1 line-clamp-1">
+                        return (
+                            <motion.div
+                                key={property.id}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ duration: 0.4, delay: index * 0.08 }}
+                            >
+                                <Link to={`/hostel/${property.id}`} className="block h-full">
+                                    <Card className="group h-full flex flex-col justify-between hover:shadow-2xl transition-all duration-300 border-slate-200/80 rounded-3xl overflow-hidden bg-white hover:-translate-y-1">
+                                        <div>
+                                            {/* Property Image & Badges */}
+                                            <div className="relative h-52 overflow-hidden bg-slate-100">
+                                                <img
+                                                    src={imageSrc}
+                                                    alt={property.name}
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                                />
+                                                <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                                                    <Badge className="bg-primary text-white px-2.5 py-0.5 text-[11px] font-black uppercase tracking-wider rounded-lg shadow-sm">
+                                                        {property.type || "PG"}
+                                                    </Badge>
+                                                    <Badge className="bg-black/75 backdrop-blur-md text-white border border-white/20 px-2 py-0.5 text-[11px] font-bold rounded-lg">
+                                                        {property.gender || "Boys"}
+                                                    </Badge>
+                                                </div>
+
+                                                <div className="absolute bottom-3 left-3 flex items-center gap-1 bg-white/95 backdrop-blur-md px-2 py-0.5 rounded-lg shadow-sm text-xs font-black text-amber-500">
+                                                    <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                                                    <span className="text-slate-900">{rating}</span>
+                                                    <span className="text-slate-500 font-normal text-[10px]">({reviews})</span>
+                                                </div>
+                                            </div>
+
+                                            <CardContent className="p-5">
+                                                {/* Property Name */}
+                                                <h3 className="font-heading font-black text-slate-900 text-lg mb-1.5 line-clamp-1 group-hover:text-primary transition-colors">
                                                     {property.name}
                                                 </h3>
-                                                <div className="flex items-center gap-1">
-                                                    <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                                    <span className="text-sm font-semibold text-slate-700">
-                                                        {property.rating || '4.5'}
-                                                    </span>
-                                                    <span className="text-sm text-slate-500">
-                                                        ({property.reviews_count || 0} reviews)
-                                                    </span>
+
+                                                {/* Location */}
+                                                <div className="flex items-center gap-1.5 text-slate-500 text-xs font-medium mb-3">
+                                                    <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+                                                    <span className="truncate">{property.location || property.city || "Ahmedabad"}</span>
                                                 </div>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-2xl font-bold text-blue-600">
-                                                    ₹{property.price?.toLocaleString('en-IN')}
-                                                </div>
-                                                <div className="text-xs text-slate-500">per month</div>
-                                            </div>
-                                        </div>
 
-                                        {/* Location */}
-                                        <div className="flex items-center gap-2 text-slate-600 mb-3">
-                                            <MapPin className="w-4 h-4" />
-                                            <span className="text-sm line-clamp-1">
-                                                {property.location}, {property.city}
-                                            </span>
-                                        </div>
-
-                                        {/* Key Features */}
-                                        <div className="flex items-center gap-4 text-sm text-slate-600 mb-3">
-                                            <div className="flex items-center gap-1">
-                                                <Users className="w-4 h-4" />
-                                                <span>{property.occupancy || '2'}</span>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <BedDouble className="w-4 h-4" />
-                                                <span>{property.beds || '1'} Bed</span>
-                                            </div>
-                                        </div>
-
-                                        {/* Amenities */}
-                                        {property.amenities && property.amenities.length > 0 && (
-                                            <div className="flex flex-wrap gap-2 mb-4">
-                                                {property.amenities.slice(0, 3).map((amenity, idx) => (
-                                                    <div
-                                                        key={idx}
-                                                        className="flex items-center gap-1 bg-slate-100 px-2 py-1 rounded-full text-xs text-slate-600"
-                                                    >
-                                                        {getAmenityIcon(amenity)}
-                                                        <span>{amenity}</span>
+                                                {/* Amenities Pills */}
+                                                {property.amenities && property.amenities.length > 0 && (
+                                                    <div className="flex flex-wrap gap-1.5 mb-2">
+                                                        {property.amenities.slice(0, 3).map((amenity, idx) => {
+                                                            const name = typeof amenity === 'string' ? amenity : amenity?.name || '';
+                                                            return (
+                                                                <div
+                                                                    key={idx}
+                                                                    className="flex items-center gap-1 bg-slate-100/90 text-slate-600 px-2 py-0.5 rounded-md text-[10px] font-bold"
+                                                                >
+                                                                    {getAmenityIcon(amenity)}
+                                                                    <span>{name}</span>
+                                                                </div>
+                                                            );
+                                                        })}
                                                     </div>
-                                                ))}
-                                                {property.amenities.length > 3 && (
-                                                    <span className="text-xs text-slate-500">
-                                                        +{property.amenities.length - 3} more
-                                                    </span>
                                                 )}
+                                            </CardContent>
+                                        </div>
+
+                                        {/* Pricing & CTA */}
+                                        <div className="p-5 pt-0 border-t border-slate-100 flex items-center justify-between mt-auto">
+                                            <div>
+                                                <span className="text-[10px] uppercase font-black tracking-wider text-slate-400 block">Starting</span>
+                                                <div className="flex items-baseline gap-1">
+                                                    <span className="text-xl font-black text-slate-900 font-heading">
+                                                        ₹{Number(price).toLocaleString('en-IN')}
+                                                    </span>
+                                                    <span className="text-xs text-slate-400 font-medium">/mo</span>
+                                                </div>
                                             </div>
-                                        )}
 
-                                        {/* View Button */}
-                                        <Button className="w-full group-hover:bg-blue-700 transition-colors">
-                                            View Details
-                                        </Button>
-                                    </CardContent>
-                                </Card>
-                            </Link>
-                        </motion.div>
-                    ))}
-                </div>
-
-                {/* View More Button */}
-                <div className="text-center mt-8">
-                    <Button 
-                        variant="outline" 
-                        className="px-8"
-                        onClick={() => window.location.href = '/'}
-                    >
-                        View All Properties
-                    </Button>
+                                            <Button size="sm" className="rounded-xl font-bold bg-primary hover:bg-primary/90 text-white shadow-md shadow-primary/20 text-xs px-3.5 py-1.5 group-hover:translate-x-0.5 transition-transform">
+                                                <span>View Details</span>
+                                                <ArrowRight className="w-3.5 h-3.5 ml-1" />
+                                            </Button>
+                                        </div>
+                                    </Card>
+                                </Link>
+                            </motion.div>
+                        );
+                    })}
                 </div>
             </motion.div>
         </div>

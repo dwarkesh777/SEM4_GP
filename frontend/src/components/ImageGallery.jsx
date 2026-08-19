@@ -1,30 +1,25 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Star, MapPin, Calendar, User } from 'lucide-react';
+import { X, Star, MapPin, Calendar, User, Sparkles, RefreshCw, MessageSquareQuote } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { API_URL } from '@/lib/api';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 
 const fetchReviewImages = async () => {
-    console.log('Fetching review images from:', `${API_URL}/api/reviews/`);
     try {
         const response = await fetch(`${API_URL}/api/reviews/`);
         if (!response.ok) {
-            console.error('Failed to fetch review images:', response.status, response.statusText);
             return [];
         }
         const data = await response.json();
-        console.log('Review images data:', data);
         
         // Filter reviews that have images
         const reviewsWithImages = Array.isArray(data) ? data.filter(review => {
             const hasImage = review.image || review.image_url || review.uploaded_image || review.review_image || review.photo;
-            if (hasImage) {
-                console.log('Found review with image:', review.name || review.user || 'Anonymous');
-            }
-            return hasImage;
+            return Boolean(hasImage);
         }) : [];
         
-        console.log('Reviews with images:', reviewsWithImages.length);
         return reviewsWithImages;
     } catch (error) {
         console.error('Error fetching review images:', error);
@@ -35,9 +30,18 @@ const fetchReviewImages = async () => {
 const ImageGallery = ({ isOpen, onClose }) => {
     const [hoveredImage, setHoveredImage] = useState(null);
     
-    console.log('API_URL being used:', API_URL);
-    
-    const { data: imagesData, isLoading, error, refetch } = useQuery({
+    // Close on Escape key press
+    useEffect(() => {
+        const handleKeyDown = (e) => {
+            if (e.key === 'Escape' && isOpen) {
+                onClose();
+            }
+        };
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, onClose]);
+
+    const { data: imagesData, isLoading, error, refetch, isFetching } = useQuery({
         queryKey: ['reviews'],
         queryFn: fetchReviewImages,
         enabled: isOpen,
@@ -48,31 +52,23 @@ const ImageGallery = ({ isOpen, onClose }) => {
     });
     
     const images = Array.isArray(imagesData) ? imagesData : [];
-    console.log('Images array:', images);
 
     // Helper function to find image URL from review object
     const getImageUrl = (review) => {
-        // Check all possible image fields
         const imageFields = ['image', 'image_url', 'uploaded_image', 'review_image', 'photo', 'photo_url'];
         
         for (const field of imageFields) {
             if (review[field] && typeof review[field] === 'string') {
-                const url = review[field].startsWith('http') ? review[field] : `${API_URL}${review[field]}`;
-                console.log(`Found image in field "${field}":`, url);
-                return url;
+                return review[field].startsWith('http') ? review[field] : `${API_URL}${review[field]}`;
             }
         }
         
-        // Check if any field contains a URL
         for (const [key, value] of Object.entries(review)) {
             if (typeof value === 'string' && (value.includes('http') || value.includes('/media/'))) {
-                const url = value.startsWith('http') ? value : `${API_URL}${value}`;
-                console.log(`Found URL in field "${key}":`, url);
-                return url;
+                return value.startsWith('http') ? value : `${API_URL}${value}`;
             }
         }
         
-        console.log('No image found for review:', review);
         return null;
     };
 
@@ -84,131 +80,143 @@ const ImageGallery = ({ isOpen, onClose }) => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                className="fixed inset-0 z-[100000] flex items-center justify-center bg-slate-950/80 backdrop-blur-md p-3 sm:p-5 md:p-8"
                 onClick={onClose}
             >
                 <motion.div
-                    initial={{ scale: 0.9, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.9, opacity: 0 }}
-                    transition={{ type: "spring", damping: 25, stiffness: 300 }}
-                    className="relative w-full h-full max-w-7xl max-h-[90vh] bg-white rounded-2xl overflow-hidden"
+                    initial={{ scale: 0.95, opacity: 0, y: 15 }}
+                    animate={{ scale: 1, opacity: 1, y: 0 }}
+                    exit={{ scale: 0.95, opacity: 0, y: 15 }}
+                    transition={{ type: "spring", damping: 26, stiffness: 320 }}
+                    className="relative w-full max-w-6xl max-h-[88vh] bg-white rounded-[2rem] shadow-2xl overflow-hidden flex flex-col border border-slate-200/80"
                     onClick={(e) => e.stopPropagation()}
                 >
-                    {/* Header */}
-                    <div className="flex items-center justify-between p-6 border-b border-slate-200">
-                        <div>
-                            <h2 className="text-2xl font-bold text-slate-900">Review Gallery</h2>
-                            <p className="text-slate-600 mt-1">Real photos shared by our verified users</p>
+                    {/* Modal Header */}
+                    <div className="flex items-center justify-between px-6 sm:px-8 py-5 border-b border-slate-100 bg-white/95 backdrop-blur-md sticky top-0 z-20">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-sm">
+                                <Sparkles className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h2 className="text-xl sm:text-2xl font-black text-slate-900 font-heading tracking-tight">
+                                        Review Gallery
+                                    </h2>
+                                    <Badge className="bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-bold text-[10px] uppercase tracking-wider px-2 py-0.5">
+                                        Verified Photos
+                                    </Badge>
+                                </div>
+                                <p className="text-xs sm:text-sm text-slate-500 font-medium mt-0.5">
+                                    Real photos shared by our verified student residents
+                                </p>
+                            </div>
                         </div>
+
                         <button
                             onClick={onClose}
-                            className="p-2 rounded-full hover:bg-slate-100 transition-colors"
+                            className="w-10 h-10 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-600 hover:text-slate-900 flex items-center justify-center transition-all shadow-sm active:scale-95 border border-slate-200/50"
+                            aria-label="Close Gallery"
                         >
-                            <X className="w-6 h-6 text-slate-600" />
+                            <X className="w-5 h-5" />
                         </button>
                     </div>
 
-                    {/* Content */}
-                    <div className="flex-1 overflow-y-auto max-h-[60vh] p-6">
+                    {/* Modal Content / Photo Grid */}
+                    <div className="flex-1 overflow-y-auto p-5 sm:p-6 md:p-8 bg-slate-50/50">
                         {isLoading ? (
-                            <div className="flex items-center justify-center h-64">
+                            <div className="flex flex-col items-center justify-center h-72 gap-3">
                                 <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin" />
+                                <p className="text-slate-500 text-sm font-medium">Loading verified review photos...</p>
                             </div>
                         ) : error ? (
-                            <div className="text-center py-12">
-                                <p className="text-slate-600 mb-4">Unable to connect to the gallery server.</p>
-                                <p className="text-slate-500 text-sm">Please check your internet connection or try again later.</p>
-                                <button 
-                                    onClick={() => window.location.reload()}
-                                    className="mt-4 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
+                            <div className="text-center py-16 bg-white rounded-3xl border border-red-100 p-8">
+                                <p className="text-slate-800 font-bold mb-2">Unable to load gallery photos.</p>
+                                <p className="text-slate-500 text-xs mb-4">Please verify connection or retry.</p>
+                                <Button 
+                                    onClick={() => refetch()}
+                                    className="rounded-xl font-bold bg-primary text-white text-xs px-5 py-2"
                                 >
-                                    Try Again
-                                </button>
+                                    Retry Loading
+                                </Button>
                             </div>
                         ) : images.length === 0 ? (
-                            <div className="text-center py-12">
-                                <p className="text-slate-600">No review images available yet.</p>
-                                <p className="text-slate-500 text-sm mt-2">Be the first to share your property experience!</p>
+                            <div className="text-center py-16 bg-white rounded-3xl border border-slate-100 p-8 max-w-md mx-auto">
+                                <div className="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-3">
+                                    <MessageSquareQuote className="w-7 h-7" />
+                                </div>
+                                <p className="text-slate-800 font-bold text-base">No review photos available yet</p>
+                                <p className="text-slate-500 text-xs mt-1">Be the first student to post photos of your hostel room!</p>
                             </div>
                         ) : (
-                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
                                 {images.map((image, index) => {
                                     const imageUrl = getImageUrl(image);
                                     if (!imageUrl) return null;
                                     
+                                    const rating = image.rating ? Number(image.rating).toFixed(1) : "5.0";
+                                    const reviewer = image.name || image.user_name || image.reviewer_name || "Verified Student";
+                                    const propertyName = image.property_name || image.property || "Hostel Living";
+
                                     return (
                                         <motion.div
                                             key={image.id || index}
-                                            initial={{ opacity: 0, y: 20 }}
-                                            animate={{ opacity: 1, y: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                            className="relative group cursor-pointer"
+                                            initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            transition={{ duration: 0.35, delay: index * 0.04 }}
+                                            className="relative group rounded-2xl overflow-hidden bg-white shadow-md hover:shadow-2xl transition-all duration-300 border border-slate-200/70 flex flex-col"
                                             onMouseEnter={() => setHoveredImage(image.id || index)}
                                             onMouseLeave={() => setHoveredImage(null)}
                                         >
-                                            {/* Image Container */}
-                                            <div className="aspect-square rounded-xl overflow-hidden bg-slate-100">
+                                            {/* Photo Container */}
+                                            <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
                                                 <img
                                                     src={imageUrl}
-                                                    alt={`${image.property_name || image.property || 'Property'} - Review by ${image.name || image.reviewer_name || 'Anonymous'}`}
-                                                    className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
+                                                    alt={`${propertyName} - ${reviewer}`}
+                                                    className="w-full h-full object-cover group-hover:scale-108 transition-transform duration-500"
                                                     onError={(e) => {
-                                                        console.log('Image failed to load:', imageUrl);
                                                         e.target.style.display = 'none';
                                                         const parent = e.target.parentElement;
                                                         if (parent) {
-                                                            parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-slate-400 text-center p-4"><div>Image not available</div></div>';
+                                                            parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-slate-400 text-xs font-semibold p-4">Image preview unavailable</div>';
                                                         }
                                                     }}
-                                                    onLoad={() => {
-                                                        console.log('Image loaded successfully:', imageUrl);
-                                                    }}
                                                 />
-                                            </div>
 
-                                        {/* Hover Overlay */}
-                                        <AnimatePresence>
-                                            {hoveredImage === image.id && (
-                                                <motion.div
-                                                    initial={{ opacity: 0 }}
-                                                    animate={{ opacity: 1 }}
-                                                    exit={{ opacity: 0 }}
-                                                    className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/70 to-transparent rounded-xl p-4 flex flex-col justify-end"
-                                                >
-                                                    {/* Property Name */}
-                                                    <h3 className="text-white font-bold text-lg mb-2 line-clamp-1">
-                                                        {image.property_name || image.property || 'Property'}
-                                                    </h3>
+                                                {/* Top Star Rating Badge */}
+                                                <div className="absolute top-2.5 right-2.5 bg-black/75 backdrop-blur-md px-2 py-0.5 rounded-lg border border-white/20 shadow-sm flex items-center gap-1">
+                                                    <Star className="w-3 h-3 fill-amber-400 text-amber-400" />
+                                                    <span className="text-white text-xs font-black">{rating}</span>
+                                                </div>
 
-                                                    {/* Rating */}
-                                                    <div className="flex items-center gap-1 mb-2">
-                                                        <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                                        <span className="text-white font-semibold">{image.rating}</span>
-                                                        <span className="text-white/80 text-sm">({image.name || image.reviewer_name || 'Anonymous'})</span>
-                                                    </div>
-
-                                                    {/* Review Comment */}
-                                                    <p className="text-white/90 text-sm line-clamp-3">
-                                                        {image.comment}
+                                                {/* Floating Property Name Badge */}
+                                                <div className="absolute bottom-2.5 left-2.5 bg-white/95 backdrop-blur-md px-2.5 py-0.5 rounded-lg shadow-sm border border-slate-200/60 max-w-[85%]">
+                                                    <p className="text-[11px] font-black text-slate-900 truncate">
+                                                        {propertyName}
                                                     </p>
-
-                                                    {/* Date */}
-                                                    <div className="flex items-center gap-1 mt-2 text-white/70 text-xs">
-                                                        <Calendar className="w-3 h-3" />
-                                                        <span>{image.created_at || image.date || 'Recent'}</span>
-                                                    </div>
-                                                </motion.div>
-                                            )}
-                                        </AnimatePresence>
-
-                                        {/* Quick Info Badge (always visible) */}
-                                        <div className="absolute top-2 right-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-full">
-                                            <div className="flex items-center gap-1">
-                                                <Star className="w-3 h-3 fill-yellow-400 text-yellow-400" />
-                                                <span className="text-white text-xs font-semibold">{image.rating || 'N/A'}</span>
+                                                </div>
                                             </div>
-                                        </div>
+
+                                            {/* Review details */}
+                                            <div className="p-3.5 bg-white flex-1 flex flex-col justify-between">
+                                                {image.comment ? (
+                                                    <p className="text-xs font-medium text-slate-700 line-clamp-2 italic mb-2">
+                                                        "{image.comment}"
+                                                    </p>
+                                                ) : (
+                                                    <p className="text-xs text-slate-400 italic mb-2">
+                                                        Verified student stay photo
+                                                    </p>
+                                                )}
+
+                                                <div className="flex items-center justify-between pt-2 border-t border-slate-100 text-[11px] text-slate-500 font-medium">
+                                                    <span className="font-bold text-slate-800 truncate max-w-[130px]">
+                                                        {reviewer}
+                                                    </span>
+                                                    <span>
+                                                        {image.created_at ? new Date(image.created_at).toLocaleDateString('en-IN', { month: 'short', day: 'numeric' }) : 'Verified'}
+                                                    </span>
+                                                </div>
+                                            </div>
                                         </motion.div>
                                     );
                                 })}
@@ -216,20 +224,23 @@ const ImageGallery = ({ isOpen, onClose }) => {
                         )}
                     </div>
 
-                    {/* Footer */}
+                    {/* Modal Footer */}
                     {images.length > 0 && (
-                        <div className="p-4 border-t border-slate-200 bg-slate-50">
-                            <div className="flex items-center justify-between">
-                                <p className="text-center text-slate-600 text-sm">
-                                    Showing {images.length} review images • Hover over images for details
-                                </p>
-                                <button
-                                    onClick={() => refetch()}
-                                    className="px-3 py-1 text-xs bg-primary text-white rounded-full hover:bg-primary/90 transition-colors"
-                                >
-                                    Refresh
-                                </button>
-                            </div>
+                        <div className="px-6 py-3.5 border-t border-slate-100 bg-white flex items-center justify-between">
+                            <p className="text-xs font-bold text-slate-600">
+                                Showing <span className="text-primary font-black">{images.length}</span> verified review photos
+                            </p>
+
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => refetch()}
+                                disabled={isFetching}
+                                className="rounded-xl font-bold text-xs gap-1.5 h-8 px-3.5 border-slate-200 hover:bg-slate-50"
+                            >
+                                <RefreshCw className={`w-3.5 h-3.5 ${isFetching ? 'animate-spin' : ''}`} />
+                                <span>{isFetching ? 'Refreshing...' : 'Refresh'}</span>
+                            </Button>
                         </div>
                     )}
                 </motion.div>

@@ -725,6 +725,13 @@ def create_razorpay_order(request):
     Returns: { order_id, amount, currency, key_id }
     """
     try:
+        # Prevent Owner, Developer, Admin from booking
+        if request.user and request.user.is_authenticated:
+            if getattr(request.user, 'is_owner', False) or getattr(request.user, 'is_developer', False) or request.user.is_staff or request.user.is_superuser:
+                return Response({
+                    'error': 'Only student accounts can book a PG or hostel. Owner, admin, and developer accounts can only view and explore properties.'
+                }, status=status.HTTP_403_FORBIDDEN)
+
         amount_rupees = int(request.data.get('amount', 0))
         property_id   = request.data.get('property_id', '')
         room_name     = request.data.get('room_name', '')
@@ -768,6 +775,10 @@ def verify_razorpay_payment(request):
     logger.info(f"Payment Verification - User: {request.user}, Authenticated: {request.user.is_authenticated}")
     if request.user.is_authenticated:
         logger.info(f"Authenticated User Email: {request.user.email}")
+        if getattr(request.user, 'is_owner', False) or getattr(request.user, 'is_developer', False) or request.user.is_staff or request.user.is_superuser:
+            return Response({
+                'error': 'Only student accounts can book a PG or hostel. Owner, admin, and developer accounts can only view and explore properties.'
+            }, status=status.HTTP_403_FORBIDDEN)
     
     try:
         order_id   = request.data.get('razorpay_order_id', '')
@@ -909,33 +920,25 @@ class BookingViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         if self.request.user.is_owner:
             bookings = Booking.objects.filter(property__owner=self.request.user).order_by('-created_at')
-            # Filter out bookings with broken property references
             valid_bookings = []
             for booking in bookings:
                 try:
-                    # Test if property exists
                     if booking.property:
-                        property_name = booking.property.name
                         valid_bookings.append(booking)
                 except Exception:
-                    # Skip bookings with broken property references
                     continue
             return valid_bookings
         
         bookings = Booking.objects.filter(user=self.request.user).order_by('-created_at')
-        # Filter out bookings with broken property references
         valid_bookings = []
         for booking in bookings:
             try:
-                # Test if property exists
                 if booking.property:
-                    property_name = booking.property.name
                     valid_bookings.append(booking)
             except Exception:
-                # Skip bookings with broken property references
                 continue
         
-            return valid_bookings
+        return valid_bookings
         
     @action(detail=False, methods=['post'], permission_classes=[permissions.IsAuthenticated])
     def add_student(self, request):
@@ -1442,6 +1445,14 @@ class EnquiryViewSet(viewsets.ModelViewSet):
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
+    def create(self, request, *args, **kwargs):
+        if request.user and request.user.is_authenticated:
+            if getattr(request.user, 'is_owner', False) or getattr(request.user, 'is_developer', False) or request.user.is_staff or request.user.is_superuser:
+                return Response({
+                    'error': 'Only student accounts can send enquiries. Owner, admin, and developer accounts can only view and explore properties.'
+                }, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, *args, **kwargs)
+
     def get_queryset(self):
         if self.request.user.is_authenticated:
             if self.request.user.is_owner:
@@ -1476,6 +1487,14 @@ class ReviewViewSet(viewsets.ModelViewSet):
         if self.action in ['create', 'update', 'partial_update', 'destroy']:
             return [permissions.IsAuthenticated()]
         return [permissions.AllowAny()]
+
+    def create(self, request, *args, **kwargs):
+        if request.user and request.user.is_authenticated:
+            if getattr(request.user, 'is_owner', False) or getattr(request.user, 'is_developer', False) or request.user.is_staff or request.user.is_superuser:
+                return Response({
+                    'error': 'Only student accounts can rate and review properties. Owner, admin, and developer accounts can only view reviews.'
+                }, status=status.HTTP_403_FORBIDDEN)
+        return super().create(request, *args, **kwargs)
 
     def perform_create(self, serializer):
         user = self.request.user if self.request.user.is_authenticated else None

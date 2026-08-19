@@ -175,7 +175,7 @@ const StudentSignup = () => {
             const data = await res.json();
             if (res.ok) {
                 toast.success("Account created successfully! Please login.");
-                navigate("/student/login");
+                navigate("/login?role=student");
             } else {
                 const msg = data.email?.[0] || data.detail || data.error || "Registration failed.";
                 toast.error(msg.includes("already exists") ? "This email is already registered." : msg);
@@ -235,7 +235,7 @@ const StudentSignup = () => {
                     <CardFooter className="bg-slate-50/50 p-8 pt-6 flex justify-center border-t border-slate-100">
                         <div className="text-sm font-medium text-slate-500">
                             Already have an account?{" "}
-                            <Link to="/student/login" className="text-primary font-bold hover:underline transition-all">Log in</Link>
+                            <Link to="/login?role=student" className="text-primary font-bold hover:underline transition-all">Log in</Link>
                         </div>
                     </CardFooter>
                 </Card>

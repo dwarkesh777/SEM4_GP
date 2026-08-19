@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#4f46e5" />
+  <title>Privacy Policy | NestNode</title>
+  <style>
+    :root{
+      --primary:#4f46e5;
+      --primary-2:#7c3aed;
+      --dark:#111827;
+      --text:#374151;
+      --muted:#6b7280;
+      --line:#e5e7eb;
+      --bg:#f7f8ff;
+      --card:#ffffff;
+      --soft:#eef2ff;
+    }
+    *{box-sizing:border-box}
+    html{scroll-behavior:smooth}
+    body{
+      margin:0;
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Arial,sans-serif;
+      color:var(--text);
+      background:linear-gradient(180deg,#f8f9ff 0%,#ffffff 42%);
+      line-height:1.7;
+    }
+    .hero{
+      position:relative;
+      overflow:hidden;
+      padding:70px 20px 105px;
+      background:
+        radial-gradient(circle at 15% 10%,rgba(129,140,248,.28),transparent 28%),
+        radial-gradient(circle at 85% 15%,rgba(124,58,237,.20),transparent 30%),
+        linear-gradient(135deg,#111827 0%,#312e81 52%,#6d28d9 100%);
+      color:#fff;
+      text-align:center;
+    }
+    .hero:after{
+      content:"";
+      position:absolute;
+      width:520px;height:520px;
+      border:1px solid rgba(255,255,255,.13);
+      border-radius:50%;
+      right:-180px;bottom:-330px;
+    }
+    .brand{
+      position:relative;z-index:1;
+      display:inline-flex;align-items:center;gap:12px;
+      padding:10px 18px;border:1px solid rgba(255,255,255,.18);
+      background:rgba(255,255,255,.08);
+      border-radius:999px;backdrop-filter:blur(10px);
+      font-weight:800;letter-spacing:.2px;
+    }
+    .brand-icon{
+      width:34px;height:34px;border-radius:11px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,#60a5fa,#a78bfa);
+      box-shadow:0 10px 25px rgba(0,0,0,.2);
+    }
+    .hero h1{
+      position:relative;z-index:1;
+      margin:28px 0 10px;
+      font-size:clamp(2.1rem,5vw,4rem);
+      letter-spacing:-1.5px;
+    }
+    .hero p{
+      position:relative;z-index:1;
+      max-width:650px;margin:0 auto;
+      color:#e9e8ff;font-size:1.05rem;
+    }
+    .content{
+      width:min(940px,calc(100% - 32px));
+      margin:-55px auto 55px;
+      position:relative;z-index:2;
+    }
+    .notice{
+      display:flex;gap:14px;align-items:flex-start;
+      background:var(--card);
+      padding:20px 22px;border-radius:18px;
+      border:1px solid var(--line);
+      box-shadow:0 18px 50px rgba(31,41,55,.10);
+      margin-bottom:20px;
+    }
+    .notice-icon{
+      flex:0 0 42px;width:42px;height:42px;border-radius:14px;
+      display:grid;place-items:center;
+      background:var(--soft);color:var(--primary);font-size:20px;
+    }
+    .notice strong{color:var(--dark)}
+    .policy{
+      background:var(--card);
+      border:1px solid var(--line);
+      border-radius:24px;
+      padding:clamp(24px,5vw,52px);
+      box-shadow:0 18px 50px rgba(31,41,55,.07);
+    }
+    .meta{
+      display:flex;flex-wrap:wrap;gap:12px;
+      padding:16px 18px;background:#fafafa;border:1px solid var(--line);
+      border-radius:14px;margin-bottom:34px;
+      color:var(--muted);font-size:.94rem;
+    }
+    .meta span{display:inline-flex;align-items:center;gap:7px}
+    h2{
+      color:var(--dark);font-size:1.35rem;
+      margin:42px 0 12px;padding-top:4px;
+      display:flex;align-items:center;gap:10px;
+    }
+    h2:first-of-type{margin-top:0}
+    h2 .num{
+      width:30px;height:30px;border-radius:9px;
+      display:grid;place-items:center;
+      background:linear-gradient(135deg,#eef2ff,#f3e8ff);
+      color:var(--primary);font-size:.85rem;font-weight:800;
+    }
+    p{margin:10px 0 14px}
+    ul{padding-left:22px;margin:10px 0 18px}
+    li{margin:7px 0}
+    .grid{
+      display:grid;grid-template-columns:repeat(2,minmax(0,1fr));
+      gap:16px;margin:18px 0;
+    }
+    .data-card{
+      border:1px solid var(--line);
+      border-radius:16px;padding:18px;
+      background:linear-gradient(180deg,#fff,#fafbff);
+    }
+    .data-card h3{margin:0 0 8px;color:var(--dark);font-size:1rem}
+    .data-card p{margin:0;color:var(--muted);font-size:.95rem}
+    .contact{
+      margin-top:36px;
+      padding:24px;border-radius:18px;
+      background:linear-gradient(135deg,#eef2ff,#f5f3ff);
+      border:1px solid #ddd6fe;
+    }
+    .contact h3{margin:0 0 8px;color:#312e81}
+    .contact a{color:var(--primary);font-weight:700;text-decoration:none}
+    .contact a:hover{text-decoration:underline}
+    .footer{
+      text-align:center;color:var(--muted);
+      padding:10px 20px 42px;font-size:.92rem;
+    }
+    .footer strong{color:var(--dark)}
+    @media(max-width:680px){
+      .hero{padding:55px 18px 90px}
+      .grid{grid-template-columns:1fr}
+      .notice{padding:17px}
+      .policy{border-radius:18px}
+    }
+  </style>
+</head>
+<body>
+
+  <header class="hero">
+    <div class="brand">
+      <div class="brand-icon">⌂</div>
+      <span>NestNode</span>
+    </div>
+    <h1>Privacy Policy</h1>
+    <p>Your privacy matters to us. This policy explains how NestNode collects, uses, protects, and manages your information.</p>
+  </header>
+
+  <main class="content">
+    <div class="notice">
+      <div class="notice-icon">🛡</div>
+      <div>
+        <strong>Our privacy commitment</strong><br>
+        NestNode is designed to help users discover and manage hostel and PG accommodation while respecting and protecting personal information.
+      </div>
+    </div>
+
+    <article class="policy">
+      <div class="meta">
+        <span>📅 <strong>Effective Date:</strong> August 19, 2026</span>
+        <span>🔄 <strong>Last Updated:</strong> August 19, 2026</span>
+      </div>
+
+      <p>
+        Welcome to <strong>NestNode</strong> (“we”, “our”, or “us”). NestNode is a hostel and PG booking platform that helps users discover accommodation options, view property information, and use booking-related services. This Privacy Policy explains how we handle information when you use our website or mobile application.
+      </p>
+
+      <h2><span class="num">1</span> Information We Collect</h2>
+      <div class="grid">
+        <div class="data-card">
+          <h3>👤 Account Information</h3>
+          <p>Name, email address, phone number, login details, and other information you provide while creating or managing an account.</p>
+        </div>
+        <div class="data-card">
+          <h3>🏠 Booking Information</h3>
+          <p>Accommodation preferences, selected property details, booking requests, and information needed to provide booking-related services.</p>
+        </div>
+        <div class="data-card">
+          <h3>📱 Device & Usage Information</h3>
+          <p>Basic technical information such as device type, app version, browser information, IP address, and interaction data used to improve reliability and security.</p>
+        </div>
+        <div class="data-card">
+          <h3>📍 Location Information</h3>
+          <p>Location information may be used only when you provide permission or use location-based features to help show relevant accommodation options.</p>
+        </div>
+      </div>
+
+      <h2><span class="num">2</span> How We Use Your Information</h2>
+      <ul>
+        <li>Create and manage your NestNode account.</li>
+        <li>Provide accommodation search, listing, and booking-related services.</li>
+        <li>Communicate about account activity, bookings, support requests, and important service updates.</li>
+        <li>Improve app performance, usability, features, and security.</li>
+        <li>Prevent fraud, abuse, unauthorized access, and other harmful activity.</li>
+        <li>Comply with applicable legal obligations.</li>
+      </ul>
+
+      <h2><span class="num">3</span> How We Share Information</h2>
+      <p>We do not sell your personal information. We may share information only when reasonably necessary, including:</p>
+      <ul>
+        <li>With accommodation providers or relevant parties to process a booking or service request.</li>
+        <li>With trusted service providers that support our infrastructure, hosting, communication, or technical operations.</li>
+        <li>When required by law, legal process, or to protect the rights, safety, and security of users and NestNode.</li>
+        <li>In connection with a business transfer, merger, or similar transaction, subject to applicable legal requirements.</li>
+      </ul>
+
+      <h2><span class="num">4</span> Payments</h2>
+      <p>
+        If a payment feature is available, payment processing may be handled by a third-party payment service provider. NestNode does not intentionally store complete card details or other sensitive payment credentials unless explicitly required and handled through an appropriate secure payment system.
+      </p>
+
+      <h2><span class="num">5</span> Permissions</h2>
+      <p>The NestNode mobile application may request permissions only when required for a feature you choose to use. Depending on the functionality available in your version of the app, this may include:</p>
+      <ul>
+        <li><strong>Location:</strong> to help provide nearby or location-relevant accommodation results.</li>
+        <li><strong>Camera or Photos:</strong> only if you choose a feature that requires selecting or uploading images.</li>
+        <li><strong>Notifications:</strong> to send important service, booking, or account updates when enabled.</li>
+      </ul>
+      <p>You can manage most permissions through your device settings.</p>
+
+      <h2><span class="num">6</span> Data Security</h2>
+      <p>
+        We use reasonable administrative, technical, and organizational safeguards designed to protect information against unauthorized access, loss, misuse, alteration, or disclosure. However, no internet or electronic storage system can guarantee absolute security.
+      </p>
+
+      <h2><span class="num">7</span> Data Retention</h2>
+      <p>
+        We retain personal information only for as long as reasonably necessary to provide our services, maintain legitimate business records, resolve disputes, enforce agreements, and comply with legal obligations.
+      </p>
+
+      <h2><span class="num">8</span> Your Choices and Rights</h2>
+      <p>Subject to applicable law, you may be able to:</p>
+      <ul>
+        <li>Access or update certain information in your account.</li>
+        <li>Request correction of inaccurate personal information.</li>
+        <li>Request deletion of your account or personal information, where legally applicable.</li>
+        <li>Withdraw optional permissions through your device settings.</li>
+        <li>Contact us with questions about how your information is handled.</li>
+      </ul>
+
+      <h2><span class="num">9</span> Children's Privacy</h2>
+      <p>
+        NestNode is not intended for children below the minimum age required to use the service under applicable law. We do not knowingly collect personal information from children in violation of applicable laws.
+      </p>
+
+      <h2><span class="num">10</span> Third-Party Links and Services</h2>
+      <p>
+        Our platform may contain links to third-party websites, maps, payment services, or other services. Their privacy practices are governed by their own policies, and we encourage you to review those policies before providing personal information.
+      </p>
+
+      <h2><span class="num">11</span> Changes to This Privacy Policy</h2>
+      <p>
+        We may update this Privacy Policy from time to time to reflect changes in our services, technology, or legal requirements. The latest version will be posted with an updated “Last Updated” date.
+      </p>
+
+      <h2><span class="num">12</span> Contact Us</h2>
+      <div class="contact">
+        <h3>Questions about privacy?</h3>
+        <p>
+          If you have questions, requests, or concerns about this Privacy Policy or your personal information, contact NestNode:
+        </p>
+        <p>
+          <strong>Email:</strong> <a href="mailto:privacy@nestnode.app">privacy@nestnode.app</a><br>
+          <strong>Website:</strong> <a href="https://nestnode.app">nestnode.app</a>
+        </p>
+        <p style="font-size:.9rem;color:#6b7280;margin-bottom:0;">
+          Replace the email address and website above with your real published contact details before uploading this policy to Google Play.
+        </p>
+      </div>
+    </article>
+  </main>
+
+  <footer class="footer">
+    © 2026 <strong>NestNode</strong> · Hostel & PG Booking · Privacy matters.
+  </footer>
+
+</body>
+</html>

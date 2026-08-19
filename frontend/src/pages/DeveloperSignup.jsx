@@ -164,19 +164,17 @@ const DeveloperSignup = () => {
 
                             <CardFooter className="flex flex-col space-y-4 bg-slate-50/70 p-8 pt-6 border-t border-slate-100">
                                 <div className="text-center text-sm font-medium text-slate-500">
-                                    Already have an account?{" "}
-                                    <Link to="/developer/login" className="text-cyan-600 font-bold hover:text-cyan-700 hover:underline transition-colors">
-                                        Sign in here
+                                    Already have a developer account?{" "}
+                                    <Link to="/login?role=developer" className="text-cyan-600 font-bold hover:text-cyan-700 hover:underline transition-colors">
+                                        Sign in
                                     </Link>
                                 </div>
-                                <div className="w-full h-px bg-slate-200" />
-                                <Link
-                                    to="/login"
-                                    className="text-xs font-black uppercase tracking-widest text-slate-400 hover:text-cyan-600 transition-colors flex items-center justify-center gap-2"
-                                >
-                                    <Cpu className="w-3.5 h-3.5" />
-                                    Back to main login
-                                </Link>
+                                <div className="text-center text-xs text-slate-400">
+                                    Looking for student or owner login?{" "}
+                                    <Link to="/login" className="text-slate-600 font-semibold hover:underline">
+                                        Portal Login
+                                    </Link>
+                                </div>
                             </CardFooter>
                         </Card>
                     </motion.div>

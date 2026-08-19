@@ -1,9 +1,10 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Megaphone, Star, MapPin, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
+import { Sparkles, Megaphone, MapPin, ExternalLink, ChevronLeft, ChevronRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { API_URL } from "@/lib/api";
 
 const DEFAULT_SPONSORED_ADS = [
     {
@@ -14,14 +15,13 @@ const DEFAULT_SPONSORED_ADS = [
         location: "Navrangpura, Ahmedabad",
         price: 8500,
         originalPrice: 10500,
-        rating: 4.9,
-        reviewsCount: 128,
+        rating: 0,
+        reviewsCount: 0,
         type: "PG",
         gender: "Co-ed",
         image: "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=800",
         targetUrl: "/hostel/demo-1",
-        clicks: 342,
-        impressions: 1840,
+        latestReview: null
     },
     {
         id: "default-ad-2",
@@ -31,14 +31,13 @@ const DEFAULT_SPONSORED_ADS = [
         location: "SG Highway, Ahmedabad",
         price: 7200,
         originalPrice: 9000,
-        rating: 4.8,
-        reviewsCount: 94,
+        rating: 0,
+        reviewsCount: 0,
         type: "Hostel",
         gender: "Boys",
         image: "https://images.unsplash.com/photo-1595526114035-0d45ed16cfbf?auto=format&fit=crop&q=80&w=800",
         targetUrl: "/hostel/demo-2",
-        clicks: 215,
-        impressions: 1290,
+        latestReview: null
     },
     {
         id: "default-ad-3",
@@ -48,14 +47,13 @@ const DEFAULT_SPONSORED_ADS = [
         location: "Satellite, Ahmedabad",
         price: 9500,
         originalPrice: 11000,
-        rating: 4.9,
-        reviewsCount: 156,
+        rating: 0,
+        reviewsCount: 0,
         type: "PG",
         gender: "Girls",
         image: "https://images.unsplash.com/photo-1522771739844-6a9f6d5f14af?auto=format&fit=crop&q=80&w=800",
         targetUrl: "/hostel/demo-3",
-        clicks: 180,
-        impressions: 1100,
+        latestReview: null
     },
     {
         id: "default-ad-4",
@@ -65,14 +63,13 @@ const DEFAULT_SPONSORED_ADS = [
         location: "Bodakdev, Ahmedabad",
         price: 7800,
         originalPrice: 9200,
-        rating: 4.7,
-        reviewsCount: 88,
+        rating: 0,
+        reviewsCount: 0,
         type: "Hostel",
         gender: "Co-ed",
         image: "https://images.unsplash.com/photo-1540518614846-7eded433c457?auto=format&fit=crop&q=80&w=800",
         targetUrl: "/hostel/demo-4",
-        clicks: 140,
-        impressions: 950,
+        latestReview: null
     }
 ];
 
@@ -81,15 +78,54 @@ const SponsoredAdsBanner = () => {
     const [currentIndex, setCurrentIndex] = useState(0);
     const [isHovered, setIsHovered] = useState(false);
 
-    // Load active owner ads or fallback sample ads
+    // Load active real property ads or fallback with exact review counts (0 if no reviews)
     useEffect(() => {
-        const loadAds = () => {
+        const loadAds = async () => {
             try {
+                // 1. Fetch live properties from API
+                const res = await fetch(`${API_URL}/api/public/properties/list/?appid=nestnode-readonly-key-2026`);
+                if (res.ok) {
+                    const data = await res.json();
+                    const realProps = data.results || data;
+                    if (Array.isArray(realProps) && realProps.length > 0) {
+                        const mappedProps = realProps.slice(0, 6).map((p, idx) => {
+                            const revCount = Number(p.reviews_count ?? p.reviews ?? (p.reviews_list ? p.reviews_list.length : 0)) || 0;
+                            const revRating = p.rating && Number(p.rating) > 0 ? Number(p.rating).toFixed(1) : "0";
+                            const firstReview = p.reviews_list && p.reviews_list.length > 0 ? p.reviews_list[0] : null;
+
+                            return {
+                                id: p.id,
+                                propertyId: p.id,
+                                propertyName: p.name || "Student Living Stay",
+                                headline: p.description?.slice(0, 50) || "⚡ Special Offer: 15% OFF for First Month!",
+                                badgeText: "AD • SPONSORED • RECO...",
+                                location: p.location || p.city || "Ahmedabad",
+                                price: p.price || 9700,
+                                originalPrice: p.originalPrice || p.original_price || (Number(p.price || 9700) + 1500),
+                                rating: revRating,
+                                reviewsCount: revCount,
+                                type: p.type || "PG",
+                                gender: p.gender || "Boys",
+                                image: p.main_image || p.images?.[0]?.image || DEFAULT_SPONSORED_ADS[idx % DEFAULT_SPONSORED_ADS.length].image,
+                                targetUrl: `/hostel/${p.id}`,
+                                latestReview: firstReview
+                            };
+                        });
+                        setAds(mappedProps);
+                        return;
+                    }
+                }
+
+                // 2. Check local owner campaigns
                 const storedCampaigns = JSON.parse(localStorage.getItem("owner_ads_campaigns") || "[]");
                 const activeOwnerAds = storedCampaigns.filter(ad => ad.status === "Active");
-
                 if (activeOwnerAds.length > 0) {
-                    setAds(activeOwnerAds);
+                    const sanitized = activeOwnerAds.map(ad => ({
+                        ...ad,
+                        reviewsCount: Number(ad.reviewsCount || ad.reviews_count || 0) || 0,
+                        rating: ad.rating && Number(ad.rating) > 0 ? Number(ad.rating).toFixed(1) : "0"
+                    }));
+                    setAds(sanitized);
                 } else {
                     setAds(DEFAULT_SPONSORED_ADS);
                 }
@@ -99,17 +135,15 @@ const SponsoredAdsBanner = () => {
         };
 
         loadAds();
-        const pollInterval = setInterval(loadAds, 3000);
-        return () => clearInterval(pollInterval);
     }, []);
 
-    // Automatic slide transition every 4 seconds (pauses on hover)
+    // Automatic slide transition every 4.5 seconds (pauses on hover)
     useEffect(() => {
         if (ads.length <= 3 || isHovered) return;
 
         const autoPlayTimer = setInterval(() => {
             setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
-        }, 4000);
+        }, 4500);
 
         return () => clearInterval(autoPlayTimer);
     }, [ads.length, isHovered]);
@@ -120,21 +154,6 @@ const SponsoredAdsBanner = () => {
 
     const handleNext = () => {
         setCurrentIndex((prevIndex) => (prevIndex + 1) % ads.length);
-    };
-
-    const handleAdClick = (adId) => {
-        try {
-            const storedCampaigns = JSON.parse(localStorage.getItem("owner_ads_campaigns") || "[]");
-            const updated = storedCampaigns.map(ad => {
-                if (ad.id === adId) {
-                    return { ...ad, clicks: (ad.clicks || 0) + 1 };
-                }
-                return ad;
-            });
-            localStorage.setItem("owner_ads_campaigns", JSON.stringify(updated));
-        } catch (e) {
-            console.error("Ad click error:", e);
-        }
     };
 
     if (ads.length === 0) return null;
@@ -158,7 +177,6 @@ const SponsoredAdsBanner = () => {
                 onMouseEnter={() => setIsHovered(true)}
                 onMouseLeave={() => setIsHovered(false)}
             >
-                
                 {/* Top header bar for Ads Section */}
                 <div className="flex items-center justify-between mb-6 pb-4 border-b border-indigo-500/15">
                     <div className="flex items-center gap-2.5">
@@ -171,7 +189,7 @@ const SponsoredAdsBanner = () => {
                                     Promoted & Sponsored Listings
                                 </h3>
                                 <Badge className="bg-indigo-500/15 text-indigo-700 border-indigo-500/30 font-bold uppercase tracking-wider text-[10px] px-2 py-0.5">
-                                    Ad • Verified
+                                    AD • VERIFIED
                                 </Badge>
                             </div>
                             <p className="text-xs text-slate-500 font-medium">
@@ -214,83 +232,81 @@ const SponsoredAdsBanner = () => {
                 {/* Single Row 3-Card Carousel */}
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
                     <AnimatePresence mode="popLayout">
-                        {visibleAds.map((ad, idx) => (
-                            <motion.div
-                                key={ad.id || `${currentIndex}-${idx}`}
-                                initial={{ opacity: 0, scale: 0.95, y: 15 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -15 }}
-                                transition={{ duration: 0.35, delay: idx * 0.08 }}
-                                className="bg-white rounded-2xl border border-indigo-100 p-4 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative group hover:border-indigo-400 overflow-hidden"
-                            >
-                                {/* Subtle Google Ads background glow */}
-                                <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-indigo-500/10 to-transparent pointer-events-none rounded-tr-2xl" />
+                        {visibleAds.map((ad, idx) => {
+                            const count = Number(ad.reviewsCount || 0);
+                            const ratingVal = ad.rating && Number(ad.rating) > 0 ? Number(ad.rating).toFixed(1) : "0";
 
-                                <div>
-                                    {/* Property Image with Ad Badge */}
-                                    <div className="relative w-full h-40 rounded-xl overflow-hidden bg-slate-100 mb-3">
-                                        <img
-                                            src={ad.image || "https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&q=80&w=800"}
-                                            alt={ad.propertyName}
-                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                                        />
-                                        <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/75 backdrop-blur-md text-indigo-300 text-[10px] font-black px-2 py-0.5 rounded-full border border-indigo-400/40 uppercase tracking-wider">
-                                            <span>Ad</span>
-                                            <span>•</span>
-                                            <span className="truncate max-w-[120px]">{ad.badgeText || ad.badge || "Sponsored"}</span>
-                                        </div>
-                                    </div>
+                            return (
+                                <motion.div
+                                    key={ad.id || `${currentIndex}-${idx}`}
+                                    initial={{ opacity: 0, scale: 0.95, y: 15 }}
+                                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, y: -15 }}
+                                    transition={{ duration: 0.35, delay: idx * 0.08 }}
+                                    className="bg-white rounded-2xl border border-indigo-100 p-4 shadow-md hover:shadow-xl transition-all duration-300 flex flex-col justify-between relative group hover:border-indigo-400 overflow-hidden"
+                                >
+                                    {/* Subtle background glow */}
+                                    <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-bl from-indigo-500/10 to-transparent pointer-events-none rounded-tr-2xl" />
 
-                                    {/* Card Content */}
-                                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                                        <Badge variant="outline" className="text-[10px] font-bold border-slate-200 text-slate-600 px-2 py-0">
-                                            {ad.gender || "Co-ed"} • {ad.type || "Hostel"}
-                                        </Badge>
-                                        <div className="flex items-center gap-1 text-amber-500 text-xs font-black">
-                                            <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
-                                            <span>{ad.rating || "4.8"}</span>
-                                            <span className="text-slate-400 font-normal">({ad.reviewsCount || 42})</span>
-                                        </div>
-                                    </div>
-
-                                    <h4 className="font-heading font-extrabold text-slate-900 text-base leading-snug line-clamp-1 group-hover:text-indigo-600 transition-colors">
-                                        {ad.propertyName}
-                                    </h4>
-
-                                    <p className="text-xs font-bold text-indigo-900 bg-indigo-50/80 p-2 rounded-lg my-2 border border-indigo-200/60 line-clamp-1">
-                                        {ad.headline}
-                                    </p>
-
-                                    <div className="flex items-center gap-1 text-xs text-slate-500 font-medium mb-3">
-                                        <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
-                                        <span className="truncate">{ad.location}</span>
-                                    </div>
-                                </div>
-
-                                {/* Footer & Price */}
-                                <div className="flex items-center justify-between pt-3 border-t border-slate-100">
                                     <div>
-                                        <span className="text-[11px] text-slate-400 line-through mr-1">
-                                            ₹{ad.originalPrice || Number(ad.price) + 1500}
-                                        </span>
-                                        <span className="text-lg font-black text-slate-900 font-heading">
-                                            ₹{ad.price}
-                                        </span>
-                                        <span className="text-[10px] text-slate-400 font-medium">/mo</span>
+                                        {/* Property Image with Ad Badge */}
+                                        <div className="relative w-full h-44 rounded-xl overflow-hidden bg-slate-100 mb-3">
+                                            <img
+                                                src={ad.image}
+                                                alt={ad.propertyName}
+                                                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                                            />
+                                            <div className="absolute top-2 left-2 flex items-center gap-1 bg-black/80 backdrop-blur-md text-indigo-200 text-[10px] font-black px-2.5 py-0.5 rounded-full border border-indigo-400/40 uppercase tracking-wider">
+                                                <span>{ad.badgeText || "AD • SPONSORED • RECO..."}</span>
+                                            </div>
+                                        </div>
+
+                                        {/* Category Badge */}
+                                        <div className="flex items-center justify-between gap-2 mb-2">
+                                            <Badge variant="outline" className="text-[11px] font-bold border-slate-200 text-slate-700 px-2.5 py-0.5 rounded-lg bg-slate-50">
+                                                {ad.gender || "Boys"} • {ad.type || "PG"}
+                                            </Badge>
+                                        </div>
+
+                                        <h4 className="font-heading font-black text-slate-900 text-lg uppercase tracking-wide leading-tight group-hover:text-indigo-600 transition-colors">
+                                            {ad.propertyName}
+                                        </h4>
+
+                                        <p className="text-xs font-bold text-indigo-900 bg-indigo-50/90 p-2.5 rounded-xl my-2.5 border border-indigo-200/70 flex items-center gap-1.5">
+                                            <span className="text-amber-500">⚡</span>
+                                            <span className="truncate">{ad.headline || "Special Offer: 15% OFF for First Month!"}</span>
+                                        </p>
+
+                                        <div className="flex items-center gap-1.5 text-xs text-slate-500 font-medium mb-3">
+                                            <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                                            <span className="truncate">{ad.location}</span>
+                                        </div>
                                     </div>
 
-                                    <Link
-                                        to={ad.propertyId ? `/hostel/${ad.propertyId}` : (ad.targetUrl || "#")}
-                                        onClick={() => handleAdClick(ad.id)}
-                                    >
-                                        <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md shadow-indigo-500/20 text-xs gap-1.5 px-3 py-1.5">
-                                            View
-                                            <ExternalLink className="w-3 h-3" />
-                                        </Button>
-                                    </Link>
-                                </div>
-                            </motion.div>
-                        ))}
+                                    {/* Footer & Price */}
+                                    <div className="flex items-center justify-between pt-3 border-t border-slate-100">
+                                        <div>
+                                            <span className="text-xs text-slate-400 line-through mr-1.5 font-medium">
+                                                ₹{ad.originalPrice || 11200}
+                                            </span>
+                                            <span className="text-xl font-black text-slate-900 font-heading">
+                                                ₹{ad.price || 9700}
+                                            </span>
+                                            <span className="text-xs text-slate-400 font-bold">/mo</span>
+                                        </div>
+
+                                        <Link
+                                            to={ad.propertyId ? `/hostel/${ad.propertyId}` : (ad.targetUrl || "#")}
+                                        >
+                                            <Button size="sm" className="bg-indigo-600 hover:bg-indigo-700 text-white font-black rounded-xl shadow-lg shadow-indigo-600/25 text-xs gap-1.5 px-4 py-2">
+                                                View
+                                                <ExternalLink className="w-3.5 h-3.5" />
+                                            </Button>
+                                        </Link>
+                                    </div>
+                                </motion.div>
+                            );
+                        })}
                     </AnimatePresence>
                 </div>
 

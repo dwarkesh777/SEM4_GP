@@ -6,7 +6,8 @@ import {
     Car, Tv, Wind, ChevronLeft, ChevronRight, Users, Check, X as XIcon,
     Shirt, Sparkles, BedDouble, Share2, Calendar, ShieldCheck,
     Coffee, Utensils, Zap, Lock, Info, Clock, ExternalLink, LayoutDashboard, User,
-    CreditCard, IndianRupee, CheckCircle2, AlertCircle, Loader2, Hash, Download, FileText
+    CreditCard, IndianRupee, CheckCircle2, AlertCircle, Loader2, Hash, Download, FileText,
+    GraduationCap, Eye, ShieldAlert, LogIn, UserPlus
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,6 +26,7 @@ import SimilarProperties from "@/components/SimilarProperties";
 import SupportButton from "@/components/SupportButton";
 import ImageGallery from "@/components/ImageGallery";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
 import { API_URL } from "@/lib/api";
 
 const amenityDetails = {
@@ -253,9 +255,23 @@ const HostelDetail = () => {
     });
     const [currentImage, setCurrentImage] = useState(0);
     const { toast } = useToast();
+    const { user } = useAuth();
 
-    // ── Booking Modal State ──
+    // ── Role & Account Detection ──
+    const isOwner = Boolean(user?.is_owner || localStorage.getItem("userRole") === "owner");
+    const isDeveloper = Boolean(user?.is_developer || localStorage.getItem("userRole") === "developer");
+    const isAdmin = Boolean(user?.is_staff || user?.is_superuser || localStorage.getItem("userRole") === "admin");
+    const isRestrictedUser = isOwner || isDeveloper || isAdmin;
+    const currentRoleName = isOwner ? "Owner" : isDeveloper ? "Developer" : isAdmin ? "Admin" : "";
+
+    // ── Booking, Enquiry & Role Restriction Modal States ──
     const [bookingModal, setBookingModal] = useState(false);
+    const [restrictedModalOpen, setRestrictedModalOpen] = useState(false);
+    const [restrictionInfo, setRestrictionInfo] = useState({
+        title: "Student Account Required",
+        action: "booking", // "booking" | "review" | "enquiry"
+        message: ""
+    });
     const [selectedRoom, setSelectedRoom] = useState(null);
     const [bookingStep, setBookingStep] = useState("form"); // "form" | "processing" | "success" | "failed"
     const [paymentId, setPaymentId] = useState("");
@@ -274,8 +290,50 @@ const HostelDetail = () => {
     const [submittingReview, setSubmittingReview] = useState(false);
     const [formErrors, setFormErrors] = useState({});
 
+    const handleOpenReviewDialog = () => {
+        if (isRestrictedUser) {
+            setRestrictionInfo({
+                title: "Student Account Required for Reviews",
+                action: "review",
+                message: `${currentRoleName || "Owner/Admin/Developer"} accounts cannot submit ratings or reviews. Only student accounts who stay at accommodations can post verified reviews. You can freely view all existing ratings and reviews.`
+            });
+            setRestrictedModalOpen(true);
+            toast({
+                title: "Review Restricted",
+                description: `Only student accounts can rate and review properties. As an ${currentRoleName || "authorized user"}, you can view all verified reviews.`,
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+        if (!token && !user) {
+            toast({
+                title: "Student Account Required",
+                description: "Please log in with a student account to leave a review.",
+                variant: "destructive"
+            });
+            navigate("/student/login", { state: { from: `/hostel/${id}` } });
+            return;
+        }
+
+        setReviewDialog(true);
+    };
+
     const handleReviewSubmit = async (e) => {
         e.preventDefault();
+
+        if (isRestrictedUser) {
+            setRestrictionInfo({
+                title: "Student Account Required for Reviews",
+                action: "review",
+                message: `${currentRoleName || "Owner/Admin/Developer"} accounts cannot submit ratings or reviews. Only student accounts can leave reviews.`
+            });
+            setRestrictedModalOpen(true);
+            toast({ title: "Review Restricted", description: "Only student accounts can submit reviews.", variant: "destructive" });
+            return;
+        }
+
         const token = localStorage.getItem('token');
         console.log('DEBUG: Token from localStorage:', token);
         if (!token) {
@@ -305,7 +363,7 @@ const HostelDetail = () => {
                 console.log('DEBUG: Image file type:', reviewForm.image.type);
                 console.log('DEBUG: Image file size:', reviewForm.image.size);
             }
-            
+
             console.log('DEBUG: Submitting review to:', `${API_URL}/api/reviews/`);
             console.log('DEBUG: FormData contents:');
             for (let [key, value] of formData.entries()) {
@@ -322,18 +380,18 @@ const HostelDetail = () => {
 
             console.log('DEBUG: Response status:', res.status);
             console.log('DEBUG: Response ok:', res.ok);
-            
+
             if (res.ok) {
                 toast({ title: "Review Submitted!", description: "Thank you for your feedback." });
                 setReviewDialog(false);
-                
+
                 // If review had an image, open gallery to show it
                 if (reviewForm.image) {
                     setTimeout(() => {
                         setGalleryOpen(true);
                     }, 1000);
                 }
-                
+
                 setReviewForm({ rating: 5, comment: "", name: "", image: null });
                 // Refresh page to show new review
                 setTimeout(() => {
@@ -353,6 +411,33 @@ const HostelDetail = () => {
     };
 
     const openBookingModal = (room) => {
+        // Prevent Owner, Admin, Developer accounts from booking - show restriction popup
+        if (isRestrictedUser) {
+            setRestrictionInfo({
+                title: "Student Account Required for Booking",
+                action: "booking",
+                message: `${currentRoleName || "Owner/Admin/Developer"} accounts cannot book or reserve a PG or hostel. Online room reservations and payments are strictly for verified Student accounts. You can view all property details.`
+            });
+            setRestrictedModalOpen(true);
+            toast({
+                title: "Booking Restricted",
+                description: `Only student accounts can book a PG or hostel. As an ${currentRoleName || "authorized user"}, you can view and explore all listings.`,
+                variant: "destructive"
+            });
+            return;
+        }
+
+        const token = localStorage.getItem('token');
+        if (!token && !user) {
+            toast({
+                title: "Student Account Required",
+                description: "Please log in with a student account to book accommodation.",
+                variant: "destructive"
+            });
+            navigate("/student/login", { state: { from: `/hostel/${id}` } });
+            return;
+        }
+
         if (room.total_beds !== undefined && room.available_beds === 0) {
             toast({
                 title: "Booking Unavailable",
@@ -364,7 +449,12 @@ const HostelDetail = () => {
         setSelectedRoom(room);
         setBookingModal(true);
         setBookingStep("form");
-        setBookingForm({ name: "", phone: "", age: "", email: "" });
+        setBookingForm({
+            name: user?.full_name || "",
+            phone: user?.phone_number || "",
+            age: "",
+            email: user?.email || ""
+        });
         setFormErrors({});
     };
 
@@ -467,7 +557,7 @@ const HostelDetail = () => {
                                 }
                             }),
                         });
-                        
+
                         console.log('DEBUG: Payment verification request sent');
                         console.log('DEBUG: Token present:', !!token);
                         console.log('DEBUG: Customer details:', {
@@ -480,7 +570,7 @@ const HostelDetail = () => {
                         if (verifyData.verified) {
                             setPaymentId(response.razorpay_payment_id);
                             setOrderId(response.razorpay_order_id);
-                            
+
                             // Create booking data for success page
                             const bookingData = {
                                 id: verifyData.booking_id,
@@ -498,7 +588,7 @@ const HostelDetail = () => {
                                 status: 'Confirmed',
                                 created_at: new Date().toISOString()
                             };
-                            
+
                             // Navigate to booking success page with booking data
                             navigate('/booking-success', { state: { bookingData } });
                         } else {
@@ -594,6 +684,23 @@ const HostelDetail = () => {
 
     const handleEnquiry = async (e) => {
         e.preventDefault();
+
+        // Prevent Owner, Admin, Developer accounts from sending enquiries - show restriction popup
+        if (isRestrictedUser) {
+            setRestrictionInfo({
+                title: "Student Account Required for Enquiries",
+                action: "enquiry",
+                message: `${currentRoleName || "Owner/Admin/Developer"} accounts cannot send property enquiries. Sending room enquiries to property owners is exclusively reserved for prospective Student residents. You can view all property details.`
+            });
+            setRestrictedModalOpen(true);
+            toast({
+                title: "Enquiry Restricted",
+                description: `Only student accounts can send enquiries to property owners. As an ${currentRoleName || "authorized user"}, you can view and explore all listings.`,
+                variant: "destructive"
+            });
+            return;
+        }
+
         if (!enquiryForm.name?.trim() || !enquiryForm.phone?.trim()) {
             toast({
                 title: "Incomplete Details",
@@ -833,9 +940,52 @@ const HostelDetail = () => {
                                 whileInView={{ opacity: 1, y: 0 }}
                                 viewport={{ once: true }}
                             >
-                                <h2 className="text-3xl font-heading font-black text-slate-900 mb-8 tracking-tight">
-                                    Selection of <span className="text-primary italic">Spaces</span>
-                                </h2>
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
+                                    <h2 className="text-3xl font-heading font-black text-slate-900 tracking-tight">
+                                        Selection of <span className="text-primary italic">Spaces</span>
+                                    </h2>
+                                    {isRestrictedUser && (
+                                        <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-50 border border-amber-200/80 text-amber-800 text-xs font-bold shadow-sm">
+                                            <Eye className="w-3.5 h-3.5 text-amber-600" />
+                                            <span>Viewing as {currentRoleName || "Partner"} (Student Booking Only)</span>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {isRestrictedUser && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: -10 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        className="mb-8 p-5 sm:p-6 rounded-[2rem] bg-gradient-to-r from-amber-500/10 via-orange-500/5 to-amber-500/10 border-2 border-amber-300/60 shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4"
+                                    >
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-12 h-12 rounded-2xl bg-amber-500 text-white flex items-center justify-center shadow-md shadow-amber-500/20 shrink-0">
+                                                <GraduationCap className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-xs font-black uppercase tracking-wider text-amber-900">
+                                                        Student Account Required for Booking
+                                                    </span>
+                                                    <Badge className="bg-amber-600 text-white text-[9px] font-black uppercase px-2 py-0.5">
+                                                        {currentRoleName} Account
+                                                    </Badge>
+                                                </div>
+                                                <p className="text-xs font-medium text-amber-800/90 mt-0.5 max-w-2xl">
+                                                    You can freely view all room spaces, amenities, photos, pricing, and locations. Booking & payment are exclusively available for student accounts.
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <Button
+                                            size="sm"
+                                            onClick={() => setRestrictedModalOpen(true)}
+                                            className="shrink-0 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-sm"
+                                        >
+                                            <Info className="w-3.5 h-3.5 mr-1.5" /> Booking Info
+                                        </Button>
+                                    </motion.div>
+                                )}
+
                                 <div className="space-y-4">
                                     {property.rooms?.map((room, i) => (
                                         <motion.div
@@ -973,7 +1123,7 @@ const HostelDetail = () => {
                                         </Button>
                                         <Button
                                             variant="outline"
-                                            onClick={() => setReviewDialog(true)}
+                                            onClick={handleOpenReviewDialog}
                                             className="px-6 rounded-full border-slate-200 text-slate-600 hover:text-primary hover:border-primary/30 font-bold transition-all shadow-sm"
                                         >
                                             <Star className="w-4 h-4 mr-2" /> Rate & Review
@@ -1166,7 +1316,7 @@ const HostelDetail = () => {
                                                     <div className="relative">
                                                         <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300 group-focus-within:text-primary" />
                                                         <Input
-                                                            placeholder="E.g. Dwarkesh Patel"
+                                                            placeholder="E.g. Dwarkesh Savaliya"
                                                             className="pl-12 h-14 rounded-2xl bg-white/50 border-slate-100 focus:bg-white focus:ring-primary/20 transition-all font-bold text-slate-700"
                                                             required
                                                             value={enquiryForm.name}
@@ -1248,8 +1398,8 @@ const HostelDetail = () => {
                                         <p className="text-sm font-medium text-emerald-50 leading-relaxed">
                                             Our student consultants help you find the best hostels based on your college location.
                                         </p>
-                                        <SupportButton 
-                                            variant="primary" 
+                                        <SupportButton
+                                            variant="primary"
                                             size="lg"
                                             icon="phone"
                                             onClick={() => navigate('/support')}
@@ -1262,11 +1412,11 @@ const HostelDetail = () => {
                             </motion.div>
                         </div>
                     </div>
-                    
+
                     {/* Similar Properties Section */}
                     {property && (
-                        <SimilarProperties 
-                            propertyId={property.id} 
+                        <SimilarProperties
+                            propertyId={property.id}
                             currentPropertyType={property.type}
                             currentPropertyGender={property.gender}
                         />
@@ -1340,7 +1490,7 @@ const HostelDetail = () => {
                                                 <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-300" />
                                                 <input
                                                     type="text"
-                                                    placeholder="e.g. Dwarkesh Savalia"
+                                                    placeholder="e.g. Dwarkesh Savaliya"
                                                     value={bookingForm.name}
                                                     onChange={(e) => setBookingForm(p => ({ ...p, name: e.target.value }))}
                                                     disabled={bookingStep === "processing"}
@@ -1566,6 +1716,129 @@ const HostelDetail = () => {
                                     </div>
                                 </div>
                             )}
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* ══════════════════════════════════════════════
+                ROLE RESTRICTION MODAL (Owner / Admin / Developer Cannot Book)
+            ══════════════════════════════════════════════ */}
+            <AnimatePresence>
+                {restrictedModalOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 z-[120] flex items-center justify-center p-4"
+                        onClick={(e) => e.target === e.currentTarget && setRestrictedModalOpen(false)}
+                    >
+                        {/* Smooth dark blur backdrop */}
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            className="absolute inset-0 bg-slate-950/70 backdrop-blur-md"
+                        />
+
+                        {/* Modal Dialog Card */}
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+                            transition={{ type: "spring", stiffness: 320, damping: 26 }}
+                            className="relative w-full max-w-lg bg-white rounded-[2.5rem] shadow-2xl shadow-slate-950/30 overflow-hidden border border-slate-100 z-10"
+                        >
+                            {/* Top decorative gradient bar */}
+                            <div className="h-2 w-full bg-gradient-to-r from-amber-500 via-orange-500 to-rose-500" />
+
+                            <div className="p-8">
+                                {/* Header with Close Button */}
+                                <div className="flex items-start justify-between gap-4 mb-6">
+                                    <div className="flex items-center gap-3.5">
+                                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/25 shrink-0">
+                                            <GraduationCap className="w-7 h-7" />
+                                        </div>
+                                        <div>
+                                            <Badge className="bg-amber-100 text-amber-900 border-amber-200 text-[10px] font-black uppercase tracking-wider mb-1">
+                                                {currentRoleName || "Partner"} Account Detected
+                                            </Badge>
+                                            <h3 className="text-2xl font-black text-slate-900 font-heading tracking-tight leading-none">
+                                                {restrictionInfo.title || "Student Account Required"}
+                                            </h3>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={() => setRestrictedModalOpen(false)}
+                                        className="w-9 h-9 rounded-full bg-slate-100 hover:bg-slate-200 flex items-center justify-center text-slate-500 hover:text-slate-900 transition-colors shrink-0"
+                                    >
+                                        <XIcon className="w-4 h-4" />
+                                    </button>
+                                </div>
+
+                                {/* Main Description */}
+                                <div className="space-y-4 mb-6">
+                                    <p className="text-sm font-semibold text-slate-700 leading-relaxed">
+                                        {restrictionInfo.message || (
+                                            <>
+                                                <span className="font-black text-slate-900 capitalize">{currentRoleName || "Owner/Admin/Developer"}</span> accounts cannot book accommodations, submit reviews, or send enquiries. These actions are exclusively available for <strong className="text-primary font-black">Student accounts</strong>.
+                                            </>
+                                        )}
+                                    </p>
+
+                                    {/* Permission Explanation Box */}
+                                    <div className="grid grid-cols-1 gap-2.5 p-4 rounded-2xl bg-slate-50 border border-slate-100 text-xs">
+                                        <div className="flex items-start gap-2.5">
+                                            <div className="w-5 h-5 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0 mt-0.5">
+                                                <Check className="w-3 h-3 stroke-[3]" />
+                                            </div>
+                                            <p className="text-slate-600">
+                                                <strong className="text-slate-900 font-bold">What you can do:</strong> You can view, explore photos, inspect all room types, amenities, location maps, and verified reviews.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-start gap-2.5">
+                                            <div className="w-5 h-5 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 mt-0.5">
+                                                <Lock className="w-3 h-3" />
+                                            </div>
+                                            <p className="text-slate-600">
+                                                <strong className="text-slate-900 font-bold">Student Exclusivity:</strong> Booking, ratings/reviews, and sending enquiries are locked for Owner, Admin, and Developer accounts.
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Action Buttons */}
+                                <div className="space-y-3">
+                                    {/* Primary Button: Just View / Explore */}
+                                    <Button
+                                        onClick={() => setRestrictedModalOpen(false)}
+                                        className="w-full h-13 py-3.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-black text-sm transition-all active:scale-[0.98] shadow-md flex items-center justify-center gap-2"
+                                    >
+                                        <Eye className="w-4 h-4" />
+                                        <span>Just View & Explore PG / Hostel</span>
+                                    </Button>
+
+                                    {/* Secondary Buttons: Student Login or Signup */}
+                                    <div className="grid grid-cols-2 gap-3 pt-1">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => navigate("/student/login", { state: { from: `/hostel/${id}` } })}
+                                            className="h-12 rounded-xl border-slate-200 hover:border-primary hover:text-primary font-bold text-xs flex items-center justify-center gap-1.5"
+                                        >
+                                            <User className="w-3.5 h-3.5" />
+                                            <span>Student Login</span>
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => navigate("/student/signup")}
+                                            className="h-12 rounded-xl border-slate-200 hover:border-primary hover:text-primary font-bold text-xs flex items-center justify-center gap-1.5"
+                                        >
+                                            <GraduationCap className="w-3.5 h-3.5" />
+                                            <span>Student Sign Up</span>
+                                        </Button>
+                                    </div>
+                                </div>
+                            </div>
                         </motion.div>
                     </motion.div>
                 )}
